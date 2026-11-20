@@ -1,100 +1,103 @@
-"""User-first problem-solver & life guidance helpers for AstroMuni v0.7."""
+"""User-first problem-solver & unified Astrobrain guidance helpers (v0.7+)."""
 from __future__ import annotations
 
 import datetime as dt
 import hashlib
-import math
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+
+from .astrobrain_extensions import build_astrobrain_store, evaluate_astrobrain_rules
+from .explain import describe_fact
+from .intake import BirthInput
+from .jyotish import GRAHAS
+from .kundli import dasha_at
+from .palmistry import PalmObservation
 
 CITY_COORDS = {
-    "bhopal": (23.2599, 77.4126),
-    "delhi": (28.6139, 77.2090),
-    "new delhi": (28.6139, 77.2090),
-    "mumbai": (19.0760, 72.8777),
-    "kolkata": (22.5726, 88.3639),
-    "chennai": (13.0827, 80.2707),
-    "bengaluru": (12.9716, 77.5946),
-    "bangalore": (12.9716, 77.5946),
-    "hyderabad": (17.3850, 78.4867),
-    "jaipur": (26.9124, 75.7873),
-    "indore": (22.7196, 75.8577),
-    "lucknow": (26.8467, 80.9462),
+    "bhopal": (23.2599, 77.4126, "Asia/Kolkata"),
+    "delhi": (28.6139, 77.2090, "Asia/Kolkata"),
+    "new delhi": (28.6139, 77.2090, "Asia/Kolkata"),
+    "mumbai": (19.0760, 72.8777, "Asia/Kolkata"),
+    "kolkata": (22.5726, 88.3639, "Asia/Kolkata"),
+    "chennai": (13.0827, 80.2707, "Asia/Kolkata"),
+    "bengaluru": (12.9716, 77.5946, "Asia/Kolkata"),
+    "bangalore": (12.9716, 77.5946, "Asia/Kolkata"),
+    "hyderabad": (17.3850, 78.4867, "Asia/Kolkata"),
+    "jaipur": (26.9124, 75.7873, "Asia/Kolkata"),
+    "indore": (22.7196, 75.8577, "Asia/Kolkata"),
+    "lucknow": (26.8467, 80.9462, "Asia/Kolkata"),
 }
 
-RASHIS = [
-    ("Mesha", "Mars"), ("Vrishabha", "Venus"), ("Mithuna", "Mercury"),
-    ("Karka", "Moon"), ("Simha", "Sun"), ("Kanya", "Mercury"),
-    ("Tula", "Venus"), ("Vrischika", "Mars"), ("Dhanu", "Jupiter"),
-    ("Makara", "Saturn"), ("Kumbha", "Saturn"), ("Meena", "Jupiter"),
-]
 
-NAKSHATRAS = [
-    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
-    "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni",
-    "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha",
-    "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta",
-    "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati",
-]
-
-DASHA_SEQ = [
-    ("Ketu", 7), ("Venus", 20), ("Sun", 6), ("Moon", 10), ("Mars", 7),
-    ("Rahu", 18), ("Jupiter", 16), ("Saturn", 19), ("Mercury", 17),
-]
-
-
-def _root_digit(n: int) -> int:
-    while n > 9:
-        n = sum(int(ch) for ch in str(n))
-    return n or 1
-
-
-def summarize_profile(profile: Dict[str, Any]) -> Dict[str, Any]:
+def _to_birth_input(profile: Dict[str, Any]) -> BirthInput:
     name = (profile.get("name") or "Seeker").strip()
     dob_str = (profile.get("dob") or "2001-01-29").strip()
     tob_str = (profile.get("tob") or "09:30").strip()
     city = (profile.get("city") or "Bhopal").strip()
+    certainty = (profile.get("time_certainty") or ("exact" if profile.get("tob") else "unknown")).strip()
 
-    try:
-        dob = dt.date.fromisoformat(dob_str)
-    except ValueError:
-        dob = dt.date(2001, 1, 29)
+    default_lat, default_lon, default_tz = CITY_COORDS.get(city.lower(), (23.2599, 77.4126, "Asia/Kolkata"))
+    lat = float(profile.get("lat") if profile.get("lat") not in (None, "") else default_lat)
+    lon = float(profile.get("lon") if profile.get("lon") not in (None, "") else default_lon)
+    tz_name = (profile.get("tz_name") or default_tz).strip()
 
-    try:
-        hh, mm = [int(x) for x in tob_str.split(":")[:2]]
-    except Exception:
-        hh, mm = 9, 30
+    return BirthInput(
+        name=name,
+        date=dob_str,
+        time=tob_str if certainty != "unknown" else None,
+        time_certainty=certainty,
+        place_name=city,
+        latitude=lat,
+        longitude=lon,
+        tz_name=tz_name,
+        subject_is_minor=bool(profile.get("subject_is_minor", False)),
+    )
 
-    fallback_lat, fallback_lon = CITY_COORDS.get(city.lower(), (23.2599, 77.4126))
-    lat = float(profile.get("lat") if profile.get("lat") not in (None, "") else fallback_lat)
-    lon = float(profile.get("lon") if profile.get("lon") not in (None, "") else fallback_lon)
 
-    mulank = _root_digit(dob.day)
-    bhagyank = _root_digit(sum(int(c) for c in dob.strftime("%Y%m%d")))
+def _to_palm_obs(palm_data: Optional[Dict[str, Any]]) -> Optional[PalmObservation]:
+    if not palm_data or not isinstance(palm_data, dict):
+        return None
+    if not any(palm_data.get(k) for k in ("life_line", "head_line", "heart_line", "fate_line", "dominant_mount")):
+        return None
+    return PalmObservation(
+        active_hand=palm_data.get("active_hand") or "right",
+        life_line=palm_data.get("life_line") or None,
+        head_line=palm_data.get("head_line") or None,
+        heart_line=palm_data.get("heart_line") or None,
+        fate_line=palm_data.get("fate_line") or None,
+        dominant_mount=palm_data.get("dominant_mount") or None,
+    )
 
-    jdn = dob.toordinal() + 1721424.5 + (hh + mm / 60.0 - 5.5) / 24.0
-    days_j2000 = jdn - 2451545.0
-    ayanamsa = 23.85 + (days_j2000 / 36525.0) * 1.396
-    moon_sid = ((218.316 + 13.176396 * days_j2000) - ayanamsa) % 360.0
-    lst = (100.46 + 0.985647 * days_j2000 + lon + (hh + mm / 60.0 - 5.5) * 15.0) % 360.0
-    lagna_sid = (lst - ayanamsa + math.sin(math.radians(lat)) * 12.0) % 360.0
 
-    lagna_idx = int(lagna_sid // 30) % 12
-    moon_idx = int(moon_sid // 30) % 12
-    nak_idx = int(moon_sid // (360.0 / 27.0)) % 27
+def summarize_profile(profile: Dict[str, Any]) -> Dict[str, Any]:
+    """Compute exact profile summary using Vedaksha Kundli + Numerology."""
+    b = _to_birth_input(profile)
+    today = dt.date.today()
+    kundli, store = build_astrobrain_store(b, today=today)
 
-    age = max(0.0, (dt.date.today() - dob).days / 365.25)
-    maha_idx = nak_idx % 9
-    maha_lord = DASHA_SEQ[maha_idx][0]
-    antara_lord = DASHA_SEQ[(maha_idx + int(age * 2) + 1) % 9][0]
+    lagna = store.value("lagna", "sign", "parashari") or "Withheld (uncertain birth time)"
+    rashi = store.value("Moon", "sign", "parashari") or "Withheld"
+    nakshatra = store.value("Moon", "nakshatra", "parashari") or "Withheld"
+    mulank = store.value("mulank", "value", "numerology") or 1
+    bhagyank = store.value("bhagyank", "value", "numerology") or 1
+
+    maha_lord = "Withheld"
+    antara_lord = "Withheld"
+    if kundli.dasha is not None:
+        try:
+            d = dasha_at(kundli, dt.datetime.now(dt.timezone.utc))
+            maha_lord = d.get("maha") or "Withheld"
+            antara_lord = d.get("antar") or "Withheld"
+        except ValueError:
+            pass
 
     return {
-        "name": name,
-        "dob": dob_str,
-        "tob": tob_str,
-        "city": city,
-        "lagna": RASHIS[lagna_idx][0],
-        "rashi": RASHIS[moon_idx][0],
-        "nakshatra": NAKSHATRAS[nak_idx],
+        "name": b.name,
+        "dob": b.date,
+        "tob": b.time or "",
+        "city": b.place_name,
+        "lagna": lagna,
+        "rashi": rashi,
+        "nakshatra": nakshatra,
         "mahadasha": maha_lord,
         "antardasha": antara_lord,
         "mulank": mulank,
@@ -110,6 +113,12 @@ def _topic_key(question: str, category: str) -> str:
         return "marriage"
     if any(w in txt for w in ["money", "wealth", "dhan", "paisa", "business", "invest", "income", "finance"]):
         return "wealth"
+    if any(w in txt for w in ["educat", "study", "exam", "college", "padhai", "degree", "learn"]):
+        return "education"
+    if any(w in txt for w in ["child", "kids", "santan", "bachch", "aulad", "baby"]):
+        return "children"
+    if any(w in txt for w in ["family", "parents", "mother", "father", "parivar", "ghar"]):
+        return "family"
     if any(w in txt for w in ["stress", "peace", "mind", "mann", "overthink", "sleep", "focus", "calm"]):
         return "mind"
     if any(w in txt for w in ["when", "time", "kab", "window", "timing", "month", "year"]):
@@ -118,7 +127,8 @@ def _topic_key(question: str, category: str) -> str:
 
 
 def solve_problem(payload: Dict[str, Any]) -> Dict[str, Any]:
-    prof = summarize_profile(payload.get("profile") or {})
+    raw_prof = payload.get("profile") or {}
+    prof = summarize_profile(raw_prof)
     q = (payload.get("question") or "").strip()
     cat = _topic_key(q, (payload.get("category") or "general").strip())
     lang = (payload.get("lang") or "hg").strip().lower()
@@ -168,6 +178,48 @@ def solve_problem(payload: Dict[str, Any]) -> Dict[str, Any]:
             ],
             "practice": "Review weekly cashflow every Friday evening.",
         },
+        "education": {
+            "heading": "Education & Skill Mastery",
+            "en": f"Structured daily revision beats last-minute cramming. Your {prof['nakshatra']} placement and {prof['mahadasha']} phase favour steady conceptual depth.",
+            "hi": f"अंतिम समय की भागदौड़ के बजाय नियमित अभ्यास से बेहतर परिणाम मिलते हैं। {prof['nakshatra']} नक्षत्र और {prof['mahadasha']} दशा गहरी समझ का समर्थन करती है।",
+            "hg": f"Last-minute cramming ke bajay daily structured practice best rehti hai. Aapka {prof['nakshatra']} nakshatra aur {prof['mahadasha']} daur deep learning ko support karta hai.",
+            "window": "Next 30 to 90 days",
+            "watchout": "Avoid switching study materials or courses mid-way.",
+            "steps": [
+                "Block 60 uninterrupted minutes each morning for core study.",
+                "Summarize each topic in your own words once a week.",
+                "Test yourself with practical problems before moving on.",
+            ],
+            "practice": "Keep a single study notebook and review it every Thursday morning.",
+        },
+        "children": {
+            "heading": "Children & Mentorship",
+            "en": f"Patient listening and consistent routines create a supportive environment. Your {prof['rashi']} Moon and {prof['mahadasha']} period reward steady encouragement.",
+            "hi": f"धैर्यपूर्वक सुनने और नियमित दिनचर्या से सकारात्मक माहौल बनता है। आपकी {prof['rashi']} राशि और {prof['mahadasha']} दशा निरंतर प्रोत्साहन का संकेत देती है।",
+            "hg": f"Dhairya se sunne aur regular routine se supportive environment banta hai. Aapki {prof['rashi']} rashi aur {prof['mahadasha']} daur steady encouragement ko support karta hai.",
+            "window": "Next 60 to 120 days",
+            "watchout": "Avoid comparing milestones with other families.",
+            "steps": [
+                "Set aside 20 distraction-free minutes daily for open conversation.",
+                "Encourage curiosity and effort rather than only outcomes.",
+                "Keep family meal and rest routines predictable.",
+            ],
+            "practice": "Share one calm, screen-free meal together every day.",
+        },
+        "family": {
+            "heading": "Family & Home Harmony",
+            "en": f"Clear boundaries paired with warmth keep household decisions smooth. Your {prof['lagna']} chart and {prof['mahadasha']} phase favour respectful dialogue.",
+            "hi": f"आत्मीयता के साथ स्पष्ट संवाद पारिवारिक निर्णयों को सहज बनाता है। आपकी {prof['lagna']} कुंडली और {prof['mahadasha']} दशा सौहार्दपूर्ण बातचीत का समर्थन करती है।",
+            "hg": f"Garmjoshi ke saath clear communication se ghar ke decisions smooth rehte hain. Aapka {prof['lagna']} chart aur {prof['mahadasha']} daur respectful dialogue ko support karta hai.",
+            "window": "Next 45 to 90 days",
+            "watchout": "Avoid letting minor misunderstandings go unspoken for weeks.",
+            "steps": [
+                "Address household responsibilities clearly in a calm family chat.",
+                "Respect elders' perspectives while stating your own bandwidth honestly.",
+                "Plan one shared family activity this month.",
+            ],
+            "practice": "Check in calmly with parents or family members every Sunday morning.",
+        },
         "mind": {
             "heading": "Mind, Peace & Focus",
             "en": f"Reducing open tasks restores mental calm faster than over-planning. Your {prof['nakshatra']} placement benefits from a steady daily rhythm.",
@@ -216,7 +268,7 @@ def solve_problem(payload: Dict[str, Any]) -> Dict[str, Any]:
     answer = item["hi"] if lang == "hi" else (item["hg"] if lang == "hg" else item["en"])
     return {
         "ok": True,
-        "version": "0.7",
+        "version": "0.7-astrobrain",
         "category": cat,
         "heading": item["heading"],
         "question": q or item["heading"],
@@ -231,11 +283,65 @@ def solve_problem(payload: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def evaluate_unified_astrobrain(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Return unified readings across Kundli, Numerology, Palmistry & Gochara."""
+    b = _to_birth_input(payload.get("profile") or payload)
+    palm_obs = _to_palm_obs(payload.get("palm"))
+    lang = (payload.get("lang") or "en").strip().lower()
+    today = dt.date.today()
+
+    _, store = build_astrobrain_store(b, palm_obs=palm_obs, transit_date=today, today=today)
+    res = evaluate_astrobrain_rules(store)
+
+    planets = {
+        g: {
+            "sign": store.value(g, "sign", "parashari"),
+            "house": store.value(g, "house", "parashari"),
+            "nakshatra": store.value(g, "nakshatra", "parashari"),
+            "retrograde": store.value(g, "retrograde", "parashari"),
+        }
+        for g in GRAHAS
+    }
+
+    readings = []
+    for f in res.firings:
+        readings.append(
+            {
+                "rule_id": f.rule_id,
+                "system": f.system,
+                "scope": list(f.scope),
+                "adverse": f.adverse,
+                "review_status": f.review_status,
+                "interpretation": f.interpretation,
+                "basis": [describe_fact(store, fid, lang if lang in ("en", "hi", "hg") else "en") for fid in f.fact_ids],
+            }
+        )
+
+    return {
+        "ok": True,
+        "version": "0.7-astrobrain",
+        "profile": summarize_profile(payload.get("profile") or payload),
+        "planets": planets,
+        "total_facts": len(store),
+        "total_firings": len(readings),
+        "readings": readings,
+    }
+
+
 def handle_v07(path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    if path.startswith("/api/v07/astrobrain"):
+        return evaluate_unified_astrobrain(payload)
     if path.startswith("/api/v07/snapshot"):
         prof = summarize_profile(payload.get("profile") or payload)
         areas = []
-        for k, lbl in [("career", "Career"), ("marriage", "Marriage & Rishte"), ("wealth", "Money & Stability"), ("mind", "Mind & Peace")]:
+        for k, lbl in [
+            ("career", "Career"),
+            ("marriage", "Marriage & Rishte"),
+            ("wealth", "Money & Stability"),
+            ("education", "Education & Learning"),
+            ("family", "Family & Home"),
+            ("mind", "Mind & Peace"),
+        ]:
             res = solve_problem({"profile": prof, "category": k, "lang": payload.get("lang", "hg")})
             areas.append({"key": k, "label": lbl, "score": res["score"], "window": res["window"], "answer": res["answer"]})
         return {"ok": True, "profile": prof, "areas": areas}

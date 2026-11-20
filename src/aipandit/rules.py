@@ -18,7 +18,7 @@ from typing import Optional
 
 from .predicate import Predicate, from_dict
 
-BASE_SYSTEMS = ("parashari", "lal_kitab", "palm", "numerology")
+BASE_SYSTEMS = ("parashari", "lal_kitab", "palm", "numerology", "gochara")
 SYSTEMS = BASE_SYSTEMS + ("concordance",)
 GENDER_SCOPES = ("male", "female", "neutral", "all")
 PARTNERSHIP_SCOPES = ("heterosexual", "same_sex", "all")
