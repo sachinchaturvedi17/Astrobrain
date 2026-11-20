@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="hi-Latn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#FBF0D2">
+<title>AstroMuni</title>
+<meta name="description" content="AstroMuni: kundli, horoscope aur numerology, Hinglish, Hindi aur English mein.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233B2314'/%3E%3Cpath d='M16 5l11 11-11 11L5 16z' fill='none' stroke='%23F4C95D' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23F4C95D'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/copy.js" defer></script>
+<script src="/static/app.js" defer></script>
+</head>
+<body>
+<div class="sky" aria-hidden="true"></div>
+<a class="skip" href="#main" data-i="skip"></a>
+
+<header class="top">
+  <button class="brand" id="brandBtn" type="button" aria-label="AstroMuni">
+    <svg viewBox="0 0 32 32" aria-hidden="true" class="logo"><rect width="32" height="32" rx="9" class="logo-bg"/><path d="M16 5l11 11-11 11L5 16z" class="logo-d"/><circle cx="16" cy="16" r="3" class="logo-c"/></svg>
+    <span>AstroMuni</span>
+  </button>
+  <div class="top-r">
+    <button class="link" id="homeBtn" type="button" hidden data-i="home"></button>
+    <div class="seg" id="langSeg" role="group" aria-label="Language">
+      <button type="button" data-lang="hg" aria-pressed="true">Hinglish</button>
+      <button type="button" data-lang="hi" aria-pressed="false" lang="hi">हिन्दी</button>
+      <button type="button" data-lang="en" aria-pressed="false">English</button>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+
+<!-- ====================================================================== 1. details -->
+<section class="view" id="v-onboard" aria-labelledby="obTitle">
+  <div class="ob">
+    <div class="ob-hero">
+      <svg class="draw" viewBox="0 0 400 400" aria-hidden="true">
+        <path pathLength="1" d="M20 20H380V380H20Z"/><path pathLength="1" d="M20 20L380 380M380 20L20 380"/><path pathLength="1" d="M200 20L380 200L200 380L20 200Z"/>
+      </svg>
+      <h1 id="obTitle" data-i="obTitle"></h1>
+      <p class="lede" data-i="obLede"></p>
+      <ul class="points" id="obPoints"></ul>
+    </div>
+
+    <form id="birth" class="card ob-card" novalidate autocomplete="on">
+      <div class="progress" aria-hidden="true"><span id="progBar"></span></div>
+      <p class="step-of" id="stepOf" aria-live="polite"></p>
+
+      <fieldset class="step" data-step="1">
+        <legend data-i="s1"></legend>
+        <label class="f"><span data-i="fName"></span><input class="input" id="name" type="text" autocomplete="name" maxlength="60" required></label>
+        <p class="hint" data-i="fNameHint"></p>
+        <div class="row2">
+          <label class="f"><span data-i="fGender"></span><select class="input" id="gender"></select></label>
+          <label class="f"><span data-i="fWho"></span><select class="input" id="who"></select></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="step" data-step="2" hidden>
+        <legend data-i="s2"></legend>
+        <div class="row2">
+          <label class="f"><span data-i="fDate"></span><input class="input" id="date" type="date" min="1900-01-01" required></label>
+          <label class="f"><span data-i="fTime"></span><input class="input" id="time" type="time"></label>
+        </div>
+        <label class="f"><span data-i="fCert"></span><select class="input" id="cert"></select></label>
+        <label class="f"><span data-i="fPlace"></span><select class="input" id="city"></select></label>
+        <div class="row2" id="coords" hidden>
+          <label class="f"><span data-i="fLat"></span><input class="input" id="lat" type="number" step="0.0001" min="-90" max="90" value="23.2599"></label>
+          <label class="f"><span data-i="fLon"></span><input class="input" id="lon" type="number" step="0.0001" min="-180" max="180" value="77.4126"></label>
+          <label class="f wide"><span data-i="fTz"></span><input class="input" id="tz" type="text" value="Asia/Kolkata"></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="step" data-step="3" hidden>
+        <legend data-i="s3"></legend>
+        <p class="hint first" data-i="s3Lede"></p>
+        <div class="palms">
+          <label class="palm" id="palmL" for="fileL">
+            <input type="file" id="fileL" accept="image/*" class="sr">
+            <span class="palm-art" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M22 58V34l-6-9c-1.5-2.5 1.5-5 3.5-2.5L24 29V12c0-3 4-3 4 0v14V9c0-3 4-3 4 0v17V11c0-3 4-3 4 0v17V16c0-3 4-3 4 0v22c0 8-3 12-6 14v6" fill="none"/></svg></span>
+            <img class="palm-img" alt="" hidden>
+            <span class="palm-t" data-i="palmL"></span>
+            <span class="palm-a" data-i="palmAdd"></span>
+          </label>
+          <label class="palm" id="palmR" for="fileR">
+            <input type="file" id="fileR" accept="image/*" class="sr">
+            <span class="palm-art flip" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M22 58V34l-6-9c-1.5-2.5 1.5-5 3.5-2.5L24 29V12c0-3 4-3 4 0v14V9c0-3 4-3 4 0v17V11c0-3 4-3 4 0v17V16c0-3 4-3 4 0v22c0 8-3 12-6 14v6" fill="none"/></svg></span>
+            <img class="palm-img" alt="" hidden>
+            <span class="palm-t" data-i="palmR"></span>
+            <span class="palm-a" data-i="palmAdd"></span>
+          </label>
+        </div>
+        <ul class="tips" id="palmTips"></ul>
+        <p class="hint" data-i="palmNote"></p>
+        <label class="check"><input type="checkbox" id="consent"><span data-i="consent"></span></label>
+      </fieldset>
+
+      <p class="err" id="formErr" role="alert"></p>
+      <div class="ob-nav">
+        <button type="button" class="btn ghost" id="backStep" data-i="back" hidden></button>
+        <button type="submit" class="btn" id="nextStep"></button>
+      </div>
+      <p class="fine" data-i="privacy"></p>
+    </form>
+  </div>
+</section>
+
+<!-- ====================================================================== 2. making the kundli -->
+<section class="view" id="v-making" hidden aria-live="polite">
+  <div class="making">
+    <svg class="draw big" viewBox="0 0 400 400" aria-hidden="true">
+      <path pathLength="1" d="M20 20H380V380H20Z"/><path pathLength="1" d="M20 20L380 380M380 20L20 380"/><path pathLength="1" d="M200 20L380 200L200 380L20 200Z"/><circle cx="200" cy="200" r="46"/>
+    </svg>
+    <p class="making-t" id="makingText"></p>
+  </div>
+</section>
+
+<!-- ====================================================================== 3. hub -->
+<section class="view" id="v-hub" hidden aria-labelledby="hubTitle">
+  <div class="wrap">
+    <h1 id="hubTitle" class="hub-h"></h1>
+    <p class="lede" data-i="hubAsk"></p>
+    <ul class="chips-row" id="profileChips"></ul>
+    <div class="cards" id="hubCards"></div>
+  </div>
+</section>
+
+<!-- ====================================================================== 4. kundli -->
+<section class="view" id="v-kundli" hidden aria-labelledby="kTitle">
+  <div class="wrap">
+    <div class="vh"><button class="link back" type="button" data-go="hub" data-i="back2"></button><button class="link" type="button" id="printBtn" data-i="print"></button></div>
+    <h1 id="kTitle" data-i="kTitle"></h1>
+    <p class="lede" data-i="kLede"></p>
+    <p class="warn" id="kWarn"></p>
+    <div class="k-grid">
+      <section class="card" aria-labelledby="chartH">
+        <h2 id="chartH" data-i="chartTitle"></h2>
+        <div id="chartBox" class="chart"></div>
+        <dl class="facts" id="keyFacts"></dl>
+      </section>
+      <section class="card" aria-labelledby="plH">
+        <h2 id="plH" data-i="planetsTitle"></h2>
+        <div class="tscroll"><table class="grid" id="planets"></table></div>
+      </section>
+    </div>
+    <section class="card" aria-labelledby="dH">
+      <h2 id="dH" data-i="dashaTitle"></h2>
+      <p class="sub" id="dashaNow"></p>
+      <ol class="timeline" id="timeline"></ol>
+    </section>
+    <section class="card" id="numsSect" aria-labelledby="nH">
+      <h2 id="nH" data-i="numsTitle"></h2>
+      <p class="sub" data-i="numsLede"></p>
+      <div class="nums" id="nums"></div>
+    </section>
+  </div>
+</section>
+
+<!-- ====================================================================== 5. horoscope -->
+<section class="view" id="v-horo" hidden aria-labelledby="hTitle">
+  <div class="wrap narrow">
+    <div class="vh"><button class="link back" type="button" data-go="hub" data-i="back2"></button></div>
+    <h1 id="hTitle" data-i="hTitle"></h1>
+    <p class="lede" data-i="hLede"></p>
+    <div id="horoLoad" class="loading" role="status"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span id="horoLoadText"></span></div>
+    <div id="horoBody" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ====================================================================== 6. AstroMuni -->
+<section class="view muni-view" id="v-muni" hidden aria-label="AstroMuni">
+  <div class="muni">
+    <aside class="stage" id="stage" data-state="idle" aria-label="AstroMuni">
+      <button class="link back stage-back" type="button" data-go="hub" data-i="back2"></button>
+      <svg class="figure" viewBox="0 0 320 380" role="img" aria-label="AstroMuni, a softly lit seated figure">
+        <defs>
+          <radialGradient id="halo" cx="160" cy="108" r="150" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#FFD66B" stop-opacity=".85"/><stop offset=".45" stop-color="#FFE7A0" stop-opacity=".42"/><stop offset="1" stop-color="#FFF4D2" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="floor" cx="160" cy="352" r="150" gradientUnits="userSpaceOnUse" gradientTransform="translate(0 352) scale(1 .12) translate(0 -352)">
+            <stop offset="0" stop-color="#8A5A2B" stop-opacity=".38"/><stop offset="1" stop-color="#8A5A2B" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="fadeY" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".62" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+          <mask id="fadeMask" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="380"><rect width="320" height="380" fill="url(#fadeY)"/></mask>
+          <filter id="haze" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.4"/></filter>
+          <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="14"/></filter>
+          <g id="shape">
+            <circle cx="160" cy="54" r="14"/>
+            <ellipse cx="160" cy="100" rx="31" ry="37"/>
+            <rect x="147" y="126" width="26" height="34" rx="8"/>
+            <path d="M160 148C118 148 86 166 76 210L64 304H256L244 210C234 166 202 148 160 148Z"/>
+            <path d="M84 196C56 240 62 292 112 310L134 296C104 282 100 246 110 214Z"/>
+            <path d="M236 196C264 240 258 292 208 310L186 296C216 282 220 246 210 214Z"/>
+            <path d="M30 334C30 292 98 280 160 284C222 280 290 292 290 334C290 358 240 368 160 368C80 368 30 358 30 334Z"/>
+            <ellipse cx="160" cy="302" rx="34" ry="13"/>
+          </g>
+        </defs>
+        <ellipse cx="160" cy="352" rx="150" ry="20" fill="url(#floor)"/>
+        <circle class="halo" cx="160" cy="108" r="150" fill="url(#halo)"/>
+        <circle class="ring r1" cx="160" cy="104" r="62"/><circle class="ring r2" cx="160" cy="104" r="84"/>
+        <g class="breath" mask="url(#fadeMask)">
+          <use href="#shape" class="glow-copy" filter="url(#glow)"/>
+          <use href="#shape" class="body-copy" filter="url(#haze)"/>
+        </g>
+        <g class="motes" aria-hidden="true"><circle cx="60" cy="150" r="2.2"/><circle cx="258" cy="120" r="1.8"/><circle cx="84" cy="70" r="1.6"/><circle cx="236" cy="190" r="2"/><circle cx="208" cy="48" r="1.5"/><circle cx="116" cy="230" r="1.4"/></g>
+      </svg>
+      <div class="plate">
+        <p class="nm">AstroMuni <span class="role" id="mRole"></span></p>
+        <p class="st" id="mState" role="status"></p>
+      </div>
+    </aside>
+
+    <div class="talk">
+      <div class="log" id="log" role="log" aria-live="polite"></div>
+      <div class="dock">
+        <div class="chips" id="chips" aria-label=""></div>
+        <form id="ask" class="ask" autocomplete="off">
+          <label class="sr" for="q" data-i="placeholder"></label>
+          <input id="q" class="input" type="text" maxlength="500" data-ph="placeholder">
+          <button class="send" id="askBtn" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L21 3l-6.5 18-3.2-7.3z"/></svg></button>
+        </form>
+        <p class="fine"><span data-i="aiNote"></span> <button class="link fbopen" type="button" hidden data-i="fbOpen"></button></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================================================================== 7. real pandit -->
+<section class="view" id="v-pandit" hidden aria-labelledby="pTitle">
+  <div class="wrap narrow">
+    <div class="vh"><button class="link back" type="button" data-go="hub" data-i="back2"></button></div>
+    <h1 id="pTitle" data-i="pTitle"></h1>
+    <p class="lede" data-i="pLede"></p>
+    <form id="pform" class="card" novalidate>
+      <label class="f"><span data-i="fPhone"></span><input class="input" id="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20"></label>
+      <p class="hint" data-i="fPhoneHint"></p>
+      <div class="row2">
+        <label class="f"><span data-i="fSlot"></span><select class="input" id="slot"></select></label>
+        <label class="f"><span data-i="fTopic"></span><select class="input" id="topic"></select></label>
+      </div>
+      <label class="f"><span data-i="fNote"></span><textarea class="input" id="note" rows="3" maxlength="300"></textarea></label>
+      <label class="check"><input type="checkbox" id="shareDetails"><span data-i="shareDetails"></span></label>
+      <label class="check" id="sharePalmsRow"><input type="checkbox" id="sharePalms"><span data-i="sharePalms"></span></label>
+      <p class="err" id="pErr" role="alert"></p>
+      <button class="btn" id="pSend" type="submit"></button>
+    </form>
+    <div class="card ok" id="pOk" hidden>
+      <h2 id="pOkTitle"></h2><p id="pOkText"></p>
+      <button class="btn ghost" type="button" data-go="hub" data-i="back2"></button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot"><button class="link fbopen" type="button" hidden data-i="fbOpen"></button></footer>
+
+<dialog id="fbDlg" aria-labelledby="fbTitle">
+  <form method="dialog" class="dlg">
+    <h2 id="fbTitle" data-i="fbTitle"></h2>
+    <p class="sub" data-i="fbSub"></p>
+    <div class="stars" id="stars" role="group" aria-label="1 to 5"></div>
+    <label class="f"><span data-i="fbText"></span><textarea class="input" id="fbText" rows="3" maxlength="900"></textarea></label>
+    <div class="dlg-b"><button class="btn ghost" value="cancel" data-i="cancel"></button><button class="btn" id="fbSend" value="default" data-i="send"></button></div>
+  </form>
+</dialog>
+</body>
+</html>

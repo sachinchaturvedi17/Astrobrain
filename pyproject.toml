@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aipandit"
+version = "0.6.0"
+description = "AstroMuni - Vedic astrology (kundli), numerology and an AI guide in English / Hinglish / Hindi"
+requires-python = ">=3.10"
+dependencies = [
+    "vedaksha>=10.2,<11",   # BUSL-1.1: commercial use needs a licence, see docs/RESEARCH_FINDINGS.md
+    "tzdata",
+]
+
+[project.optional-dependencies]
+# pyswisseph is AGPL-3.0 / commercial. It is a TEST ORACLE ONLY and must never
+# appear in the production dependency tree.
+dev = ["pytest>=8", "pyswisseph>=2.10"]
+llm = ["anthropic>=0.40"]   # optional: enables the LLM composer; the template composer needs nothing
+
+[project.scripts]
+aipandit-kundli = "aipandit.cli:main"
+aipandit-chat = "aipandit.chat:main"
+aipandit-web = "aipandit.web.server:main"
+astromuni-web = "aipandit.web.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"aipandit.web" = ["static/*.html", "static/*.css", "static/*.js", "static/fonts/*.woff2", "static/fonts/LICENSE-*.txt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = ["oracle: compares against Swiss Ephemeris (dev-only, AGPL)"]
