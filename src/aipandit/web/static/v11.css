@@ -117,3 +117,18 @@ p.fb{margin:-4px 0 0 44px}
   .chip.voice{min-height:30px}
   .fb,p.fb{margin-left:0}
 }
+
+/* phones: give the conversation the room, keep the character as a compact header */
+@media(max-width:860px){
+  .askpage{height:calc(100dvh - 235px);min-height:420px}
+  .nv-stage{padding:8px 12px}
+  .rings{width:60px}
+  .stage-name h2{font-size:1.05rem}
+  .stage-status{font-size:.82rem}
+  .chip.voice{display:none}
+  .askpage .chat-head{padding:8px 14px}
+  .askpage .chat-head small,.ctx{display:none}
+  .askpage .thread{padding:12px}
+  .askpage .composer{padding:8px 12px 4px}
+  .askpage .disclaimer{font-size:.68rem;margin:4px 0 0;line-height:1.3}
+}
