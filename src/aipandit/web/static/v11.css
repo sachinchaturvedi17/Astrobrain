@@ -65,3 +65,55 @@ details.why>summary{font-size:.88rem}
 .nv-head .avatar{width:56px;height:56px}
 .welcome .avatar.big{margin-bottom:4px}
 .chatpage .msg .reply{max-width:calc(100% - 46px)}
+
+/* ---- v1.1.2: NaradVani stage (left) + chat (right); stacked on phones ---- */
+.askpage{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:clamp(16px,2.4vw,32px);height:calc(100dvh - 170px);min-height:540px;max-width:1200px;margin:0 auto;width:100%}
+.nv-stage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px 20px;border-radius:var(--r-lg);border:1px solid var(--line);background:radial-gradient(120% 90% at 50% 20%,#fff3c9 0%,#fdf3d3 45%,#f6e2a6 100%);box-shadow:var(--shadow);overflow:hidden;text-align:center}
+.rings{position:relative;width:min(300px,72%);aspect-ratio:1;display:grid;place-items:center}
+.ring{position:absolute;border-radius:50%;border:1.5px solid rgba(176,132,42,.35);inset:0}
+.ring.r1{inset:-14%}.ring.r2{inset:-30%;border-color:rgba(176,132,42,.22)}.ring.r3{inset:-48%;border-color:rgba(176,132,42,.12)}
+.portrait{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;box-shadow:0 0 0 4px var(--gold),0 22px 40px -18px rgba(70,40,26,.65);background:#0f5c63}
+.portrait img{width:100%;height:100%;object-fit:cover;object-position:50% 16%;display:block}
+.nv-stage.busy .ring.r1{animation:nvpulse 1.6s ease-in-out infinite}
+.nv-stage.busy .ring.r2{animation:nvpulse 1.6s ease-in-out .25s infinite}
+.nv-stage.busy .ring.r3{animation:nvpulse 1.6s ease-in-out .5s infinite}
+@keyframes nvpulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.05);opacity:1}}
+@media(prefers-reduced-motion:reduce){.nv-stage.busy .ring{animation:none!important}}
+.stage-info{display:grid;gap:8px;justify-items:center;margin-top:34px}
+.stage-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.stage-name h2{margin:0;font-size:1.5rem}
+.live{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 0 4px rgba(77,122,63,.18);flex:none}
+.chip.ai{min-height:26px;font-size:.74rem;background:var(--choc);color:#fff8e8;border-color:var(--choc)}
+.stage-status{margin:0;font-weight:600;color:var(--choc)}
+.stage-cap{margin:0;font-size:.88rem;color:var(--soft);max-width:30ch;line-height:1.45}
+.ai-note{margin:0;font-size:.74rem}
+.chip.voice.on{background:var(--gold-wash);border-color:var(--gold-deep)}
+.askpage .chat{display:flex;flex-direction:column;min-height:0;height:100%;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);box-shadow:var(--shadow);overflow:hidden}
+.askpage .chat-head{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
+.askpage .chat-head small{display:block}
+.ctx{display:flex;gap:6px;flex-wrap:wrap}
+.ctx .chip{min-height:28px;font-size:.78rem;background:var(--gold-wash);border-color:transparent}
+.askpage .thread{flex:1;min-height:0;max-height:none;overflow-y:auto;display:grid;align-content:start;padding:18px;gap:14px}
+.askpage .welcome{border-radius:18px;padding:16px 18px}
+.askpage .welcome h3{margin:2px 0}
+.askpage .reply{max-width:100%}
+.askpage .msg .reply{max-width:calc(100% - 46px)}
+.fb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 0 44px}
+p.fb{margin:-4px 0 0 44px}
+.fb .chip{min-height:32px}
+.askpage .composer{padding:12px 16px 10px}
+.askbox.pill{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:999px;background:#fffefb;padding:6px 6px 6px 16px}
+.askbox.pill input{flex:1;min-width:0;border:0;background:transparent;box-shadow:none;outline:0;font-size:1rem;min-height:44px;padding:0}
+.askbox.pill:focus-within{border-color:var(--gold-deep)}
+.askbox.pill .btn.send{width:46px;min-width:46px;height:46px;min-height:46px;padding:0;border-radius:50%}
+@media(max-width:860px){
+  .askpage{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);height:calc(100dvh - 150px);min-height:480px}
+  .nv-stage{flex-direction:row;justify-content:flex-start;text-align:left;gap:14px;padding:12px 14px}
+  .rings{width:84px;flex:none}
+  .ring.r2,.ring.r3{display:none}.ring.r1{inset:-8%}
+  .stage-info{margin-top:0;justify-items:start}
+  .stage-name{justify-content:flex-start}.stage-name h2{font-size:1.15rem}
+  .stage-cap,.ai-note{display:none}
+  .chip.voice{min-height:30px}
+  .fb,p.fb{margin-left:0}
+}

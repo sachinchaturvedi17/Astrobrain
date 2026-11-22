@@ -1,3 +1,14 @@
+# AstroNaradMuni 1.1.2
+
+NaradVani now has a face, and the Ask page is a conversation with someone rather than a form.
+
+- **Split Ask screen.** Desktop: NaradVani's portrait on the left (concentric rings, name, "AI guide" chip, live status "Listening to you" / "NaradVani is typing…" with pulsing rings), chat on the right. Phone: character on top, chat below.
+- **Real-image character.** `naradvani.jpg` / `naradvani-avatar.jpg` replace the vector sage. The image was generated with an AI tool; the visible corner sparkle was cropped out. The file still carries the generator's invisible provenance watermark (SynthID), which is not removed, and the UI says plainly that NaradVani is an AI-generated character.
+- **Chat details.** Context chips (Lagna, Moon nakshatra, current Maha dasha), a "Did this feel useful? Yes / Not quite" row (kept on-device, not sent anywhere), pill composer, optional "read replies aloud" using the browser's own voice (hi-IN / en-IN).
+- **Yogas.** New computed check, `yogas.py`: Gajakesari, Budhaditya, Chandra-Mangal, the five Mahapurusha yogas, and Guru-Chandal (worded gently). Sign-level rules only; Mahapurusha is skipped when only the Moon chart is available. Ask "which yogas do I have?", "mere yog kya hain", "मेरे योग क्या हैं".
+- Server now serves `.jpg`; package data includes `static/*.jpg`.
+- 12 new tests (`tests/test_v112_pure.py`); 33 pass with the earlier suites.
+
 # AstroNaradMuni 1.1.1
 
 The portal is now **AstroNaradMuni** and the assistant is **NaradVani**. Chatting is free: no timer, no wallet.

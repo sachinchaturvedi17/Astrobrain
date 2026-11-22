@@ -20,7 +20,7 @@
     horoscope: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>', chart: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3v6.5M12 14.5V21M3 12h6.5M14.5 12H21M5.6 5.6l4.6 4.6M13.8 13.8l4.6 4.6M18.4 5.6l-4.6 4.6M10.2 13.8l-4.6 4.6"/>',
     calculators: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M8 16h2M12 16h2"/>', reports: '<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/>', learn: '<path d="M4 5a2 2 0 012-2h5v17H6a2 2 0 00-2 2zM20 5a2 2 0 00-2-2h-5v17h5a2 2 0 012 2z"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>', search: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>', send: '<path d="M4 12l16-8-6 16-3-7z"/>', heart: '<path d="M12 20s-7-4.6-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.4-7 10-7 10z"/>', cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>' };
-  var AVATAR = '<img class="avatar" src="/static/naradvani.svg" alt="NaradVani">';
+  var AVATAR = '<img class="avatar" src="/static/naradvani-avatar.jpg" alt="NaradVani" width="44" height="44">';
   var svg = function (k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[k] + '</svg>'; };
 
   var S = { route: "hub", profile: null, palms: {}, chart: null, pan: null, horo: null, sel: null, msgs: [], mode: "muni", busy: false, calc: null, calcType: "moon", rep: null, repTopic: "career", learn: null, learnQ: "", compat: null, where: null, drawer: false, loaded: {} };
@@ -190,19 +190,45 @@
       (d.confidence && d.confidence.level === "low" && d.confidence.why ? '<p class="small note">' + esc(d.confidence.why) + '</p>' : "") +
       (more && !d.safety ? '<details class="why"><summary>' + esc(t("why")) + '</summary>' + (d.reasons && d.reasons.length ? '<div class="eyebrow">' + esc(t("basis")) + '</div><ul>' + d.reasons.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") + (d.timing && d.timing.length ? '<div class="eyebrow">' + esc(t("timing")) + '</div><ul>' + d.timing.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") +
         (d.confidence && d.confidence.level !== "n/a" && d.confidence.why && d.confidence.level !== "low" ? '<p class="small muted">' + esc(t("confidence")) + ': ' + esc(t(d.confidence.level)) + '. ' + esc(d.confidence.why) + '</p>' : "") + (d.evidence && d.evidence.length ? '<div class="eyebrow">' + esc(t("sources")) + '</div><ul>' + d.evidence.map(function (e) { return '<li><b>' + esc(e.title) + '</b> <span class="src">' + (/^https?:\/\//.test(e.url) ? '<a href="' + esc(e.url) + '" target="_blank" rel="noopener noreferrer">' + esc(e.source) + '</a>' : esc(e.source)) + ' · ' + esc(e.licence) + '</span></li>'; }).join("") + '</ul>' : "") +
-        (d.caveats && d.caveats.length ? '<p class="small muted">' + esc(d.caveats.join(" ")) + '</p>' : "") + '</details>' : "") + '</div>' + (wrap ? '</div>' : "");
+        (d.caveats && d.caveats.length ? '<p class="small muted">' + esc(d.caveats.join(" ")) + '</p>' : "") + '</details>' : "") + '</div>' + (wrap ? '</div>' : "") + (m.last && wrap && !d.safety ? fbHtml(m) : "");
+  }
+  function fbHtml(m) {
+    if (m.fb) return '<p class="fb small muted">' + esc(t(m.fb === "yes" ? "fb_yes" : "fb_no")) + '</p>';
+    return '<div class="fb"><span class="small muted">' + esc(t("useful_q")) + '</span><button type="button" class="chip" data-fb="yes">' + esc(t("yes")) + '</button><button type="button" class="chip" data-fb="no">' + esc(t("not_quite")) + '</button></div>';
   }
   function threadHtml() {
     if (!S.msgs.length) {
       var chips = CHIPS[lang()] || CHIPS.en;
-      return '<div class="welcome"><img class="avatar big" src="/static/naradvani.svg" alt="NaradVani"><h3>' + esc(t("astro_hello", { n: first() })) + '</h3><p class="muted">' + esc(t("astro_hello_sub")) + '</p><div class="eyebrow mt-m">' + esc(t("try_tap")) + '</div><div class="chips">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></div>';
+      return '<div class="welcome card tint"><div class="eyebrow">' + esc(t("today_for_you")) + '</div><h3>' + esc(t("astro_hello", { n: first() })) + '</h3><p class="muted">' + esc(t("astro_hello_sub")) + '</p><div class="eyebrow mt-m">' + esc(t("try_tap")) + '</div><div class="chips">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></div>';
     }
     var n = S.msgs.length;
     return S.msgs.map(function (m, i) { if (m.role === "user") return '<div class="bubble">' + esc(m.text) + '</div>'; m.last = i === n - 1; return replyHtml(m); }).join("");
   }
+  function ctxChips() {
+    var c = S.chart, out = [];
+    if (c && c.lagna) out.push(t("lagna") + ": " + signName(c.lagna));
+    if (c && c.moon && c.moon.nakshatra) out.push(t("moon") + ": " + c.moon.nakshatra);
+    if (c && c.dasha && c.dasha.maha) out.push(t("dasha_now") + ": " + plName(c.dasha.maha));
+    return out.length ? '<div class="ctx">' + out.map(function (x) { return '<span class="chip">' + esc(x) + '</span>'; }).join("") + '</div>' : "";
+  }
+  function stageHtml() {
+    var st = S.busy ? t("typing_label") : t("listening");
+    return '<aside class="nv-stage' + (S.busy ? " busy" : "") + '" aria-label="NaradVani"><div class="rings"><span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>' +
+      '<div class="portrait"><img src="/static/naradvani.jpg" alt="NaradVani, the AI guide" width="900" height="1199"></div></div>' +
+      '<div class="stage-info"><div class="stage-name"><h2>NaradVani</h2><span class="live" aria-hidden="true"></span><span class="chip ai">' + esc(t("ai_guide")) + '</span></div>' +
+      '<p class="stage-status" role="status">' + esc(st) + '</p><p class="stage-cap">' + esc(t("stage_cap")) + '</p>' +
+      (window.speechSynthesis ? '<button type="button" class="chip voice' + (S.voice ? " on" : "") + '" data-voice="1" aria-pressed="' + (S.voice ? "true" : "false") + '">' + esc(t(S.voice ? "voice_on" : "voice_off")) + '</button>' : "") +
+      '<p class="small muted ai-note">' + esc(t("ai_char")) + '</p></div></aside>';
+  }
   function viewAsk() {
-    return '<div class="chatpage"><div class="chat"><div class="chat-head">' + AVATAR + '<div><b>NaradVani</b><small class="muted">' + esc(t("free_chat")) + '</small></div></div><div class="thread" id="thread">' + threadHtml() + '</div>' +
-      '<div class="composer"><form class="askbox" id="askForm"><input id="askQ" type="text" maxlength="500" autocomplete="off" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form><p class="disclaimer">' + esc(t("disclaimer")) + '</p></div></div></div>';
+    return '<div class="askpage">' + stageHtml() + '<section class="chat" aria-label="Chat"><div class="chat-head"><div><b>' + esc(t("talk_to")) + '</b><small class="muted">' + esc(t("free_chat")) + '</small></div>' + ctxChips() + '</div><div class="thread" id="thread">' + threadHtml() + '</div>' +
+      '<div class="composer"><form class="askbox pill" id="askForm"><span class="live" aria-hidden="true"></span><input id="askQ" type="text" maxlength="500" autocomplete="off" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn send" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form><p class="disclaimer">' + esc(t("disclaimer")) + '</p></div></section></div>';
+  }
+  function speak(txt) {
+    try {
+      var ss = window.speechSynthesis; if (!ss || !S.voice || !txt) return;
+      ss.cancel(); var u = new SpeechSynthesisUtterance(String(txt).slice(0, 900)); u.lang = lang() === "hi" ? "hi-IN" : "en-IN"; u.rate = 0.95; ss.speak(u);
+    } catch (e) { /* voice is optional */ }
   }
   async function ask(q) {
     q = (q || "").trim(); if (!q || S.busy) return;
@@ -212,6 +238,7 @@
     try { m.data = await api("/api/v10/ask", Object.assign(body({ question: q, mode: S.mode, history: hist }), S.mode === "astropedia" ? { profile: null } : {})); }
     catch (e) { m.data = { answer: e.message, title: "", reasons: [], evidence: [], caveats: [], safety: "error" }; }
     S.busy = false; renderView(); var i = $("#askQ"); if (i) i.focus();
+    if (m.data && !m.data.safety && m.data.answer) speak(m.data.answer);
   }
 
   async function runCalc(type) {
@@ -319,6 +346,8 @@
     if ((el = e.target.closest("[data-act]")) && !e.target.closest("#amModal")) return act(el.dataset.act);
     if ((el = e.target.closest("[data-sign]"))) { S.sel = el.dataset.sign; return renderView(); }
     if ((el = e.target.closest("[data-mode]"))) { S.mode = el.dataset.mode; return renderView(); }
+    if ((el = e.target.closest("[data-fb]"))) { var lm = S.msgs.filter(function (x) { return x.role !== "user" && x.data; }).pop(); if (lm) lm.fb = el.dataset.fb; return renderView(); }
+    if ((el = e.target.closest("[data-voice]"))) { S.voice = !S.voice; try { if (!S.voice && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (x) { } return renderView(); }
     if ((el = e.target.closest("[data-q]"))) return ask(el.dataset.q);
     if ((el = e.target.closest("[data-calc]"))) { if (S.route !== "calculators") { S.route = "calculators"; shell(); } return runCalc(el.dataset.calc); }
     if ((el = e.target.closest("[data-rep]"))) return runReport(el.dataset.rep);
