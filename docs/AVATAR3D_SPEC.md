@@ -1,6 +1,6 @@
 # NaradVani 3D avatar: build spec (for v1.3.0)
 
-Goal: replace the 2D living portrait in Talk mode with a real-time 3D NaradVani (head and shoulders, seated sage) that blinks, breathes, glances, lifts brows and moves his lips to the words. Chat mode stays silent with blinking only. Free to run: no per-minute cost.
+Goal: replace the 2D living portrait in Talk mode with a real-time 3D NaradVani (head and shoulders, seated guide) that blinks, breathes, glances, lifts brows and moves his lips to the words. Chat mode stays silent with blinking only. Free to run: no per-minute cost.
 
 Honest expectation: a rigged 3D character is a stylised game-style face. It will move far more convincingly than the 2D photo trick but will not match the photo's realism. The photoreal route is a neural video avatar (HeyGen LiveAvatar, Simli, Anam, MuseTalk on a GPU), which costs per minute. This spec is the free path.
 
@@ -20,7 +20,7 @@ Honest expectation: a rigged 3D character is a stylised game-style face. It will
 
 ## Asset (the hard part)
 
-Needed: upper body of an elderly Indian sage: beard, saffron shawl, tilak, matches `naradvani.jpg` as closely as possible. Rig: Mixamo-compatible or at least a head and neck bone; blendshapes: ARKit 52 + Oculus 15 (`viseme_aa`, `viseme_E`, `viseme_I`, `viseme_O`, `viseme_U`, `viseme_PP`, `viseme_FF`, `viseme_TH`, `viseme_DD`, `viseme_kk`, `viseme_CH`, `viseme_SS`, `viseme_nn`, `viseme_RR`, `viseme_sil`).
+Needed: upper body of the man in `naradvani.jpg`: about 40, long wavy black hair past the shoulders, no beard, Vaishnava tilak (white U with a red line), saffron shawl. Match the photo as closely as possible. Build steps are in `docs/AVATAR_BUILD_RUNBOOK.md`. Rig: Mixamo-compatible or at least a head and neck bone; blendshapes: ARKit 52 + Oculus 15 (`viseme_aa`, `viseme_E`, `viseme_I`, `viseme_O`, `viseme_U`, `viseme_PP`, `viseme_FF`, `viseme_TH`, `viseme_DD`, `viseme_kk`, `viseme_CH`, `viseme_SS`, `viseme_nn`, `viseme_RR`, `viseme_sil`).
 
 Options, in order:
 1. Blender + MPFB (CC0 base, beard and clothes assets), then run the repo's `blender/` scripts to build visemes from ARKit shapes. Clean licence, most work.
