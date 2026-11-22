@@ -165,3 +165,18 @@ class ExpertTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RunningDashaTests(unittest.TestCase):
+    def test_running_dasha_is_read_from_the_kundli_when_facts_are_empty(self):
+        from unittest import mock
+        try:
+            from aipandit import v10_engine
+            import aipandit.kundli  # noqa: F401
+        except Exception:
+            self.skipTest("chart engine modules are not importable here")
+        fake = {"maha": "Saturn", "maha_end": "2031-06-01", "antar": "Mercury", "antar_end": "2027-03-10"}
+        with mock.patch("aipandit.kundli.dasha_at", return_value=fake):
+            self.assertEqual(v10_engine._running_dasha(object())["maha"], "Saturn")
+        with mock.patch("aipandit.kundli.dasha_at", side_effect=ValueError("withheld")):
+            self.assertIsNone(v10_engine._running_dasha(object()))
