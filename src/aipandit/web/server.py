@@ -409,25 +409,29 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 
-# --- AstroMuni v0.7 Routes ---
+# --- AstroMuni v0.7 & v0.9 Routes ---
 def _install_v07_routes() -> None:
     import json as _json
     from http.server import BaseHTTPRequestHandler as _BaseHandler
     from aipandit.problem_solver import handle_v07 as _handle_v07
+    from aipandit.v09_engine import handle_v09 as _handle_v09
 
     for _obj in list(globals().values()):
         if isinstance(_obj, type) and issubclass(_obj, _BaseHandler) and _obj is not _BaseHandler:
             _orig_post = getattr(_obj, "do_POST", None)
             if callable(_orig_post) and not getattr(_obj, "_v07_patched", False):
                 def _wrapped_post(self, _orig=_orig_post):
-                    if getattr(self, "path", "").startswith("/api/v07/"):
+                    if getattr(self, "path", "").startswith(("/api/v07/", "/api/v09/")):
                         length = int(self.headers.get("Content-Length", "0") or 0)
                         raw = self.rfile.read(length) if length > 0 else b"{}"
                         try:
                             payload = _json.loads(raw.decode("utf-8") or "{}")
                         except Exception:
                             payload = {}
-                        out = _handle_v07(self.path, payload)
+                        if self.path.startswith("/api/v09/"):
+                            out = _handle_v09(self.path, payload)
+                        else:
+                            out = _handle_v07(self.path, payload)
                         body = _json.dumps(out, ensure_ascii=False).encode("utf-8")
                         self.send_response(200)
                         self.send_header("Content-Type", "application/json; charset=utf-8")

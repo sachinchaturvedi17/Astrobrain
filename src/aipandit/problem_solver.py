@@ -268,7 +268,7 @@ def solve_problem(payload: Dict[str, Any]) -> Dict[str, Any]:
     answer = item["hi"] if lang == "hi" else (item["hg"] if lang == "hg" else item["en"])
     return {
         "ok": True,
-        "version": "0.7-astrobrain",
+        "version": "0.8-astrobrain",
         "category": cat,
         "heading": item["heading"],
         "question": q or item["heading"],
@@ -319,7 +319,7 @@ def evaluate_unified_astrobrain(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     return {
         "ok": True,
-        "version": "0.7-astrobrain",
+        "version": "0.8-astrobrain",
         "profile": summarize_profile(payload.get("profile") or payload),
         "planets": planets,
         "total_facts": len(store),

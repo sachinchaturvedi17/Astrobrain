@@ -1,577 +1,119 @@
-"use strict";
-/* AstroMuni v0.6 front end. No frameworks. Every piece of text goes in with textContent, never innerHTML.
-   Flow: details (3 steps) -> hub -> kundli | horoscope | AstroMuni room | real-pandit request.
-   The "thinking" pause before an answer is presentation pacing: the engine itself answers in milliseconds. */
-(() => {
-const $ = id => document.getElementById(id);
-const NS = "http://www.w3.org/2000/svg";
-const wrapStore = st => ({ get(k) { try { return st.getItem(k) } catch (e) { return null } }, set(k, v) { try { st.setItem(k, v) } catch (e) {} }, del(k) { try { st.removeItem(k) } catch (e) {} } });
-const local = wrapStore(window.localStorage || { getItem() {}, setItem() {}, removeItem() {} });
-const sess = wrapStore(window.sessionStorage || { getItem() {}, setItem() {}, removeItem() {} });
-const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-const rand = (a, b) => a + Math.random() * (b - a);
-const REQUIRE_PALMS = true;                 // set to false to make the two palm photos optional
-const THINK_MS = [2200, 3400];              // how long AstroMuni "thinks" before answering
-const VIEWS = ["onboard", "making", "hub", "kundli", "horo", "muni", "pandit"];
-
-let LANG = ["hg", "hi", "en"].includes(local.get("astromuni.lang")) ? local.get("astromuni.lang") : "hg";
-let SESSION = null, CHART = null, PROFILE = null, VIEW = "onboard", STEP = 1;
-const PALMS = { left: null, right: null };
-const HORO = {};
-const t = k => window.COPY[LANG][k];
-const fmt = (s, o) => s.replace(/\{(\w+)\}/g, (_, k) => (o[k] != null ? o[k] : ""));
-const planet = g => t("planets")[g] || g;
-const signName = x => (x ? (window.SIGNS[LANG][x] || x) : "");
-
-// ------------------------------------------------------------------------------------------ DOM helpers
-function h(tag, attrs, ...kids) {
-  const e = document.createElement(tag);
-  for (const k in attrs || {}) { if (k === "class") e.className = attrs[k]; else if (attrs[k] !== false && attrs[k] != null) e.setAttribute(k, attrs[k]); }
-  kids.flat().forEach(c => { if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c)); });
-  return e;
-}
-function s(tag, attrs, text) {
-  const e = document.createElementNS(NS, tag);
-  for (const k in attrs || {}) e.setAttribute(k, attrs[k]);
-  if (text !== undefined) e.textContent = text;
-  return e;
-}
-function svgIcon(paths, extra) {
-  const v = s("svg", { viewBox: "0 0 24 24", "aria-hidden": "true" });
-  paths.forEach(d => v.appendChild(s("path", { d })));
-  (extra || []).forEach(e => v.appendChild(e));
-  return v;
-}
-const ICON = {
-  kundli: () => svgIcon(["M4 4h16v16H4z", "M4 4l16 16M20 4L4 20", "M12 4l8 8-8 8-8-8z"]),
-  horo: () => svgIcon(["M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"], [s("circle", { cx: 12, cy: 12, r: 4 })]),
-  muni: () => svgIcon(["M5 21c0-4 3-7 7-7s7 3 7 7", "M7.2 4.6a6.2 6.2 0 0 1 9.6 0"], [s("circle", { cx: 12, cy: 9, r: 3.4 })]),
-  pandit: () => svgIcon(["M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6", "M15.2 14.3c3 0 5.3 2 5.3 5.7"], [s("circle", { cx: 9, cy: 8, r: 3 }), s("circle", { cx: 17, cy: 9, r: 2.4 })]),
-  go: () => svgIcon(["M5 12h14M13 6l6 6-6 6"])
-};
-const GLYPH = {
-  kundli: () => svgIcon(["M4 4h16v16H4z", "M12 4l8 8-8 8-8-8z"]),
-  numerology: () => { const v = s("svg", { viewBox: "0 0 24 24", "aria-hidden": "true" }); for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) v.appendChild(s("circle", { cx: 5 + c * 7, cy: 5 + r * 7, r: 1.9, class: "fill" })); return v; },
-  both: () => { const v = s("svg", { viewBox: "0 0 24 24", "aria-hidden": "true" }); v.appendChild(s("circle", { cx: 9, cy: 12, r: 6 })); v.appendChild(s("circle", { cx: 15, cy: 12, r: 6 })); return v; }
-};
-async function post(path, body) {
-  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  const j = await r.json().catch(() => ({ error: "unexpected response" }));
-  if (!r.ok) { const e = new Error(j.error || "request failed"); e.status = r.status; e.alternatives = j.alternatives || []; throw e; }
-  return j;
-}
-
-// ------------------------------------------------------------------------------------------ language
-const CITIES = [["Bhopal", 23.2599, 77.4126], ["Delhi", 28.6139, 77.2090], ["Mumbai", 19.0760, 72.8777], ["Kolkata", 22.5726, 88.3639], ["Chennai", 13.0827, 80.2707],
-  ["Bengaluru", 12.9716, 77.5946], ["Hyderabad", 17.3850, 78.4867], ["Jaipur", 26.9124, 75.7873], ["Indore", 22.7196, 75.8577], ["Lucknow", 26.8467, 80.9462], [null, null, null]];
-function fillSelect(sel, opts) { const v = sel.value; sel.replaceChildren(); opts.forEach(([val, label]) => sel.appendChild(h("option", { value: val }, label))); if (v) sel.value = v; }
-function setLang(l) {
-  LANG = l; local.set("astromuni.lang", l);
-  document.documentElement.lang = l === "hi" ? "hi" : l === "hg" ? "hi-Latn" : "en";
-  document.querySelectorAll("#langSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === l)));
-  document.querySelectorAll("[data-i]").forEach(n => { const v = t(n.dataset.i); if (typeof v === "string") n.textContent = v; });
-  document.querySelectorAll("[data-ph]").forEach(n => { n.placeholder = t(n.dataset.ph); });
-  fillSelect($("cert"), t("certs")); fillSelect($("gender"), t("genders")); fillSelect($("who"), t("whos"));
-  fillSelect($("slot"), t("slots")); fillSelect($("topic"), t("topics"));
-  const keep = $("city").value; $("city").replaceChildren();
-  CITIES.forEach((c, i) => $("city").appendChild(h("option", { value: i }, c[0] || t("otherCity")))); $("city").value = keep || "0";
-  $("obPoints").replaceChildren(...t("obPoints").map(x => h("li", null, x)));
-  $("palmTips").replaceChildren(...t("palmTips").map(x => h("li", null, x)));
-  setStep(STEP); renderStars();
-  $("mRole").textContent = t("mRole"); setState(document.getElementById("stage").dataset.state || "idle");
-  $("askBtn").setAttribute("aria-label", t("send"));
-  if (SESSION) (RENDER[VIEW] || (() => {}))();
-  renderChips();
-}
-document.querySelectorAll("#langSeg button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
-
-// ------------------------------------------------------------------------------------------ router
-const RENDER = {};
-function show(v, push = true) {
-  if (!SESSION && v !== "onboard") v = "onboard";
-  VIEW = v;
-  VIEWS.forEach(n => { $("v-" + n).hidden = n !== v; });
-  document.body.dataset.view = v;
-  $("homeBtn").hidden = !(SESSION && !["hub", "onboard", "making"].includes(v));
-  document.querySelectorAll(".fbopen").forEach(b => { b.hidden = !SESSION || ["onboard", "making"].includes(v); });
-  if (push && v !== "making") { try { history.pushState({ v }, "", "#" + v); } catch (e) {} }
-  if (RENDER[v]) RENDER[v]();
-  window.scrollTo(0, 0);
-  const view = $("v-" + v), hd = view.querySelector("h1");
-  if (v === "muni") $("q").focus({ preventScroll: true });
-  else if (hd) { hd.tabIndex = -1; hd.focus({ preventScroll: true }); }
-}
-window.addEventListener("popstate", e => {
-  const v = (e.state && e.state.v) || location.hash.slice(1) || "onboard";
-  show(VIEWS.includes(v) && v !== "making" ? v : (SESSION ? "hub" : "onboard"), false);
-});
-document.addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (b) show(b.dataset.go); });
-$("brandBtn").addEventListener("click", () => show(SESSION ? "hub" : "onboard"));
-$("homeBtn").addEventListener("click", () => show("hub"));
-
-// ------------------------------------------------------------------------------------------ 1. details wizard
-function syncCity() { const c = CITIES[$("city").value]; const other = c[1] === null; $("coords").hidden = !other; if (!other) { $("lat").value = c[1]; $("lon").value = c[2]; } }
-$("city").addEventListener("change", syncCity);
-$("cert").addEventListener("change", () => { $("time").disabled = $("cert").value === "unknown"; });
-$("date").max = new Date().toISOString().slice(0, 10);
-
-function setStep(n) {
-  STEP = n;
-  document.querySelectorAll("fieldset.step").forEach(f => { f.hidden = Number(f.dataset.step) !== n; });
-  $("progBar").style.width = Math.round((n / 3) * 100) + "%";
-  $("stepOf").textContent = fmt(t("stepOf"), { n });
-  $("backStep").hidden = n === 1;
-  const btn = $("nextStep"); if (!btn.disabled) btn.textContent = n === 3 ? t("start") : t("next");
-}
-function stepError(n) {
-  if (n === 1 && $("name").value.trim().length < 2) return ["needName", "name"];
-  if (n === 2) {
-    if (!$("date").value) return ["needDate", "date"];
-    if ($("cert").value !== "unknown" && !$("time").value) return ["needTime", "time"];
-  }
-  if (n === 3 && REQUIRE_PALMS && !(PALMS.left && PALMS.right)) return ["needPalms", "fileL"];
-  return null;
-}
-$("backStep").addEventListener("click", () => { $("formErr").textContent = ""; setStep(STEP - 1); });
-
-function toJpeg(file) {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file), img = new Image();
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("read")); };
-    img.onload = () => {
-      try {
-        const sc = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight)), w = Math.round(img.naturalWidth * sc), hh = Math.round(img.naturalHeight * sc);
-        const c = document.createElement("canvas"); c.width = w; c.height = hh;
-        const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, w, hh); x.drawImage(img, 0, 0, w, hh);   // re-encoding also drops camera/GPS metadata
-        URL.revokeObjectURL(url);
-        let q = 0.85;
-        const attempt = () => c.toBlob(b => {
-          if (!b) return reject(new Error("read"));
-          if (b.size > 480 * 1024 && q > 0.45) { q -= 0.1; return attempt(); }
-          if (b.size > 560 * 1024) return reject(new Error("big"));
-          const rd = new FileReader();
-          rd.onload = () => resolve({ b64: String(rd.result).split(",")[1], url: URL.createObjectURL(b) });
-          rd.onerror = () => reject(new Error("read")); rd.readAsDataURL(b);
-        }, "image/jpeg", q);
-        attempt();
-      } catch (e) { reject(new Error("read")); }
-    };
-    img.src = url;
-  });
-}
-function paintPalm(side) {
-  const tile = $(side === "left" ? "palmL" : "palmR"), img = tile.querySelector("img"), p = PALMS[side];
-  tile.classList.toggle("has", !!p); img.hidden = !p; if (p) img.src = p.url; else img.removeAttribute("src");
-  tile.querySelector(".palm-a").textContent = p ? t("palmChange") : t("palmAdd");
-}
-[["left", "fileL"], ["right", "fileR"]].forEach(([side, id]) => $(id).addEventListener("change", async ev => {
-  const f = ev.target.files && ev.target.files[0]; if (!f) return;
-  $("formErr").textContent = "";
-  try { PALMS[side] = await toJpeg(f); } catch (e) { $("formErr").textContent = t(e.message === "big" ? "photoBig" : "photoFail"); PALMS[side] = null; }
-  paintPalm(side);
-}));
-
-$("birth").addEventListener("submit", async ev => {
-  ev.preventDefault(); $("formErr").textContent = "";
-  const err = stepError(STEP);
-  if (err) { $("formErr").textContent = t(err[0]); $(err[1]).focus(); return; }
-  if (STEP < 3) { setStep(STEP + 1); const f = document.querySelector(`fieldset[data-step="${STEP}"] .input, fieldset[data-step="${STEP}"] input`); if (f) f.focus({ preventScroll: true }); return; }
-  for (const n of [1, 2]) { const e2 = stepError(n); if (e2) { setStep(n); $("formErr").textContent = t(e2[0]); $(e2[1]).focus(); return; } }
-  const btn = $("nextStep"); btn.disabled = true; btn.textContent = t("going");
-  try {
-    const c = CITIES[$("city").value];
-    const body = {
-      name: $("name").value.trim(), date: $("date").value, time: $("cert").value === "unknown" ? null : ($("time").value || null), certainty: $("cert").value,
-      place: c[0] || "Custom", lat: parseFloat($("lat").value), lon: parseFloat($("lon").value), tz: $("tz").value.trim(),
-      gender: $("gender").value, who: $("who").value, consent: $("consent").checked };
-    if (PALMS.left && PALMS.right) body.palms = { left: PALMS.left.b64, right: PALMS.right.b64 };
-    const j = await post("/api/start", body);
-    adopt(j); sess.set("astromuni.sid", SESSION);
-    await ceremony();
-    show("hub");
-  } catch (e) {
-    $("formErr").textContent = e.message + (e.alternatives && e.alternatives.length ? "\n• " + e.alternatives.join("\n• ") : "");
-    if (VIEW === "making") show("onboard", false);
-  } finally { btn.disabled = false; btn.textContent = STEP === 3 ? t("start") : t("next"); }
-});
-function adopt(j) { SESSION = j.session; CHART = j.chart; PROFILE = j.profile; for (const k in HORO) delete HORO[k]; }
-async function ceremony() {
-  show("making", false);
-  const lines = t("making"), el = $("makingText"), step = reduced() ? 500 : 900;
-  for (let i = 0; i < lines.length; i++) { el.textContent = lines[i]; await sleep(i === lines.length - 1 ? step : step + 100); }
-}
-
-// ------------------------------------------------------------------------------------------ 3. hub
-RENDER.hub = () => {
-  const n = PROFILE && PROFILE.first_name;
-  $("hubTitle").textContent = n ? fmt(t("hello"), { n }) : t("helloAnon");
-  const pills = [];
-  if (CHART.lagna_sign) pills.push([t("chipLagna"), signName(CHART.lagna_sign)]);
-  if (CHART.moon && CHART.moon.sign) pills.push([t("chipMoon"), signName(CHART.moon.sign)]);
-  const N = CHART.numbers || {};
-  if (N.mulank) pills.push([t("chipMulank"), String(N.mulank.value)]);
-  if (N.bhagyank) pills.push([t("chipBhagyank"), String(N.bhagyank.value)]);
-  $("profileChips").replaceChildren(...pills.map(([a, b]) => h("li", { class: "pill" }, h("span", null, a), h("b", null, b))));
-  const C = t("cards");
-  const mk = (key, view, cls) => {
-    const b = h("button", { class: "tool " + (cls || ""), type: "button", "data-open": view },
-      h("span", { class: "ic" }, ICON[key === "horo" ? "horo" : key]()), h("h2", null, C[key][0]), h("p", null, C[key][1]), h("span", { class: "tag" }, C[key][2]), h("span", { class: "go" }, ICON.go()));
-    b.addEventListener("click", () => show(view)); return b;
+(function(){
+  "use strict";
+  function sGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function sSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  var SIGNS=[
+    {key:"Mesha",en:"Aries",sym:"\u2648",h:"Act with clear intention today.",r:"Mars supports decisive momentum when paired with patience."},
+    {key:"Vrishabha",en:"Taurus",sym:"\u2649",h:"Steady consistency compounds.",r:"Venus highlights grounded priorities and calm financial choices."},
+    {key:"Mithuna",en:"Gemini",sym:"\u264a",h:"Clarity comes through dialogue.",r:"Mercury sharpens communication—capture ideas before acting."},
+    {key:"Karka",en:"Cancer",sym:"\u264b",h:"Honour your emotional rhythm.",r:"Quiet reflection reveals what truly deserves your energy."},
+    {key:"Simha",en:"Leo",sym:"\u264c",h:"Lead with warmth, not urgency.",r:"A generous Moon-Jupiter exchange opens sincere conversations."},
+    {key:"Kanya",en:"Virgo",sym:"\u264d",h:"Refine details before committing.",r:"Careful review saves effort and strengthens long-term craft."},
+    {key:"Tula",en:"Libra",sym:"\u264e",h:"Choose balance over pleasing.",r:"Harmony improves when boundaries are stated clearly."},
+    {key:"Vrishchika",en:"Scorpio",sym:"\u264f",h:"Trust quiet observation.",r:"Pause before reacting so deeper clarity can surface."},
+    {key:"Dhanu",en:"Sagittarius",sym:"\u2650",h:"Keep your long-term vision steady.",r:"A thoughtful conversation sparks fresh perspective."},
+    {key:"Makara",en:"Capricorn",sym:"\u2651",h:"Build one durable habit today.",r:"Consistent structure turns small daily steps into mastery."},
+    {key:"Kumbha",en:"Aquarius",sym:"\u2652",h:"Step back for wider perspective.",r:"Trusted peers offer a helpful angle on a recurring question."},
+    {key:"Meena",en:"Pisces",sym:"\u2653",h:"Listen to intuition without rushing.",r:"Gentle pacing brings clarity to personal commitments."}
+  ];
+  var STATE={
+    lang:sGet("am_lang_v09")||"en",route:"hub",askMode:"muni",selectedSign:"Simha",calcType:"moon",reportTopic:"career",drawerOpen:false,profileModal:false,
+    profile:JSON.parse(sGet("am_profile_v09")||"null")||{name:"Sachin Chaturvedi",dob:"2001-01-29",tob:"09:30",city:"Bhopal"},
+    partner:{name:"Partner",dob:"2002-05-14",tob:"14:20",city:"Indore"},
+    panchang:{date_label:"Sunday, 22 November",tithi:"Shukla Trayodashi",nakshatra:"Ashwini",yoga:"Siddhi",karana:"Bava",abhijit:"11:52 - 12:38",rahu_kaal:"16:30 - 18:00",energy:82,energy_label:"Radiant & decisive",lucky_hour:"10:30 AM",guiding_planet:"Sun",focus:"Purpose",active_rashi:"Simha",active_rashi_en:"Leo",active_symbol:"\u264c"},
+    horoscope:{signs:SIGNS},compat:{total_points:31,percentage:86,summary:"Strong mental wavelength and supportive long-term rhythm.",kootas:[]},calcRes:null,reportRes:null,
+    journal:[
+      {id:"saturn",cat:"PLANETS",rt:"8 MIN",sym:"\u2644",th:"dark",t:"Saturn isn't punishing you. It's asking you to build.",s:"A gentler way to understand discipline, delay, and staying power.",b:["In classical Parashari texts, Saturn is the karaka of endurance and structures that last across decades."]},
+      {id:"moon",cat:"NAKSHATRAS",rt:"6 MIN",sym:"\u263e",th:"amber",t:"What your Moon remembers",s:"Your nakshatra reveals the emotional home you return to.",b:["Your Moon moves through 27 Nakshatras, shaping how you process stress and restore calm."]},
+      {id:"week",cat:"VEDIC LIVING",rt:"5 MIN",sym:"\u2609",th:"gold",t:"Planning your week with the planets",s:"Work with each day's ruling graha instead of pushing against it.",b:["Align analytical work with Wednesday (Mercury) and big-picture planning with Thursday (Jupiter)."]}
+    ],
+    messages:[],panditMsg:""
   };
-  $("hubCards").replaceChildren(mk("kundli", "kundli"), mk("horo", "horo"), mk("muni", "muni", "feature"), mk("pandit", "pandit"));
-};
-
-// ------------------------------------------------------------------------------------------ 4. kundli
-const HOUSES = [[1, "200,0 300,100 200,200 100,100", [200, 100], [200, 152]], [2, "0,0 200,0 100,100", [100, 38], [100, 72]], [3, "0,0 100,100 0,200", [36, 100], [64, 100]],
-  [4, "0,200 100,100 200,200 100,300", [100, 200], [100, 236]], [5, "0,200 100,300 0,400", [36, 300], [64, 300]], [6, "0,400 100,300 200,400", [100, 362], [100, 330]],
-  [7, "200,400 100,300 200,200 300,300", [200, 300], [200, 352]], [8, "200,400 300,300 400,400", [300, 362], [300, 330]], [9, "400,400 300,300 400,200", [364, 300], [336, 300]],
-  [10, "400,200 300,300 200,200 300,100", [300, 200], [300, 236]], [11, "400,200 300,100 400,0", [364, 100], [336, 100]], [12, "400,0 300,100 200,0", [300, 38], [300, 72]]];
-const ABBR = { latin: { Sun: "Su", Moon: "Mo", Mars: "Ma", Mercury: "Me", Jupiter: "Ju", Venus: "Ve", Saturn: "Sa", Rahu: "Ra", Ketu: "Ke" },
-               hi: { Sun: "सू", Moon: "चं", Mars: "मं", Mercury: "बु", Jupiter: "गु", Venus: "शु", Saturn: "श", Rahu: "रा", Ketu: "के" } };
-const KENDRA = n => n === 1 || n === 4 || n === 7 || n === 10;
-function drawChart(ch) {
-  const box = $("chartBox"); box.replaceChildren();
-  if (ch.lagna_index === null || ch.lagna_index === undefined) { box.appendChild(h("p", { class: "warn" }, t("noLagna"))); return; }
-  const ab = LANG === "hi" ? ABBR.hi : ABBR.latin;
-  const svg = s("svg", { viewBox: "-3 -3 406 406", role: "img", "aria-label": t("chartTitle") + ": " + t("lagna") + " " + signName(ch.lagna_sign) });
-  HOUSES.forEach(([n, pts]) => svg.appendChild(s("polygon", { points: pts, class: "ln" + (n === 1 ? " h1" : "") })));
-  const by = {}; ch.planets.forEach(p => { if (p.house) (by[p.house] = by[p.house] || []).push(p); });
-  HOUSES.forEach(([n, , pa, sa]) => {
-    svg.appendChild(s("text", { x: sa[0], y: sa[1] + 4, class: "sg", "text-anchor": "middle" }, String(((ch.lagna_index + n - 1) % 12) + 1)));
-    const ps = by[n] || [], cols = !KENDRA(n) ? 1 : (ps.length > 3 ? 2 : 1), rows = Math.ceil(ps.length / cols);
-    ps.forEach((p, i) => {
-      const row = Math.floor(i / cols), col = i % cols;
-      const x = pa[0] + (cols === 2 ? (col ? 17 : -17) : 0), y = pa[1] + 5 + row * 17 - (rows - 1) * 8.5;
-      const txt = s("text", { x, y, class: "pl", "text-anchor": "middle" }, ab[p.name]);
-      if (p.retrograde) txt.appendChild(s("tspan", { dy: "-5", "font-size": "9" }, "R"));
-      svg.appendChild(txt);
-    });
-  });
-  box.appendChild(svg);
-}
-RENDER.kundli = () => {
-  const ch = CHART;
-  drawChart(ch);
-  const facts = [];
-  if (ch.lagna_sign) facts.push([t("lagna"), signName(ch.lagna_sign)]);
-  if (ch.moon && ch.moon.sign) facts.push([t("moon"), signName(ch.moon.sign)]);
-  if (ch.moon && ch.moon.nakshatra) facts.push([t("nak"), ch.moon.nakshatra + (ch.moon.pada ? " (" + ch.moon.pada + ")" : "")]);
-  if (ch.sun_sign) facts.push([t("sun"), signName(ch.sun_sign)]);
-  $("keyFacts").replaceChildren(...facts.flatMap(([a, b]) => [h("dt", null, a), h("dd", null, b)]));
-  const tb = $("planets"); tb.replaceChildren();
-  tb.appendChild(h("tr", null, ...["thGraha", "thSign", "thHouse", "thNak"].map(k => h("th", { scope: "col" }, t(k)))));
-  ch.planets.forEach(p => tb.appendChild(h("tr", null, h("td", null, planet(p.name) + (p.retrograde ? " (R)" : "")), h("td", null, p.sign ? signName(p.sign) : "—"), h("td", null, p.house || "—"), h("td", null, p.nakshatra || "—"))));
-  const d = ch.dasha, now = $("dashaNow");
-  now.textContent = d ? t("dashaMain") + ": " + planet(d.maha_lord) + " " + t("until") + " " + d.maha_end + (d.antar_lord ? "  ·  " + t("dashaSub") + ": " + planet(d.antar_lord) + " " + t("until") + " " + d.antar_end : "") : t("noDasha");
-  const tl = $("timeline"); tl.replaceChildren();
-  (ch.timeline || []).forEach(m => {
-    const past = !m.current && m.end <= new Date().toISOString().slice(0, 10);
-    tl.appendChild(h("li", { class: m.current ? "now" : past ? "past" : "" }, h("b", null, planet(m.lord)), h("span", null, m.start.slice(0, 4) + " – " + m.end.slice(0, 4)), m.current ? h("span", null, t("dashaNow")) : null));
-  });
-  const cur = tl.querySelector(".now"); if (cur) setTimeout(() => cur.scrollIntoView({ inline: "center", block: "nearest" }), 60);
-  const nums = $("nums"); nums.replaceChildren();
-  const N = ch.numbers || {};
-  ["mulank", "bhagyank", "name_number", "personal_year"].forEach(k => { if (N[k]) nums.appendChild(h("div", { class: "num" }, h("span", { class: "nm" }, t("nums")[k]), h("span", { class: "dg" }, String(N[k].value)), h("span", { class: "pn" }, planet(N[k].planet)))); });
-  $("numsSect").hidden = !nums.children.length;
-  const notes = []; if (ch.time_uncertain) notes.push(t("uncertain")); (ch.warnings || []).forEach(w => notes.push(w));
-  $("kWarn").textContent = notes.join(" ");
-};
-$("printBtn").addEventListener("click", () => window.print());
-
-// ------------------------------------------------------------------------------------------ shared reading blocks
-function lensLabel(l) { return l === "numerology" ? t("lensNum") : l === "both" ? t("lensBoth") : t("lensKundli"); }
-function splitLead(text) {            // presentation only: the first sentence becomes a heading-weight lead, the text itself is unchanged
-  let depth = 0;
-  for (let i = 0; i < text.length - 2; i++) {
-    const ch = text[i];
-    if (ch === "(") depth++; else if (ch === ")") depth = Math.max(0, depth - 1);
-    else if (depth === 0 && (ch === "." || ch === ":") && text[i + 1] === " " && i >= 12 && i <= 130) return [text.slice(0, i + 1), text.slice(i + 2)];
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+  function post(u,b){return fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b||{})}).then(function(r){return r.json()})}
+  function icon(k){
+    var m={hub:'<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',ask:'<path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/>',horoscope:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2"/>',chart:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>',calculators:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h2m4 0h2M8 16h2m4 0h2"/>',reports:'<path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>',journal:'<path d="M4 5a2 2 0 0 1 2-2h6v18H6a2 2 0 0 0-2 2V5zm16 0a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2V5z"/>'};
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(m[k]||m.hub)+'</svg>';
   }
-  return [text, ""];
-}
-function readingBlock(st, showLens, lensTag) {
-  const lens = st.lens || "kundli";
-  const box = h("div", { class: "rd" + (lens === "both" ? " bridge" : "") });
-  if (showLens && (lens !== lensTag.last || lens === "both")) box.appendChild(h("div", { class: "lens " + lens }, GLYPH[lens](), lensLabel(lens)));
-  lensTag.last = lens;
-  const p = h("p", { class: "rd-text" });
-  if (st.kind === "reading") { const [a, b] = splitLead(st.text); p.append(h("strong", null, a)); if (b) p.append(" " + b); } else p.append(st.text);
-  if (st.label) p.appendChild(h("span", { class: "tag" }, st.label));
-  box.appendChild(p);
-  if (st.basis && st.basis.length) box.appendChild(h("details", { class: "why" }, h("summary", null, t("why")), h("ul", null, st.basis.map(b => h("li", null, b)))));
-  return box;
-}
-const countLenses = sts => new Set(sts.filter(x => x.kind !== "framing" && x.kind !== "caveat").map(x => x.lens || "kundli")).size;
-function thumb(up) {
-  const v = s("svg", { viewBox: "0 0 24 24", "aria-hidden": "true" });
-  v.appendChild(s("path", { d: up ? "M7 11v9H4v-9zM7 11l4-8c1.5 0 2.5 1.2 2.2 2.7L12.7 9H19a2 2 0 0 1 2 2.4l-1.3 6.5A2 2 0 0 1 17.7 20H7" : "M17 13V4h3v9zM17 13l-4 8c-1.5 0-2.5-1.2-2.2-2.7l.5-3.3H5a2 2 0 0 1-2-2.4l1.3-6.5A2 2 0 0 1 6.3 4H17" }));
-  return v;
-}
-function feedbackRow(answerId, ask) {
-  const wrap = h("div", { class: "fb" });
-  const up = h("button", { class: "th", type: "button", "aria-pressed": "false", "aria-label": t("up"), title: t("up") }, thumb(true));
-  const dn = h("button", { class: "th", type: "button", "aria-pressed": "false", "aria-label": t("down"), title: t("down") }, thumb(false));
-  const more = h("div", { class: "fb-more", hidden: "" });
-  const ta = h("textarea", { class: "input", rows: 2, maxlength: 600, "aria-label": t("fbWhy"), placeholder: t("fbWhy") });
-  const send = h("button", { class: "fb-send", type: "button" }, t("fbSend"));
-  more.append(ta, send);
-  const rate = async which => {
-    up.setAttribute("aria-pressed", String(which === "up")); dn.setAttribute("aria-pressed", String(which === "down")); more.hidden = false;
-    try { await post("/api/feedback", { session: SESSION, answer_id: answerId, kind: "answer", rating: which }); } catch (e) { /* feedback must never break the page */ }
-  };
-  up.addEventListener("click", () => rate("up")); dn.addEventListener("click", () => rate("down"));
-  send.addEventListener("click", async () => {
-    if (!ta.value.trim()) return;
-    try { await post("/api/feedback", { session: SESSION, answer_id: answerId, kind: "answer_comment", comment: ta.value.trim() }); } catch (e) {}
-    more.replaceChildren(h("span", null, t("fbThanks")));
-  });
-  wrap.append(h("span", null, ask || t("fbAsk")), up, dn, more);
-  return wrap;
-}
-
-// ------------------------------------------------------------------------------------------ 5. horoscope
-let horoToken = 0;
-RENDER.horo = async () => {
-  const token = ++horoToken, lang = LANG, body = $("horoBody"), load = $("horoLoad");
-  body.replaceChildren();
-  let data = HORO[lang];
-  if (!data) {
-    load.hidden = false;
-    const lines = t("hLoad"); let i = 0; $("horoLoadText").textContent = lines[0];
-    const tick = setInterval(() => { i = (i + 1) % lines.length; $("horoLoadText").textContent = lines[i]; }, 850);
-    try {
-      [data] = await Promise.all([post("/api/horoscope", { session: SESSION, lang }), sleep(rand(THINK_MS[0], THINK_MS[1]))]);
-      HORO[lang] = data;
-    } catch (e) { clearInterval(tick); load.hidden = true; body.appendChild(h("p", { class: "err" }, t("err") + e.message)); return; }
-    clearInterval(tick);
+  function renderShell(inner){
+    var p=STATE.panchang,ini=(STATE.profile.name||"SC").slice(0,2).toUpperCase();
+    var navs=[["hub","Cosmic hub"],["ask","Ask Astromuni"],["horoscope","Horoscope"],["chart","My birth chart"],["calculators","Calculators"],["reports","Reports"],["journal","Learn astrology"]].map(function(n){
+      return '<button type="button" class="am-nbtn'+(STATE.route===n[0]?" active":"")+'" data-route="'+n[0]+'">'+icon(n[0])+'<span>'+n[1]+'</span></button>';
+    }).join("");
+    var btabs=[["hub","Cosmic"],["ask","Ask"],["horoscope","Horoscope"],["chart","My"]].map(function(b){
+      return '<button type="button" class="am-btab'+(STATE.route===b[0]?" active":"")+'" data-route="'+b[0]+'">'+icon(b[0])+'<span>'+b[1]+'</span></button>';
+    }).join("");
+    var foot='<div><div class="am-scard" data-route="horoscope"><div style="display:flex;align-items:center;gap:9px"><span class="am-leo-sq">'+esc(p.active_symbol)+'</span><div><div style="font-size:.69rem;color:var(--soft)">Your moon sign</div><strong style="font-size:.83rem">'+esc(p.active_rashi_en+" \u2022 "+p.nakshatra)+'</strong></div></div><span>&rsaquo;</span></div>'+
+      '<div class="am-scard" data-open-prof="1"><div style="display:flex;align-items:center;gap:9px"><span class="am-av-dark">'+esc(ini)+'</span><div><strong style="font-size:.83rem">'+esc(STATE.profile.name)+'</strong><div style="font-size:.69rem;color:var(--soft)">Cosmic member</div></div></div><span>&rsaquo;</span></div></div>';
+    var pm=!STATE.profileModal?"":'<div class="am-modal-bg" id="amProfBg"><div class="am-modal" style="max-width:460px;text-align:left"><span class="am-pill">Birth Chart &amp; Optional Palms</span><h2 style="margin:8px 0">Personalise Your Kundli</h2><div class="am-field"><label>Name</label><input class="am-input" id="pfName" value="'+esc(STATE.profile.name)+'"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="am-field"><label>DOB</label><input type="date" class="am-input" id="pfDob" value="'+esc(STATE.profile.dob)+'"></div><div class="am-field"><label>Time</label><input type="time" class="am-input" id="pfTob" value="'+esc(STATE.profile.tob)+'"></div></div><div class="am-field"><label>City</label><input class="am-input" id="pfCity" value="'+esc(STATE.profile.city)+'"></div><div class="am-field"><label>Palm Photos (Optional)</label><input type="file" accept="image/*" class="am-input" style="padding:8px"><small style="color:var(--soft)">Optional — skip anytime.</small></div><div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" class="am-btn am-ghost" id="pfSkip">Skip / Close</button><button type="button" class="am-btn" id="pfSave">Save Chart</button></div></div></div>';
+    var appFoot='<footer class="am-foot"><div><strong class="serif" style="font-size:1.1rem;color:var(--choc)">astromuni</strong> &bull; Ancient intelligence for modern lives.</div><div class="am-chips"><button type="button" class="am-link" data-route="journal">Journal</button><button type="button" class="am-link" data-route="calculators">Calculators</button><button type="button" class="am-link" data-route="reports">Reports</button><button type="button" class="am-link" data-route="pandit">Talk to Pandit</button></div><div>&copy; 2026 Astromuni. Guidance, not certainty.</div></footer>';
+    return '<div class="am-shell"><aside class="am-side"><div><div class="am-brand" data-route="hub"><div class="am-logo">\u0950</div><div><div class="am-brand-t">astromuni</div><div class="am-brand-s">Wisdom written in the stars</div></div></div><div class="am-nav-lbl">YOUR UNIVERSE</div><nav class="am-nav">'+navs+'</nav></div>'+foot+'</aside>'+
+      '<div class="am-drawer-bg'+(STATE.drawerOpen?"":" hidden")+'" id="amDrawerBg"><div class="am-drawer"><nav class="am-nav">'+navs+'</nav>'+foot+'</div></div>'+
+      '<main class="am-main"><header class="am-topbar"><div class="am-row"><button type="button" class="am-btn am-ghost" id="amMenuBtn" style="min-height:38px;padding:0 12px">&#9776;</button><div><strong style="font-size:.95rem">'+esc(p.date_label)+'</strong><div style="font-size:.77rem;color:var(--soft)">'+esc(p.tithi+" \u2022 "+p.nakshatra)+'</div></div></div><div class="am-row"><div class="am-search"><span>&#128269;</span><input id="topSearch" placeholder="Search wisdom, tools..."></div><button type="button" class="am-ibtn" data-route="pandit" title="Talk to Pandit">&#9742;</button><button type="button" class="am-btn" style="min-height:38px;padding:8px 16px;border-radius:999px" data-route="ask">&#10024; Ask Muni</button></div></header>'+inner+appFoot+'</main><nav class="am-bnav">'+btabs+'</nav>'+pm+'</div>';
   }
-  if (token !== horoToken) return;                 // the language or view changed while loading
-  load.hidden = true;
-  const add = async el => { body.appendChild(el); if (!reduced()) await sleep(380); };
-  if (CHART.dasha) {
-    const d = CHART.dasha, span = (CHART.timeline || []).find(m => m.current);
-    const card = h("section", { class: "card sec now-card" }, h("h2", null, t("nowTitle")),
-      h("p", { class: "big" }, fmt(t("nowText"), { m: planet(d.maha_lord), a: d.maha_end }) + (d.antar_lord ? " " + fmt(t("nowSub"), { s: planet(d.antar_lord), b: d.antar_end }) : "")));
-    if (span) {
-      const a = Date.parse(span.start), b = Date.parse(span.end), pct = Math.max(2, Math.min(100, Math.round(((Date.now() - a) / (b - a)) * 100)));
-      const bar = h("div", { class: "bar", "aria-hidden": "true" }, h("span")); bar.firstChild.style.width = pct + "%"; card.appendChild(bar);
-    }
-    await add(card); if (token !== horoToken) return;
+  function renderHub(){
+    var p=STATE.panchang,first=(STATE.profile.name||"Sachin").split(" ")[0],signs=STATE.horoscope.signs||SIGNS;
+    var actH=signs.find(function(s){return s.key===STATE.selectedSign})||signs[4];
+    var zcards=signs.map(function(s){return '<button type="button" class="am-zcard'+(s.key===STATE.selectedSign?" active":"")+'" data-sign="'+esc(s.key)+'"><span class="am-leo-sq">'+esc(s.sym||s.symbol)+'</span><span>'+esc(s.en)+'</span></button>'}).join("");
+    var calcs=[["moon","\u263e","Moon sign","Find your Rashi from exact birth details."],["ascendant","\u2600","Ascendant","Discover your rising sign and 1st house."],["nakshatra","\u2728","Nakshatra","Meet your birth star and deeper nature."],["sade_sati","\u25f4","Sade Sati","Understand Saturn's 7.5-year cycle."]].map(function(x){return '<div class="am-card" style="padding:18px;cursor:pointer" data-calc="'+x[0]+'"><div style="font-size:1.3rem;margin-bottom:8px">'+x[1]+'</div><div class="serif" style="font-weight:700;margin-bottom:4px">'+x[2]+'</div><div style="font-size:.83rem;color:var(--soft)">'+x[3]+'</div></div>'}).join("");
+    var jcards=STATE.journal.map(function(a){return '<div class="am-card" style="padding:16px;cursor:pointer" data-route="journal"><div class="am-jcover '+esc(a.th||a.theme)+'">'+esc(a.sym||a.symbol)+'</div><div style="font-size:.69rem;font-weight:700;color:var(--soft);margin-bottom:4px">'+esc((a.cat||a.category)+" \u2022 "+(a.rt||a.read_time))+'</div><div class="serif" style="font-weight:700;margin-bottom:4px">'+esc(a.t||a.title)+'</div><div style="font-size:.83rem;color:var(--soft)">'+esc(a.s||a.subtitle)+'</div></div>'}).join("");
+    return '<section class="am-sec am-grid-2"><div style="display:flex;flex-direction:column;justify-content:center;gap:14px"><div class="am-eyebrow">YOUR PERSONAL COSMIC COMPASS</div><h1 class="am-h1">Good morning,<br>'+esc(first)+'.<span class="am-it">Your stars are in<br>motion.</span></h1><p style="color:var(--soft);max-width:480px">Understand today\'s energies, ask what\'s on your mind, and move forward with timeless Vedic wisdom.</p><div class="am-chips"><button type="button" class="am-btn" data-route="ask">Ask the universe &rarr;</button><button type="button" class="am-link" data-route="chart">&#9784; Explore my chart</button></div><div class="am-trust"><div class="am-avs"><span>SM</span><span>RK</span><span>AD</span></div><div><strong style="font-size:.82rem;display:block">Trusted by 50,000+ seekers</strong><span style="font-size:.75rem;color:var(--soft)">Personal. Private. Rooted in Jyotish.</span></div></div></div>'+
+      '<div class="am-wcard"><div class="am-flex" style="font-size:.72rem;font-weight:700;color:var(--soft)"><span>YOUR CELESTIAL WEATHER</span><span>&#9679; Live</span></div><div class="am-wheel"><div class="am-ring"><span class="am-dot d1"></span><span class="am-dot d2"></span><div class="am-core"><span class="am-leo-sq" style="width:28px;height:28px">'+esc(p.active_symbol)+'</span><span style="font-size:.68rem;letter-spacing:.08em">'+esc(p.active_rashi_en.toUpperCase())+'</span></div></div></div><div class="am-flex" style="align-items:flex-end"><div><div style="font-size:.72rem;color:var(--soft)">Today\'s energy</div><strong style="font-size:.9rem">'+esc(p.energy_label)+'</strong></div><strong>'+esc(p.energy)+'%</strong></div><div class="am-bar"><span style="width:'+esc(p.energy)+'%"></span></div><div class="am-wcols"><div><div style="color:var(--soft)">Lucky hour</div><strong>'+esc(p.lucky_hour)+'</strong></div><div><div style="color:var(--soft)">Guiding planet</div><strong>'+esc(p.guiding_planet)+'</strong></div><div><div style="color:var(--soft)">Focus</div><strong>'+esc(p.focus)+'</strong></div></div></div></section>'+
+      '<section class="am-sec am-insight"><div class="am-row"><span style="width:36px;height:36px;border-radius:10px;background:var(--gsoft);display:flex;align-items:center;justify-content:center">&#9728;</span><div><div style="font-size:.68rem;font-weight:700;letter-spacing:.08em;color:#8c5c19">INSIGHT FOR TODAY</div><strong style="font-size:.92rem">Your voice carries unusual clarity today. Use it to begin the conversation you\'ve been postponing.</strong></div></div><button type="button" class="am-link" data-route="ask">Read full guidance &rarr;</button></section>'+
+      '<section class="am-sec am-card"><div class="am-flex" style="margin-bottom:14px"><div><span class="am-pill">PERSONAL GUIDANCE</span><h2 style="margin-top:6px">What\'s on your mind?</h2><p style="font-size:.86rem;color:var(--soft)">Ask Muni anything. Your answer is interpreted through your unique birth chart.</p></div><div class="am-seg"><button type="button" class="'+(STATE.askMode==="muni"?"active":"")+'" data-mode="muni">Muni AI</button><button type="button" class="'+(STATE.askMode==="astropedia"?"active":"")+'" data-mode="astropedia">Astropedia</button></div></div><div class="am-row"><input class="am-input" id="hubAskInput" placeholder="Ask about love, career, money, family, purpose..."><button type="button" class="am-btn" id="hubAskSend">&#10148;</button></div><div class="am-chips" style="margin-top:12px"><button type="button" class="am-chip" data-quick="What does my career path look like this year?">Career path this year?</button><button type="button" class="am-chip" data-quick="When is a supportive time for a new relationship?">Relationship timing?</button><button type="button" class="am-chip" data-quick="How is my current Mahadasha shaping my life?">Current Dasha impact?</button></div></section>'+
+      '<section class="am-sec"><div style="text-align:center;margin-bottom:16px"><span class="am-pill">DAILY HOROSCOPE</span><h2 style="margin:6px 0 4px">A glimpse of every sign</h2></div><div class="am-zgrid" style="margin-bottom:14px">'+zcards+'</div><div class="am-card am-flex"><div class="am-row"><span class="am-leo-sq" style="width:40px;height:40px;font-size:1.2rem">'+esc(actH.sym||actH.symbol)+'</span><div><div style="font-size:.7rem;font-weight:700;color:#8c5c19">'+esc(actH.en.toUpperCase())+' &bull; TODAY</div><h3 style="margin:3px 0">'+esc(actH.h||actH.headline)+'</h3><p style="font-size:.88rem;color:var(--soft)">'+esc(actH.r||actH.reading)+'</p></div></div><button type="button" class="am-link" data-route="horoscope">Read '+esc(actH.en)+' horoscope &rarr;</button></div></section>'+
+      '<section class="am-sec"><div class="am-sec-hd"><div><span class="am-pill">YOUR VEDIC TOOLKIT</span><h2 style="margin-top:4px">Explore the map of you</h2></div></div><div class="am-grid-3"><div class="am-card am-wcard"><span class="am-pill">YOUR CHART</span><h3 style="margin:8px 0 6px">Janam Kundli</h3><p style="font-size:.86rem;color:var(--soft);margin-bottom:14px">Planetary placements, houses, yogas &amp; dashas.</p><button type="button" class="am-link" data-route="chart">Open my birth chart &rarr;</button></div><div class="am-card"><span class="am-pill">RELATIONSHIPS</span><h3 style="margin:8px 0 6px">Compatibility</h3><p style="font-size:.86rem;color:var(--soft);margin-bottom:12px">36-point Ashtakoota harmony between two birth charts.</p><div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0"><span class="am-av-dark" style="width:40px;height:40px">SC</span><strong>'+STATE.compat.percentage+'%</strong><span style="width:40px;height:40px;border-radius:50%;background:#e7b949;display:flex;align-items:center;justify-content:center;font-weight:700">?</span></div><button type="button" class="am-link" data-route="compatibility">Check compatibility &rarr;</button></div><div class="am-card"><span class="am-pill">VEDIC CALENDAR</span><h3 style="margin:8px 0 6px">Today\'s Panchang</h3><div class="am-kv"><span>Tithi</span><strong>'+esc(p.tithi)+'</strong></div><div class="am-kv"><span>Nakshatra</span><strong>'+esc(p.nakshatra)+'</strong></div><div class="am-kv"><span>Abhijit</span><strong>'+esc(p.abhijit)+'</strong></div><button type="button" class="am-link" data-route="chart">View full Panchang &rarr;</button></div></div></section>'+
+      '<section class="am-sec"><div class="am-sec-hd"><div><span class="am-pill">FREE CALCULATORS</span><h2 style="margin-top:4px">Small questions, precise answers</h2></div><button type="button" class="am-btn am-ghost" data-route="calculators">View all calculators &rarr;</button></div><div class="am-grid-4">'+calcs+'</div></section>'+
+      '<section class="am-sec am-card am-dark"><span class="am-pill" style="background:rgba(231,185,73,.2);color:#f7d478">PERSONALISED REPORTS</span><h2 style="margin:10px 0 8px">Go beyond the daily forecast</h2><p style="color:rgba(255,250,240,.82);margin-bottom:16px">Astrologer-reviewed readings connecting your chart patterns to the questions that matter now.</p><div class="am-chips" style="margin-bottom:16px"><button type="button" class="am-chip" data-rep="career">Career &amp; purpose</button><button type="button" class="am-chip" data-rep="marriage">Love &amp; marriage</button><button type="button" class="am-chip" data-rep="year">Year ahead</button><button type="button" class="am-chip" data-rep="wealth">Wealth path</button></div><button type="button" class="am-btn am-gold" data-route="reports">Explore reports &rarr;</button></section>'+
+      '<section class="am-sec"><div class="am-sec-hd"><div><span class="am-pill">ASTROMUNI JOURNAL</span><h2 style="margin-top:4px">Wisdom to carry with you</h2></div><button type="button" class="am-link" data-route="journal">Browse the journal &rarr;</button></div><div class="am-grid-3">'+jcards+'</div></section>';
   }
-  for (const sec of data.sections) {
-    const lensTag = { last: null }, showLens = countLenses(sec.statements) > 1;
-    const card = h("section", { class: "card sec" }, h("h2", null, t("areas")[sec.key] || sec.key), ...sec.statements.map(st => readingBlock(st, showLens, lensTag)), feedbackRow(sec.answer_id));
-    await add(card); if (token !== horoToken) return;
+  function renderAsk(){
+    var first=(STATE.profile.name||"Sachin").split(" ")[0];
+    var msgs=STATE.messages.map(function(m){
+      if(m.role==="user")return '<div class="am-u">'+esc(m.text)+'</div>';
+      var st=(m.steps||[]).map(function(s){return '<li>'+esc(s)+'</li>'}).join("");
+      return '<div class="am-ai"><strong style="color:#8c5c19">'+esc(m.title||"Astromuni")+'</strong><p style="margin:6px 0">'+esc(m.answer)+'</p>'+(st?'<ul>'+st+'</ul>':'')+'</div>';
+    }).join("");
+    return '<div class="am-ask"><div class="am-sage"><div class="am-sage-fig"></div><h3>Astromuni</h3></div><div class="am-card"><div class="am-flex" style="margin-bottom:12px"><h2>Namaste, '+esc(first)+'.</h2><div class="am-seg"><button type="button" class="'+(STATE.askMode==="muni"?"active":"")+'" data-mode="muni">Muni AI</button><button type="button" class="'+(STATE.askMode==="astropedia"?"active":"")+'" data-mode="astropedia">Astropedia</button></div></div><div class="am-log">'+(msgs||'<div class="am-ai">Ask in English, Hinglish, or Hindi.</div>')+'</div><div class="am-row"><input class="am-input" id="askMainInput" placeholder="Ask Astromuni..."><button type="button" class="am-btn" id="askMainSend">&#10148;</button></div></div></div>';
   }
-  const N = CHART.numbers || {};
-  if (data.uncovered && data.uncovered.length) body.appendChild(h("p", { class: "note-line" }, fmt(t("uncovered"), { list: data.uncovered.map(k => t("areas")[k] || k).join(", ") })));
-  if (data.lang_fallback && t("fallbackHi")) body.appendChild(h("p", { class: "note-line" }, t("fallbackHi")));
-  if (data.notes && data.notes.length) body.appendChild(h("section", { class: "sec" }, h("h2", null, t("notesTitle")), h("ul", { class: "notes" }, data.notes.map(n => h("li", null, n)))));
-};
-
-// ------------------------------------------------------------------------------------------ 6. AstroMuni room
-let busy = false, ASKED = new Set(), TURNS = 0, thinkTimer = null;
-function setState(st) { const el = $("stage"); el.dataset.state = st; $("mState").textContent = t("mState")[st] || ""; }
-function followBottom(ans) {          // keep the growing answer in view without pushing its first line off the top
-  const log = $("log"), r = ans.getBoundingClientRect(), lr = log.getBoundingClientRect();
-  const over = r.bottom - (lr.bottom - 12), room = r.top - (lr.top + 8);
-  if (over > 0 && room > 0) log.scrollBy({ top: Math.min(over, room), behavior: reduced() ? "auto" : "smooth" });
-}
-const beat = async () => { if (!reduced()) await sleep(rand(380, 620)); };
-function thinkingEl() {
-  const txt = h("span", null, t("think")[0]);
-  const el = h("div", { class: "thinking", role: "status" }, h("span", { class: "dots", "aria-hidden": "true" }, h("i"), h("i"), h("i")), txt);
-  let i = 0; clearInterval(thinkTimer);
-  thinkTimer = setInterval(() => { i = (i + 1) % t("think").length; txt.textContent = t("think")[i]; }, 850);
-  return el;
-}
-async function reveal(turn, ans, items) {
-  setState("speaking");
-  turn.appendChild(ans);
-  for (const el of items) { ans.appendChild(el); followBottom(ans); await beat(); }
-}
-function answerItems(j) {
-  const items = [], sts = j.statements, showLens = countLenses(sts) > 1, lensTag = { last: null }, caveats = [];
-  sts.forEach(st => {
-    if (st.kind === "framing") items.push(h("p", { class: "intro" }, st.text));
-    else if (st.kind === "caveat") caveats.push(st.text);
-    else items.push(readingBlock(st, showLens, lensTag));
-  });
-  if (caveats.length) items.push(h("p", { class: "note-line" }, caveats.join(" ")));
-  items.push(feedbackRow(j.answer_id));
-  return items;
-}
-async function ask(q, chipIdx) {
-  if (busy || !SESSION) return;
-  busy = true; $("askBtn").disabled = true;
-  if (chipIdx != null) { ASKED.add(chipIdx); renderChips(); }
-  const log = $("log"), turn = h("div", { class: "turn" }, h("div", { class: "q" }, q));
-  const th = thinkingEl(); turn.appendChild(th); log.appendChild(turn);
-  turn.scrollIntoView({ block: "end", behavior: reduced() ? "auto" : "smooth" });
-  setState("thinking");
-  try {
-    const [j] = await Promise.all([post("/api/chat", { session: SESSION, question: q }), sleep(rand(THINK_MS[0], THINK_MS[1]))]);
-    clearInterval(thinkTimer); th.remove();
-    const ans = h("div", { class: "ans" });
-    await reveal(turn, ans, answerItems(j));
-    TURNS++;
-    if (TURNS % 3 === 0) { const b = h("button", { class: "btn ghost", type: "button" }, t("panditNudgeBtn")); b.addEventListener("click", () => show("pandit")); ans.appendChild(h("div", { class: "nudge" }, h("span", null, t("panditNudge")), b)); followBottom(ans); }
-  } catch (e) {
-    clearInterval(thinkTimer); th.remove();
-    turn.appendChild(h("div", { class: "ans" }, h("p", { class: "note-line" }, t("err") + e.message)));
-  } finally { setState("idle"); busy = false; $("askBtn").disabled = false; $("q").focus({ preventScroll: true }); }
-}
-RENDER.muni = async () => {
-  renderChips(); $("mRole").textContent = t("mRole"); setState($("stage").dataset.state || "idle");
-  const log = $("log");
-  if (log.children.length) return;
-  const n = PROFILE && PROFILE.first_name, turn = h("div", { class: "turn" }), ans = h("div", { class: "ans" });
-  log.appendChild(turn);
-  await reveal(turn, ans, [h("p", { class: "intro" }, n ? fmt(t("greet"), { n }) : t("greetAnon")), h("p", { class: "rd-text" }, t("greet2"))]);
-  setState("idle");
-};
-function renderChips() {
-  const c = $("chips"); c.replaceChildren();
-  t("chips").forEach(([label, q], i) => { if (ASKED.has(i)) return; const b = h("button", { class: "chip", type: "button" }, label); b.addEventListener("click", () => ask(q, i)); c.appendChild(b); });
-}
-$("ask").addEventListener("submit", ev => { ev.preventDefault(); const q = $("q").value.trim(); if (!q) return; $("q").value = ""; ask(q); });
-
-// ------------------------------------------------------------------------------------------ 7. real pandit
-RENDER.pandit = () => {
-  $("sharePalmsRow").hidden = !(PROFILE && PROFILE.has_palms);
-  if (!$("pOk").hidden) return;
-  $("pform").hidden = false;
-};
-$("pform").addEventListener("submit", async ev => {
-  ev.preventDefault(); $("pErr").textContent = "";
-  const phone = $("phone").value.replace(/[\s\-()]/g, "");
-  if (!/^\+?[0-9]{10,13}$/.test(phone)) { $("pErr").textContent = t("pErrPhone"); $("phone").focus(); return; }
-  if (!$("shareDetails").checked) { $("pErr").textContent = t("pErrDetails"); $("shareDetails").focus(); return; }
-  const btn = $("pSend"); btn.disabled = true; btn.textContent = t("pSending");
-  try {
-    const j = await post("/api/pandit-request", { session: SESSION, phone, slot: $("slot").value, topic: $("topic").value, note: $("note").value.trim(),
-      share_details: true, share_palms: $("sharePalms").checked && !$("sharePalmsRow").hidden });
-    $("pOkTitle").textContent = t("pOkTitle"); $("pOkText").textContent = fmt(t("pOkText"), { p: phone, r: j.ref });
-    $("pform").hidden = true; $("pOk").hidden = false;
-  } catch (e) { $("pErr").textContent = e.message; } finally { btn.disabled = false; btn.textContent = t("pSend"); }
-});
-
-// ------------------------------------------------------------------------------------------ overall feedback dialog
-let stars = 0;
-function renderStars() { const w = $("stars"); w.replaceChildren(); for (let i = 1; i <= 5; i++) { const b = h("button", { type: "button", "aria-pressed": String(stars === i), "aria-label": String(i) }, String(i)); b.addEventListener("click", () => { stars = i; renderStars(); }); w.appendChild(b); } }
-document.querySelectorAll(".fbopen").forEach(b => b.addEventListener("click", () => $("fbDlg").showModal()));
-$("fbSend").addEventListener("click", async () => {
-  try { await post("/api/feedback", { session: SESSION, kind: "session", rating: stars || null, comment: $("fbText").value.trim() }); } catch (e) {}
-  $("fbText").value = "";
-});
-
-// ------------------------------------------------------------------------------------------ start
-(async function init() {
-  setLang(LANG); syncCity(); setStep(1);
-  const sid = sess.get("astromuni.sid");
-  if (sid) {
-    try {
-      adopt(await post("/api/resume", { session: sid }));
-      const want = location.hash.slice(1);
-      show(["kundli", "horo", "muni", "pandit"].includes(want) ? want : "hub", false);
-      try { history.replaceState({ v: VIEW }, "", "#" + VIEW); } catch (e) {}
-      return;
-    } catch (e) { sess.del("astromuni.sid"); }
+  function renderSubpage(){
+    var r=STATE.route;
+    if(r==="horoscope"){var signs=STATE.horoscope.signs||SIGNS,actH=signs.find(function(s){return s.key===STATE.selectedSign})||signs[4];return '<div class="am-card"><h2>Daily Horoscope</h2><div class="am-zgrid" style="margin:14px 0">'+signs.map(function(s){return '<button type="button" class="am-zcard'+(s.key===STATE.selectedSign?" active":"")+'" data-sign="'+esc(s.key)+'"><span class="am-leo-sq">'+esc(s.sym||s.symbol)+'</span><span>'+esc(s.en)+'</span></button>'}).join("")+'</div><div class="am-card am-wcard"><h3>'+esc(actH.en+" - "+(actH.h||actH.headline))+'</h3><p>'+esc(actH.r||actH.reading)+'</p></div></div>'}
+    if(r==="compatibility"){var cp=STATE.compat;return '<div class="am-grid-2"><div class="am-card"><h2>Compatibility</h2><div class="am-field"><label>Partner</label><input class="am-input" id="ptName" value="'+esc(STATE.partner.name)+'"></div><div class="am-field"><label>DOB</label><input type="date" class="am-input" id="ptDob" value="'+esc(STATE.partner.dob)+'"></div><div class="am-field"><label>Time</label><input type="time" class="am-input" id="ptTob" value="'+esc(STATE.partner.tob)+'"></div><div class="am-field"><label>City</label><input class="am-input" id="ptCity" value="'+esc(STATE.partner.city)+'"></div><button type="button" class="am-btn" id="runCompatBtn">Calculate</button></div><div class="am-card am-wcard"><h2>'+cp.total_points+'/36 ('+cp.percentage+'%)</h2><p>'+esc(cp.summary)+'</p>'+(cp.kootas||[]).map(function(k){return '<div class="am-kv"><span>'+esc(k.name)+'</span><strong>'+k.obtained+'/'+k.max+'</strong></div>'}).join("")+'</div></div>'}
+    if(r==="calculators"){var cr=STATE.calcRes||{};return '<div class="am-card"><h2>Vedic Calculators</h2><div class="am-chips" style="margin:14px 0">'+[["moon","Moon Sign"],["ascendant","Ascendant"],["nakshatra","Nakshatra"],["sade_sati","Sade Sati"]].map(function(t){return '<button type="button" class="am-chip'+(STATE.calcType===t[0]?" active":"")+'" data-calc="'+t[0]+'">'+t[1]+'</button>'}).join("")+'</div><div class="am-card am-wcard"><h3>'+esc(cr.headline||"Moon Sign")+'</h3><p>'+esc(cr.summary||"")+'</p>'+(cr.highlights||[]).map(function(h){return '<div class="am-kv"><span>'+esc(h)+'</span></div>'}).join("")+'</div></div>'}
+    if(r==="reports"){var rp=STATE.reportRes||{};return '<div class="am-card"><h2>Personalised Reports</h2><div class="am-chips" style="margin:14px 0">'+[["career","Career"],["marriage","Marriage"],["year","Year Ahead"],["wealth","Wealth"]].map(function(t){return '<button type="button" class="am-chip'+(STATE.reportTopic===t[0]?" active":"")+'" data-rep="'+t[0]+'">'+t[1]+'</button>'}).join("")+'</div><h3>'+esc(rp.title||"Career Blueprint")+'</h3><p>'+esc(rp.summary||"")+'</p><div class="am-kv"><span>Window</span><strong>'+esc(rp.window||"")+'</strong></div></div>'}
+    if(r==="journal"){return '<div>'+STATE.journal.map(function(a){return '<div class="am-card" style="margin-bottom:14px"><div class="am-jcover '+esc(a.th||a.theme)+'">'+esc(a.sym||a.symbol)+'</div><h3>'+esc(a.t||a.title)+'</h3><p>'+esc((a.b||a.body||[])[0]||"")+'</p></div>'}).join("")+'</div>'}
+    if(r==="pandit"){return '<div class="am-card" style="max-width:560px"><h2>Talk to a real pundit</h2><div class="am-field"><label>Mobile / WhatsApp</label><input class="am-input" placeholder="+91 98765 43210"></div><button type="button" class="am-btn" id="pdSubmitBtn">Send request &rarr;</button>'+(STATE.panditMsg?'<p style="margin-top:10px;color:#2c6e3b">'+esc(STATE.panditMsg)+'</p>':'')+'</div>'}
+    var p=STATE.panchang,prof=(STATE.reportRes&&STATE.reportRes.profile)||{};return '<div class="am-grid-2"><div class="am-card am-wcard"><h2>'+esc(STATE.profile.name)+'</h2><div class="am-kv"><span>Birth</span><strong>'+esc(STATE.profile.dob+" "+STATE.profile.tob+" "+STATE.profile.city)+'</strong></div><div class="am-kv"><span>Rashi</span><strong>'+esc(prof.rashi||p.active_rashi)+'</strong></div><div class="am-kv"><span>Lagna</span><strong>'+esc(prof.lagna||"Meena")+'</strong></div><button type="button" class="am-btn" style="margin-top:14px" data-open-prof="1">Edit Birth Chart</button></div><div class="am-card"><h2>Today\'s Panchang</h2><div class="am-kv"><span>Tithi</span><strong>'+esc(p.tithi)+'</strong></div><div class="am-kv"><span>Nakshatra</span><strong>'+esc(p.nakshatra)+'</strong></div><div class="am-kv"><span>Abhijit</span><strong>'+esc(p.abhijit)+'</strong></div></div></div>';
   }
-  show("onboard", false);
-})();
-})();
-
-/* AstroMuni v0.7 intake-first problem-solver enhancement keeping v0.6 visual style */
-(() => {
-  const getProfileFromDom = () => ({
-    name: (document.getElementById("name") && document.getElementById("name").value.trim()) || (window.PROFILE && window.PROFILE.full_name) || "Sachin Chaturvedi",
-    dob: (document.getElementById("date") && document.getElementById("date").value) || "2001-01-29",
-    tob: (document.getElementById("time") && document.getElementById("time").value) || "09:30",
-    city: (document.getElementById("city") && document.getElementById("city").selectedOptions[0] && document.getElementById("city").selectedOptions[0].textContent) || "Bhopal",
-    lat: document.getElementById("lat") && document.getElementById("lat").value,
-    lon: document.getElementById("lon") && document.getElementById("lon").value,
-  });
-
-  function ensureSolverBox() {
-    const muniView = document.getElementById("v-muni");
-    if (!muniView || document.getElementById("v07SolverBox")) return;
-    const talk = muniView.querySelector(".talk");
-    if (!talk) return;
-
-    const box = document.createElement("div");
-    box.id = "v07SolverBox";
-    box.className = "card";
-    box.style.margin = "0 clamp(16px,4vw,48px) 12px";
-    box.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-        <strong id="v07Heading">Problem Solver (v0.7)</strong>
-        <span id="v07Score" class="tag"></span>
-      </div>
-      <p id="v07Verdict" class="rd-text" style="margin-top:8px;font-weight:600;"></p>
-      <p id="v07Meta" class="note-line"></p>
-      <ol id="v07Steps" style="margin:8px 0 0;padding-left:18px;font-size:0.92rem;"></ol>
-      <p id="v07Practice" class="note-line"></p>
-    `;
-    const dock = talk.querySelector(".dock");
-    if (dock) talk.insertBefore(box, dock);
+  function render(){var root=document.getElementById("amRoot");if(root)root.innerHTML=renderShell(STATE.route==="hub"?renderHub():(STATE.route==="ask"?renderAsk():renderSubpage()))}
+  function sendQuestion(qText){var q=(qText||"").trim();if(!q)return;STATE.route="ask";STATE.messages.push({role:"user",text:q});render();post("/api/v09/ask",{mode:STATE.askMode,question:q,profile:STATE.profile,lang:STATE.lang}).then(function(res){STATE.messages.push({role:"ai",title:res.title,answer:res.answer,steps:res.steps});render()})}
+  function refreshAll(){
+    post("/api/v09/panchang",{city:STATE.profile.city,profile:STATE.profile}).then(function(r){if(r&&r.tithi){STATE.panchang=r;STATE.selectedSign=r.active_rashi||STATE.selectedSign;render()}});
+    post("/api/v09/horoscope",{lang:STATE.lang}).then(function(r){if(r&&r.signs&&r.signs.length){STATE.horoscope=r;render()}});
+    post("/api/v09/compatibility",{person_a:STATE.profile,person_b:STATE.partner,lang:STATE.lang}).then(function(r){if(r&&r.total_points){STATE.compat=r;render()}});
+    post("/api/v09/calculator",{type:STATE.calcType,profile:STATE.profile,lang:STATE.lang}).then(function(r){if(r&&r.headline){STATE.calcRes=r;render()}});
+    post("/api/v09/report",{topic:STATE.reportTopic,profile:STATE.profile,lang:STATE.lang}).then(function(r){if(r&&r.title){STATE.reportRes=r;render()}});
   }
-
-  async function updateSolverFromQuestion(questionText) {
-    ensureSolverBox();
-    const activeLang = document.querySelector("#langSeg button[aria-pressed='true']")?.dataset.lang || "hg";
-    try {
-      const r = await fetch("/api/v07/solve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          profile: getProfileFromDom(),
-          question: questionText || "",
-          category: "general",
-          lang: activeLang,
-        }),
-      });
-      if (!r.ok) return;
-      const d = await r.json();
-      const hEl = document.getElementById("v07Heading");
-      const sEl = document.getElementById("v07Score");
-      const vEl = document.getElementById("v07Verdict");
-      const mEl = document.getElementById("v07Meta");
-      const stEl = document.getElementById("v07Steps");
-      const prEl = document.getElementById("v07Practice");
-      if (hEl) hEl.textContent = `${d.heading} — ${d.question}`;
-      if (sEl) sEl.textContent = `${d.score}% clarity • ${d.window}`;
-      if (vEl) vEl.textContent = d.answer;
-      if (mEl) mEl.textContent = `${d.why} | Watch out: ${d.watchout}`;
-      if (stEl) {
-        stEl.innerHTML = "";
-        (d.steps || []).forEach(step => {
-          const li = document.createElement("li");
-          li.textContent = step;
-          stEl.appendChild(li);
-        });
-      }
-      if (prEl) prEl.textContent = `Daily habit: ${d.practice}`;
-    } catch (_) {}
-  }
-
-  document.addEventListener("submit", (ev) => {
-    if (ev.target && ev.target.id === "ask") {
-      const q = document.getElementById("q")?.value || "";
-      setTimeout(() => updateSolverFromQuestion(q), 60);
-    }
+  document.addEventListener("click",function(ev){
+    var t=ev.target,lb=t.closest("[data-lang]");
+    if(lb){STATE.lang=lb.getAttribute("data-lang")||"en";sSet("am_lang_v09",STATE.lang);var m=document.getElementById("amLangModal");if(m)m.classList.add("hidden");refreshAll();return}
+    var rt=t.closest("[data-route]");if(rt){STATE.route=rt.getAttribute("data-route");STATE.drawerOpen=false;render();return}
+    if(t.closest("#amMenuBtn")){STATE.drawerOpen=!STATE.drawerOpen;render();return}
+    if(t.id==="amDrawerBg"){STATE.drawerOpen=false;render();return}
+    if(t.closest("[data-open-prof]")){STATE.profileModal=true;render();return}
+    if(t.closest("#pfSkip")||t.id==="amProfBg"){STATE.profileModal=false;render();return}
+    if(t.closest("#pfSave")){STATE.profile.name=(document.getElementById("pfName").value||STATE.profile.name).trim();STATE.profile.dob=document.getElementById("pfDob").value||STATE.profile.dob;STATE.profile.tob=document.getElementById("pfTob").value||STATE.profile.tob;STATE.profile.city=(document.getElementById("pfCity").value||STATE.profile.city).trim();sSet("am_profile_v09",JSON.stringify(STATE.profile));STATE.profileModal=false;refreshAll();return}
+    var md=t.closest("[data-mode]");if(md){STATE.askMode=md.getAttribute("data-mode");render();return}
+    var sg=t.closest("[data-sign]");if(sg){STATE.selectedSign=sg.getAttribute("data-sign");render();return}
+    var cl=t.closest("[data-calc]");if(cl){STATE.calcType=cl.getAttribute("data-calc");STATE.route="calculators";post("/api/v09/calculator",{type:STATE.calcType,profile:STATE.profile,lang:STATE.lang}).then(function(r){STATE.calcRes=r;render()});return}
+    var rp=t.closest("[data-rep]");if(rp){STATE.reportTopic=rp.getAttribute("data-rep");STATE.route="reports";post("/api/v09/report",{topic:STATE.reportTopic,profile:STATE.profile,lang:STATE.lang}).then(function(r){STATE.reportRes=r;render()});return}
+    var qk=t.closest("[data-quick]");if(qk){sendQuestion(qk.getAttribute("data-quick"));return}
+    if(t.closest("#hubAskSend")){sendQuestion((document.getElementById("hubAskInput")||{}).value);return}
+    if(t.closest("#askMainSend")){sendQuestion((document.getElementById("askMainInput")||{}).value);return}
+    if(t.closest("#runCompatBtn")){STATE.partner.name=(document.getElementById("ptName").value||"Partner").trim();STATE.partner.dob=document.getElementById("ptDob").value||STATE.partner.dob;STATE.partner.tob=document.getElementById("ptTob").value||STATE.partner.tob;STATE.partner.city=(document.getElementById("ptCity").value||STATE.partner.city).trim();post("/api/v09/compatibility",{person_a:STATE.profile,person_b:STATE.partner,lang:STATE.lang}).then(function(r){STATE.compat=r;render()});return}
+    if(t.closest("#pdSubmitBtn")){STATE.panditMsg="Request received! Our Vedic Acharya team will reach out shortly.";render()}
   });
-
-  document.addEventListener("click", (ev) => {
-    const chip = ev.target.closest("#chips .chip");
-    if (chip) {
-      setTimeout(() => updateSolverFromQuestion(chip.textContent || ""), 60);
-    }
-  });
-
-  window.addEventListener("DOMContentLoaded", () => {
-    ensureSolverBox();
-    updateSolverFromQuestion("");
-  });
+  document.addEventListener("keydown",function(ev){if(ev.key==="Enter"&&ev.target&&(ev.target.id==="hubAskInput"||ev.target.id==="askMainInput")){ev.preventDefault();sendQuestion(ev.target.value)}});
+  render();refreshAll();
 })();
