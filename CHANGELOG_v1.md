@@ -1,3 +1,10 @@
+# AstroNaradMuni 1.1.3
+
+- **Raja yogas, computed** (`yogas.py`): kendra-trikona links (same sign, facing, or exchanging signs), yogakaraka planet, Dharma-Karmadhipati, and Neecha Bhanga cancellation. Sign-level only; skipped when the Lagna is unreliable.
+- **Dasha timing windows** (`timeline.py`): the running dasha is projected forward in Vimshottari order, and sub-periods tied to the topic are shown as activation windows for the next five years ("Apr 2028 to Jun 2031: Venus inside Saturn"). Never an event date. If our timeline disagrees with the engine's own Maha end date, no windows are shown. Appears under "Why this answer?" for every topic, and in the reply when the user asks "when...?" / "kab...?".
+- **Expert case library** (`expert.py`, `expert_data/`, `tools/expert_check.py`): a place for real advice from experienced astrologers. Cases are validated (consent required; phone/email, death predictions, guarantees, fear, fees, medical claims and investment instructions are rejected), indexed as a new `expert` retrieval tier, and shown as "An experienced astrologer on our panel often advises..." only when the question shares real content words with a case. Private by default: `expert_data/cases/` is git-ignored. This is retrieval, not model training.
+- 15 new tests; 48 pass in total.
+
 # AstroNaradMuni 1.1.2
 
 NaradVani now has a face, and the Ask page is a conversation with someone rather than a form.

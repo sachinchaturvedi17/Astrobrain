@@ -22,7 +22,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from .kb_core import core_passages
 
 KB_DIR = Path(__file__).resolve().parents[2] / "knowledge_base"
-TIER_PRIOR = {"core": 1.25, "web": 1.0, "shastra": 0.7}
+TIER_PRIOR = {"expert": 1.3, "core": 1.25, "web": 1.0, "shastra": 0.7}
 STOP = frozenset("a an the of and or to in on for with is are was be it this that what when how why do does my me i you your "
                  "can will about from at by as if so not no yes please tell kya hai hain ka ki ke ko se mein me par aur".split())
 
@@ -169,6 +169,9 @@ def load_index(kb_dir: Optional[Path] = None, force: bool = False) -> Index:
     docs: List[Dict[str, Any]] = list(core_passages())
     docs += list(_read_jsonl(base / "web_corpus.jsonl", "web"))
     docs += list(_read_jsonl(base / "shastra_corpus.jsonl", "shastra"))
+    if kb_dir is None:
+        from . import expert
+        docs += list(expert.passages())
     idx = Index(docs)
     if kb_dir is None:
         _INDEX = idx

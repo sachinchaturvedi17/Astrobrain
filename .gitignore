@@ -11,3 +11,7 @@ venv/
 .ruff_cache/
 aipandit-feedback/
 knowledge_base/
+
+# private expert advice (see expert_data/README.md)
+expert_data/cases/*
+!expert_data/cases/.gitkeep
