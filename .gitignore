@@ -19,3 +19,11 @@ expert_data/cases/*
 # Blender working files (large)
 assets_src/*.blend
 assets_src/*.blend1
+
+# Private assets with unresolved licences (never commit or push)
+assets_src/private/
+
+# Large Blender intermediates (back these up outside git)
+assets_src/review/
+assets_src/textures/
+assets_src/*_raw.glb
