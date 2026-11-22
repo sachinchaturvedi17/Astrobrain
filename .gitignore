@@ -27,3 +27,6 @@ assets_src/private/
 assets_src/review/
 assets_src/textures/
 assets_src/*_raw.glb
+
+# Private MetaPerson avatar copied in only for local ?model=mp testing (unresolved licence; also remove before building a wheel)
+src/aipandit/web/static/vendor/naradvani_mp.glb

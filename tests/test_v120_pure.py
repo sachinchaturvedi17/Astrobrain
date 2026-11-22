@@ -28,7 +28,7 @@ class WiringTests(unittest.TestCase):
         html = read("index.html")
         self.assertTrue((ST / "live.js").exists())
         self.assertLess(html.index("/static/live.js"), html.index("/static/app.js"))
-        self.assertEqual(len(re.findall(r"\?v=1\.2\.0", html)), html.count("?v="))
+        self.assertEqual(len(set(re.findall(r"\?v=([0-9.]+)", html))), 1)            # one cache-busting version across the page
         self.assertNotIn(" style=", html)
 
     def test_no_inline_style_or_handlers_in_new_markup(self):

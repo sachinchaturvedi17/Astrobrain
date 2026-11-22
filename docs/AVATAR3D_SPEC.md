@@ -46,3 +46,9 @@ Optimise with `@gltf-transform/cli`: meshopt or draco, WebP textures; the skin a
 ## Later upgrade (optional)
 
 Server TTS (Piper Hindi/English voice, check each voice's licence) returns audio plus word timings, enabling TalkingHead's `speakAudio` or audio-driven visemes for exact lip-sync, and a consistent NaradVani voice on every device.
+
+## Status (v1.3.0)
+
+Built: `static/avatar3d.js` (driver + loader), the `live.js` hand-over with fallback, `.glb` serving, the CSP change for the meshopt decoder (`'wasm-unsafe-eval'` only), `tools/vendor_three.py`, 23 tests. Not yet done: vendoring three.js (needs npm), and verification in a real browser. See `docs/AVATAR_PAGE_VERIFY.md`.
+
+Deviations from the plan above: the driver is our own (not TalkingHead's) as specified; the model is cut to a bust, so the camera frames the whole bust inside the circular portrait and the circle hides the cut edge; `Armature` is the root, with bones Head, Neck, Spine1/Spine2, LeftEye, RightEye.

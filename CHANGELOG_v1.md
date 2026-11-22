@@ -1,3 +1,15 @@
+# AstroNaradMuni 1.3.0
+
+NaradVani in 3D (page side). The Ask screen can now show a real-time 3D NaradVani instead of the 2D portrait, with the portrait as the automatic fallback.
+
+- **How:** `static/avatar3d.js` (classic script, lazy-loads three.js, GLTFLoader and the meshopt decoder from `static/vendor/` by absolute path, strict-CSP safe). `live.js` stays the speech brain (text position, word-boundary re-sync, mic) and hands the stage over once the model is ready; its public `AMLive` API is unchanged (`is3d()` added).
+- **Motion:** text to the 15 Oculus mouth shapes (Latin and Devanagari, digraphs sh/ch/th/ph, labials close the lips), eased in about 40 ms and out in about 70 ms; natural blinks (double blinks 18%); brows lift on questions and new sentences; small eye saccades; breathing, head sway, a nod while speaking, a tilt while listening; a light resting smile. Bones are rotated about world axes, so the export's bone roll does not matter. Reduced-motion users get calmer movement.
+- **Fallback chain:** 3D, then the 2D portrait, then the still image. No WebGL, a missing or failed GLB, a lost context, or a device that stays slow (drops to 1x pixels once, then gives up) all keep or restore the portrait. `?avatar=2d` forces the portrait.
+- **Server:** `.glb` is served as `model/gltf-binary`. The CSP gains `'wasm-unsafe-eval'` in `script-src` only, which the meshopt decoder needs to compile WebAssembly. No `'unsafe-inline'`, no `'unsafe-eval'`.
+- **Avatar:** `static/vendor/naradvani.glb` (our own MPFB build, 5 MB, licences in `docs/ASSETS.md`). `?model=mp` loads `vendor/naradvani_mp.glb` for private local testing only; that file is git-ignored because its licence is unresolved.
+- **Still to do by hand (no npm in the build sandbox):** run `python3 tools/vendor_three.py` once, then follow `docs/AVATAR_PAGE_VERIFY.md` (real browser check, camera framing, Playwright).
+- 23 new tests (`tests/test_v130_pure.py`, with node harnesses for the driver and the hand-over); 83 pure tests pass in total.
+
 # AstroNaradMuni 1.2.0
 
 NaradVani comes alive. The Ask screen now has two modes.

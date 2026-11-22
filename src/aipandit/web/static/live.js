@@ -1,4 +1,6 @@
-/* AstroNaradMuni v1.2.0: NaradVani comes alive. No dependencies, no network, CSP-safe (no inline styles or handlers).
+/* AstroNaradMuni v1.3.0: NaradVani comes alive. No dependencies, no network, CSP-safe (no inline styles or handlers).
+ * v1.3.0: when avatar3d.js can load the 3D model, mount() hands the stage to it and keeps this file as the speech brain (text position, word
+ * boundary re-sync, mic). If 3D is unavailable or fails, everything below keeps drawing the 2D portrait exactly as in 1.2.0.
  *
  * What it does with the single portrait photo:
  *   - natural blinking (random gaps, occasional double blink) and a slow breathing sway. This is all that happens in Chat mode.
@@ -84,7 +86,7 @@
     });
   }
   function draw() {
-    var c = L.ctx; if (!c || !L.ready) return;
+    var c = L.ctx; if (!c || !L.ready || L.three) return;
     var sig = [L.blink.toFixed(2), L.mouth.toFixed(2), L.brow.toFixed(2)].join("|");
     if (sig === L.sig) return; L.sig = sig;
     c.drawImage(L.img, 0, 0, CAL.w, CAL.h);
@@ -131,6 +133,7 @@
     L.tiltT = L.listening ? 2.2 : 0; L.tilt += (L.tiltT - L.tilt) * Math.min(1, k * 0.2);
     var breathe = Math.sin(t * 1.3) * 1.4, sway = talk ? Math.sin(t * 0.8) * 0.6 : Math.sin(t * 0.5) * 0.25;
     var nod = L.speaking ? Math.max(0, Math.sin(t * 3.1)) * 1.6 + L.mouth * 1.2 : 0;
+    if (L.three) return;                                  // the 3D model is on stage; nothing more to draw here
     L.canvas.style.transform = "translateY(" + (breathe + nod).toFixed(2) + "px) rotate(" + (sway + L.tilt).toFixed(2) + "deg) scale(1.035)";
     draw();
   }
@@ -202,6 +205,14 @@
     } else if (L.ready) { draw(); }
     if (!L.blinkAt) L.blinkAt = performance.now() / 1000 + rnd(1.2, 3);
     if (!L.rafOn) requestAnimationFrame(frame);
+    // 3D upgrade: keep the 2D portrait visible until the model is ready, then swap; any failure puts the portrait back
+    L.three = false; canvas.style.display = "";
+    var A3 = window.AM3D;
+    if (A3 && A3.enabled && A3.enabled() && canvas.parentNode) {
+      A3.mount(canvas.parentNode, { state: L, onFail: function () { if (L.canvas === canvas) { L.three = false; canvas.style.display = ""; L.sig = ""; } } }).then(function (ok) {
+        if (ok && L.canvas === canvas && canvas.isConnected) { L.three = true; canvas.style.display = "none"; }
+      });
+    }
   }
   function setMode(m) { L.mode = m === "talk" ? "talk" : "chat"; if (L.mode === "chat") { stop(); stopListening(); } }
   if (window.speechSynthesis) { loadVoices(); try { window.speechSynthesis.onvoiceschanged = loadVoices; } catch (e) { /* ignore */ } }
@@ -209,5 +220,5 @@
   function preview(blink, mouth, brow) { L.frozen = true; L.blink = blink; L.mouth = mouth; L.brow = brow; L.sig = ""; draw(); }   // for calibration and tests
   function unfreeze() { L.frozen = false; }
   window.AMLive = { preview: preview, unfreeze: unfreeze, mount: mount, setMode: setMode, speak: speak, stop: stop, listen: listen, stopListening: stopListening, micSupported: micSupported,
-    speaking: function () { return L.speaking; }, listening: function () { return L.listening; }, visemeTrack: visemeTrack, openness: openness, CAL: CAL, _state: L };
+    is3d: function () { return !!L.three; }, speaking: function () { return L.speaking; }, listening: function () { return L.listening; }, visemeTrack: visemeTrack, openness: openness, CAL: CAL, _state: L };
 })();

@@ -147,3 +147,6 @@ p.fb{margin:-4px 0 0 44px}
 .askbox.pill .btn.mic.on{background:var(--gold-wash);border-color:var(--gold-deep);animation:nvpulse 1.2s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){.nv-stage.speaking .ring,.nv-stage.hearing .ring,.askbox.pill .btn.mic.on{animation:none!important}}
 @media(max-width:860px){.modes .seg{padding:4px 12px;min-height:32px}.nv-stage .ai-note{display:none}}
+
+/* v1.3.0 3D portrait: the WebGL canvas fills the same circle as the 2D one */
+.portrait canvas.nv3d{width:100%;height:100%;display:block;object-fit:initial;transform:none;will-change:auto}
