@@ -15,3 +15,7 @@ knowledge_base/
 # private expert advice (see expert_data/README.md)
 expert_data/cases/*
 !expert_data/cases/.gitkeep
+
+# Blender working files (large)
+assets_src/*.blend
+assets_src/*.blend1

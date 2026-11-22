@@ -27,7 +27,7 @@ Options, in order:
 2. Avaturn from `naradvani.jpg` (user's own account, user reads the Terms first). Fast and closest likeness; commercial licence must be confirmed.
 3. A purchased or CC0 model with ARKit shapes (check licence per asset).
 Record the source and licence of the final GLB in `docs/ASSETS.md`.
-Optimise with `@gltf-transform/cli`: meshopt or draco, WebP textures at 1024 px or less, head-and-shoulders only. Budget: 6 MB or less, runs at 30 fps on a mid phone.
+Optimise with `@gltf-transform/cli`: meshopt or draco, WebP textures; the skin albedo is 4K and other maps are as small as they can be. Bust only: head, shoulders and upper chest, cut at mid-chest and capped under the shawl, no arms or lower body. Budget: 8 MB or less, runs at 30 fps on a mid phone.
 
 ## Driver
 
