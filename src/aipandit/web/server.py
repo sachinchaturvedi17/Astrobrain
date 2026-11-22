@@ -52,8 +52,8 @@ MAX_LOG_BYTES = 8 * 1024 * 1024
 P = "parashari"
 NUMS = ("mulank", "bhagyank", "name_number", "personal_year")
 STATIC_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8",
-                ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8"}
-CSP = ("default-src 'self'; style-src 'self'; script-src 'self'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; "
+                ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon"}
+CSP = ("default-src 'self'; style-src 'self'; script-src 'self'; font-src 'self'; img-src 'self' data: blob: https://*.tile.openstreetmap.org; connect-src 'self'; "
        "base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
 
 
@@ -157,7 +157,7 @@ class App:
         """(bytes, content-type) for a whitelisted static path, or None. No directory traversal: the name must be a
         file directly under static/ or static/fonts/ with a known extension."""
         rel = "index.html" if path in ("/", "/index.html") else path.removeprefix("/static/") if path.startswith("/static/") else None
-        if not rel or ".." in rel or "\\" in rel or rel.count("/") > 1 or (rel.count("/") == 1 and not rel.startswith("fonts/")):
+        if not rel or ".." in rel or "\\" in rel or rel.count("/") > 1 or (rel.count("/") == 1 and not rel.startswith(("fonts/", "vendor/"))):
             return None
         ext = Path(rel).suffix.lower()
         if ext not in STATIC_TYPES:
@@ -358,6 +358,9 @@ def make_handler(app: App):
             routes = {"/api/start": app.start, "/api/resume": app.resume, "/api/chat": app.chat, "/api/horoscope": app.horoscope,
                       "/api/pandit-request": app.pandit_request, "/api/feedback": app.feedback}
             fn = routes.get(self.path)
+            if fn is None and self.path.startswith("/api/v10/"):
+                from ..v10_engine import handle_v10
+                fn = lambda body, _p=self.path: handle_v10(_p, body)
             if fn is None:
                 return self._send(404, {"error": "not found"})
             try:

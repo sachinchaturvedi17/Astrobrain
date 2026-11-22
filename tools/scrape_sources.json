@@ -1,0 +1,15 @@
+{
+  "wikipedia": {
+    "en": ["Jyotisha", "Nakshatra", "Navagraha", "Rashi (astrology)", "Dasha (astrology)", "Panchangam", "Tithi", "Yoga (astrology)",
+           "Muhurta", "Lagna", "Ayanamsa", "Hindu astrology", "Surya", "Chandra", "Shani", "Brihaspati", "Shukra", "Budha", "Mangala",
+           "Rahu", "Ketu (mythology)", "Karana (Hindu calendar)", "Hindu calendar", "Kundali", "Vimshottari dasha", "Sade sati"],
+    "hi": ["ज्योतिष", "नक्षत्र", "नवग्रह", "राशि", "पंचांग", "कुण्डली", "तिथि", "करण (ज्योतिष)", "मुहूर्त", "शनि (ग्रह)", "बृहस्पति (ग्रह)"]
+  },
+  "public": [
+    {"_note": "Add public-domain or openly licensed full texts here. Example (remove _note, set a real URL you are allowed to use):",
+     "_example": {"url": "https://example.org/some-public-domain-text.txt", "title": "Name of the text", "licence": "public-domain (declared)", "max_passages": 300}}
+  ],
+  "restricted": [
+    {"_note": "Pages from sites you do NOT have a licence for. Only a <=35-word snippet and the link are kept, and robots.txt is obeyed. Example: {\"url\": \"https://example.com/page\", \"title\": \"Page name\"}"}
+  ]
+}

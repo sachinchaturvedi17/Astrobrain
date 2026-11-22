@@ -2,24 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>AstroMuni — Wisdom Written in the Stars</title>
-  <link rel="stylesheet" href="/static/app.css?v=0.9.3">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#fdf3d3">
+  <title>AstroMuni — Personal Vedic Guide</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css?v=1.0.0">
+  <link rel="stylesheet" href="/static/vendor/leaflet.css?v=1.0.0">
 </head>
 <body>
-  <div id="amLangModal" class="am-modal-bg" role="dialog" aria-modal="true">
-    <div class="am-modal">
-      <span class="am-pill">AstroMuni</span>
-      <h2>&#2309;&#2346;&#2344;&#2368; &#2349;&#2366;&#2359;&#2366; &#2330;&#2369;&#2344;&#2375;&#2306; / Choose Language</h2>
-      <p>Select your preferred language to begin</p>
-      <div class="am-lang-row">
-        <button type="button" class="am-lbtn" data-lang="hg">Hinglish</button>
-        <button type="button" class="am-lbtn" data-lang="hi">&#2361;&#2367;&#2344;&#2381;&#2342;&#2368;</button>
-        <button type="button" class="am-lbtn" data-lang="en">English</button>
-      </div>
-    </div>
-  </div>
-  <div id="amRoot"></div>
-  <script src="/static/app.js?v=0.9.3"></script>
+  <noscript><p style="padding:24px;font-family:sans-serif">AstroMuni needs JavaScript to run.</p></noscript>
+  <div id="amRoot" class="am-root" aria-live="polite"></div>
+  <div id="amModal" class="am-overlay" hidden></div>
+  <div id="amToast" class="am-toast" role="status" hidden></div>
+  <script src="/static/i18n.js?v=1.0.0"></script>
+  <script src="/static/onboarding.js?v=1.0.0"></script>
+  <script src="/static/app.js?v=1.0.0"></script>
 </body>
 </html>

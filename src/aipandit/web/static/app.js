@@ -1,119 +1,374 @@
-(function(){
+/* AstroMuni v1.0 main app: shell, routing and all screens. No inline handlers or styles (strict CSP). */
+(function () {
   "use strict";
-  function sGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
-  function sSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
-  var SIGNS=[
-    {key:"Mesha",en:"Aries",sym:"\u2648",h:"Act with clear intention today.",r:"Mars supports decisive momentum when paired with patience."},
-    {key:"Vrishabha",en:"Taurus",sym:"\u2649",h:"Steady consistency compounds.",r:"Venus highlights grounded priorities and calm financial choices."},
-    {key:"Mithuna",en:"Gemini",sym:"\u264a",h:"Clarity comes through dialogue.",r:"Mercury sharpens communication—capture ideas before acting."},
-    {key:"Karka",en:"Cancer",sym:"\u264b",h:"Honour your emotional rhythm.",r:"Quiet reflection reveals what truly deserves your energy."},
-    {key:"Simha",en:"Leo",sym:"\u264c",h:"Lead with warmth, not urgency.",r:"A generous Moon-Jupiter exchange opens sincere conversations."},
-    {key:"Kanya",en:"Virgo",sym:"\u264d",h:"Refine details before committing.",r:"Careful review saves effort and strengthens long-term craft."},
-    {key:"Tula",en:"Libra",sym:"\u264e",h:"Choose balance over pleasing.",r:"Harmony improves when boundaries are stated clearly."},
-    {key:"Vrishchika",en:"Scorpio",sym:"\u264f",h:"Trust quiet observation.",r:"Pause before reacting so deeper clarity can surface."},
-    {key:"Dhanu",en:"Sagittarius",sym:"\u2650",h:"Keep your long-term vision steady.",r:"A thoughtful conversation sparks fresh perspective."},
-    {key:"Makara",en:"Capricorn",sym:"\u2651",h:"Build one durable habit today.",r:"Consistent structure turns small daily steps into mastery."},
-    {key:"Kumbha",en:"Aquarius",sym:"\u2652",h:"Step back for wider perspective.",r:"Trusted peers offer a helpful angle on a recurring question."},
-    {key:"Meena",en:"Pisces",sym:"\u2653",h:"Listen to intuition without rushing.",r:"Gentle pacing brings clarity to personal commitments."}
-  ];
-  var STATE={
-    lang:sGet("am_lang_v09")||"en",route:"hub",askMode:"muni",selectedSign:"Simha",calcType:"moon",reportTopic:"career",drawerOpen:false,profileModal:false,
-    profile:JSON.parse(sGet("am_profile_v09")||"null")||{name:"Sachin Chaturvedi",dob:"2001-01-29",tob:"09:30",city:"Bhopal"},
-    partner:{name:"Partner",dob:"2002-05-14",tob:"14:20",city:"Indore"},
-    panchang:{date_label:"Sunday, 22 November",tithi:"Shukla Trayodashi",nakshatra:"Ashwini",yoga:"Siddhi",karana:"Bava",abhijit:"11:52 - 12:38",rahu_kaal:"16:30 - 18:00",energy:82,energy_label:"Radiant & decisive",lucky_hour:"10:30 AM",guiding_planet:"Sun",focus:"Purpose",active_rashi:"Simha",active_rashi_en:"Leo",active_symbol:"\u264c"},
-    horoscope:{signs:SIGNS},compat:{total_points:31,percentage:86,summary:"Strong mental wavelength and supportive long-term rhythm.",kootas:[]},calcRes:null,reportRes:null,
-    journal:[
-      {id:"saturn",cat:"PLANETS",rt:"8 MIN",sym:"\u2644",th:"dark",t:"Saturn isn't punishing you. It's asking you to build.",s:"A gentler way to understand discipline, delay, and staying power.",b:["In classical Parashari texts, Saturn is the karaka of endurance and structures that last across decades."]},
-      {id:"moon",cat:"NAKSHATRAS",rt:"6 MIN",sym:"\u263e",th:"amber",t:"What your Moon remembers",s:"Your nakshatra reveals the emotional home you return to.",b:["Your Moon moves through 27 Nakshatras, shaping how you process stress and restore calm."]},
-      {id:"week",cat:"VEDIC LIVING",rt:"5 MIN",sym:"\u2609",th:"gold",t:"Planning your week with the planets",s:"Work with each day's ruling graha instead of pushing against it.",b:["Align analytical work with Wednesday (Mercury) and big-picture planning with Thursday (Jupiter)."]}
-    ],
-    messages:[],panditMsg:""
-  };
-  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
-  function post(u,b){return fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b||{})}).then(function(r){return r.json()})}
-  function icon(k){
-    var m={hub:'<path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',ask:'<path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/>',horoscope:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2"/>',chart:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>',calculators:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h2m4 0h2M8 16h2m4 0h2"/>',reports:'<path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>',journal:'<path d="M4 5a2 2 0 0 1 2-2h6v18H6a2 2 0 0 0-2 2V5zm16 0a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2V5z"/>'};
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(m[k]||m.hub)+'</svg>';
+  var AM = window.AM, t = AM.t, esc = AM.esc, api = AM.api;
+  var KEY = "astromuni_v1_profile";
+  var SIGNS = [["Mesha", "Aries", "मेष", "♈"], ["Vrishabha", "Taurus", "वृषभ", "♉"], ["Mithuna", "Gemini", "मिथुन", "♊"], ["Karka", "Cancer", "कर्क", "♋"],
+    ["Simha", "Leo", "सिंह", "♌"], ["Kanya", "Virgo", "कन्या", "♍"], ["Tula", "Libra", "तुला", "♎"], ["Vrishchika", "Scorpio", "वृश्चिक", "♏"],
+    ["Dhanu", "Sagittarius", "धनु", "♐"], ["Makara", "Capricorn", "मकर", "♑"], ["Kumbha", "Aquarius", "कुंभ", "♒"], ["Meena", "Pisces", "मीन", "♓"]];
+  var PL = { en: { Sun: "Sun", Moon: "Moon", Mars: "Mars", Mercury: "Mercury", Jupiter: "Jupiter", Venus: "Venus", Saturn: "Saturn", Rahu: "Rahu", Ketu: "Ketu" },
+    hg: { Sun: "Surya", Moon: "Chandra", Mars: "Mangal", Mercury: "Budh", Jupiter: "Guru", Venus: "Shukra", Saturn: "Shani", Rahu: "Rahu", Ketu: "Ketu" },
+    hi: { Sun: "सूर्य", Moon: "चंद्र", Mars: "मंगल", Mercury: "बुध", Jupiter: "गुरु", Venus: "शुक्र", Saturn: "शनि", Rahu: "राहु", Ketu: "केतु" } };
+  var ABBR = { Sun: "Su", Moon: "Mo", Mars: "Ma", Mercury: "Me", Jupiter: "Ju", Venus: "Ve", Saturn: "Sa", Rahu: "Ra", Ketu: "Ke" };
+  var CHIPS = { en: ["What does my career path look like this year?", "When is a supportive time for a new relationship?", "How is my current dasha shaping things?", "What does my wealth house say?"],
+    hg: ["Is saal mera career kaisa rahega?", "Naye rishte ke liye achha samay kab hai?", "Meri current dasha kya asar daal rahi hai?", "Mere dhan bhav ke baare mein bataiye."],
+    hi: ["इस साल मेरा करियर कैसा रहेगा?", "नए रिश्ते के लिए अच्छा समय कब है?", "मेरी वर्तमान दशा क्या असर डाल रही है?", "मेरा धन भाव क्या कहता है?"] };
+  var TOPICS = ["career", "marriage", "wealth", "education", "family", "children", "health"];
+  var LEARN = [["Nakshatra", "nakshatra"], ["Vimshottari Dasha", "dasha"], ["Gajakesari yoga", "gajakesari yoga"], ["Sade Sati", "sade sati"], ["Gochara", "gochara transit"], ["Panchang", "panchang"], ["Ashtakoota", "ashtakoota gun milan"], ["Navamsa", "navamsa"]];
+  var ICON = {
+    hub: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>', ask: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>',
+    horoscope: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>', chart: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3v6.5M12 14.5V21M3 12h6.5M14.5 12H21M5.6 5.6l4.6 4.6M13.8 13.8l4.6 4.6M18.4 5.6l-4.6 4.6M10.2 13.8l-4.6 4.6"/>',
+    calculators: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M8 16h2M12 16h2"/>', reports: '<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/>', learn: '<path d="M4 5a2 2 0 012-2h5v17H6a2 2 0 00-2 2zM20 5a2 2 0 00-2-2h-5v17h5a2 2 0 012 2z"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>', search: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>', send: '<path d="M4 12l16-8-6 16-3-7z"/>', heart: '<path d="M12 20s-7-4.6-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.4-7 10-7 10z"/>', cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>' };
+  var svg = function (k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[k] + '</svg>'; };
+
+  var S = { route: "hub", profile: null, palms: {}, chart: null, pan: null, horo: null, sel: null, msgs: [], mode: "muni", busy: false, calc: null, calcType: "moon", rep: null, repTopic: "career", learn: null, learnQ: "", compat: null, where: null, drawer: false, loaded: {} };
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var lang = function () { return AM.lang(); };
+  var first = function () { return ((S.profile && S.profile.name) || "").trim().split(/\s+/)[0] || ""; };
+  var signName = function (k) { var s = SIGNS.filter(function (x) { return x[0] === k; })[0]; if (!s) return k || ""; return lang() === "hi" ? s[2] : lang() === "hg" ? s[0] : s[1]; };
+  var glyph = function (k) { var s = SIGNS.filter(function (x) { return x[0] === k; })[0]; return s ? s[3] + "︎" : ""; };
+  var plName = function (p) { return (PL[lang()] || PL.en)[p] || p; };
+
+  /* ------------------------------------------------------------ persistence */
+  function save(remember) {
+    var o = JSON.stringify({ profile: S.profile, lang: lang() });
+    AM.store.set(KEY, o, remember !== false);
   }
-  function renderShell(inner){
-    var p=STATE.panchang,ini=(STATE.profile.name||"SC").slice(0,2).toUpperCase();
-    var navs=[["hub","Cosmic hub"],["ask","Ask Astromuni"],["horoscope","Horoscope"],["chart","My birth chart"],["calculators","Calculators"],["reports","Reports"],["journal","Learn astrology"]].map(function(n){
-      return '<button type="button" class="am-nbtn'+(STATE.route===n[0]?" active":"")+'" data-route="'+n[0]+'">'+icon(n[0])+'<span>'+n[1]+'</span></button>';
-    }).join("");
-    var btabs=[["hub","Cosmic"],["ask","Ask"],["horoscope","Horoscope"],["chart","My"]].map(function(b){
-      return '<button type="button" class="am-btab'+(STATE.route===b[0]?" active":"")+'" data-route="'+b[0]+'">'+icon(b[0])+'<span>'+b[1]+'</span></button>';
-    }).join("");
-    var foot='<div><div class="am-scard" data-route="horoscope"><div style="display:flex;align-items:center;gap:9px"><span class="am-leo-sq">'+esc(p.active_symbol)+'</span><div><div style="font-size:.69rem;color:var(--soft)">Your moon sign</div><strong style="font-size:.83rem">'+esc(p.active_rashi_en+" \u2022 "+p.nakshatra)+'</strong></div></div><span>&rsaquo;</span></div>'+
-      '<div class="am-scard" data-open-prof="1"><div style="display:flex;align-items:center;gap:9px"><span class="am-av-dark">'+esc(ini)+'</span><div><strong style="font-size:.83rem">'+esc(STATE.profile.name)+'</strong><div style="font-size:.69rem;color:var(--soft)">Cosmic member</div></div></div><span>&rsaquo;</span></div></div>';
-    var pm=!STATE.profileModal?"":'<div class="am-modal-bg" id="amProfBg"><div class="am-modal" style="max-width:460px;text-align:left"><span class="am-pill">Birth Chart &amp; Optional Palms</span><h2 style="margin:8px 0">Personalise Your Kundli</h2><div class="am-field"><label>Name</label><input class="am-input" id="pfName" value="'+esc(STATE.profile.name)+'"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="am-field"><label>DOB</label><input type="date" class="am-input" id="pfDob" value="'+esc(STATE.profile.dob)+'"></div><div class="am-field"><label>Time</label><input type="time" class="am-input" id="pfTob" value="'+esc(STATE.profile.tob)+'"></div></div><div class="am-field"><label>City</label><input class="am-input" id="pfCity" value="'+esc(STATE.profile.city)+'"></div><div class="am-field"><label>Palm Photos (Optional)</label><input type="file" accept="image/*" class="am-input" style="padding:8px"><small style="color:var(--soft)">Optional — skip anytime.</small></div><div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" class="am-btn am-ghost" id="pfSkip">Skip / Close</button><button type="button" class="am-btn" id="pfSave">Save Chart</button></div></div></div>';
-    var appFoot='<footer class="am-foot"><div><strong class="serif" style="font-size:1.1rem;color:var(--choc)">astromuni</strong> &bull; Ancient intelligence for modern lives.</div><div class="am-chips"><button type="button" class="am-link" data-route="journal">Journal</button><button type="button" class="am-link" data-route="calculators">Calculators</button><button type="button" class="am-link" data-route="reports">Reports</button><button type="button" class="am-link" data-route="pandit">Talk to Pandit</button></div><div>&copy; 2026 Astromuni. Guidance, not certainty.</div></footer>';
-    return '<div class="am-shell"><aside class="am-side"><div><div class="am-brand" data-route="hub"><div class="am-logo">\u0950</div><div><div class="am-brand-t">astromuni</div><div class="am-brand-s">Wisdom written in the stars</div></div></div><div class="am-nav-lbl">YOUR UNIVERSE</div><nav class="am-nav">'+navs+'</nav></div>'+foot+'</aside>'+
-      '<div class="am-drawer-bg'+(STATE.drawerOpen?"":" hidden")+'" id="amDrawerBg"><div class="am-drawer"><nav class="am-nav">'+navs+'</nav>'+foot+'</div></div>'+
-      '<main class="am-main"><header class="am-topbar"><div class="am-row"><button type="button" class="am-btn am-ghost" id="amMenuBtn" style="min-height:38px;padding:0 12px">&#9776;</button><div><strong style="font-size:.95rem">'+esc(p.date_label)+'</strong><div style="font-size:.77rem;color:var(--soft)">'+esc(p.tithi+" \u2022 "+p.nakshatra)+'</div></div></div><div class="am-row"><div class="am-search"><span>&#128269;</span><input id="topSearch" placeholder="Search wisdom, tools..."></div><button type="button" class="am-ibtn" data-route="pandit" title="Talk to Pandit">&#9742;</button><button type="button" class="am-btn" style="min-height:38px;padding:8px 16px;border-radius:999px" data-route="ask">&#10024; Ask Muni</button></div></header>'+inner+appFoot+'</main><nav class="am-bnav">'+btabs+'</nav>'+pm+'</div>';
+  function resetAll() { AM.store.del(KEY); AM.store.del("astromuni_lang"); S.profile = null; S.palms = {}; S.chart = null; S.msgs = []; S.loaded = {}; S.pan = S.horo = S.calc = S.rep = S.learn = S.compat = null; }
+
+  /* ------------------------------------------------------------ data loading (cached per language) */
+  function body(extra) { return Object.assign({ profile: S.profile, lang: lang() }, extra || {}); }
+  async function load(name) {
+    var key = name + ":" + lang() + (name === "pan" && S.where ? ":" + S.where.lat + "," + S.where.lon : "");
+    if (S.loaded[name] === key) return;
+    try {
+      if (name === "pan") S.pan = await api("/api/v10/panchang", body(S.where ? { where: S.where } : {}));
+      if (name === "horo") { S.horo = await api("/api/v10/horoscope", body()); if (!S.sel) S.sel = (S.horo.mine && S.horo.mine.key) || "Simha"; }
+      if (name === "chart") S.chart = await api("/api/v10/chart", body());
+      S.loaded[name] = key;
+    } catch (e) { S.loaded[name] = null; S["err_" + name] = e.message; }
+    renderView();
   }
-  function renderHub(){
-    var p=STATE.panchang,first=(STATE.profile.name||"Sachin").split(" ")[0],signs=STATE.horoscope.signs||SIGNS;
-    var actH=signs.find(function(s){return s.key===STATE.selectedSign})||signs[4];
-    var zcards=signs.map(function(s){return '<button type="button" class="am-zcard'+(s.key===STATE.selectedSign?" active":"")+'" data-sign="'+esc(s.key)+'"><span class="am-leo-sq">'+esc(s.sym||s.symbol)+'</span><span>'+esc(s.en)+'</span></button>'}).join("");
-    var calcs=[["moon","\u263e","Moon sign","Find your Rashi from exact birth details."],["ascendant","\u2600","Ascendant","Discover your rising sign and 1st house."],["nakshatra","\u2728","Nakshatra","Meet your birth star and deeper nature."],["sade_sati","\u25f4","Sade Sati","Understand Saturn's 7.5-year cycle."]].map(function(x){return '<div class="am-card" style="padding:18px;cursor:pointer" data-calc="'+x[0]+'"><div style="font-size:1.3rem;margin-bottom:8px">'+x[1]+'</div><div class="serif" style="font-weight:700;margin-bottom:4px">'+x[2]+'</div><div style="font-size:.83rem;color:var(--soft)">'+x[3]+'</div></div>'}).join("");
-    var jcards=STATE.journal.map(function(a){return '<div class="am-card" style="padding:16px;cursor:pointer" data-route="journal"><div class="am-jcover '+esc(a.th||a.theme)+'">'+esc(a.sym||a.symbol)+'</div><div style="font-size:.69rem;font-weight:700;color:var(--soft);margin-bottom:4px">'+esc((a.cat||a.category)+" \u2022 "+(a.rt||a.read_time))+'</div><div class="serif" style="font-weight:700;margin-bottom:4px">'+esc(a.t||a.title)+'</div><div style="font-size:.83rem;color:var(--soft)">'+esc(a.s||a.subtitle)+'</div></div>'}).join("");
-    return '<section class="am-sec am-grid-2"><div style="display:flex;flex-direction:column;justify-content:center;gap:14px"><div class="am-eyebrow">YOUR PERSONAL COSMIC COMPASS</div><h1 class="am-h1">Good morning,<br>'+esc(first)+'.<span class="am-it">Your stars are in<br>motion.</span></h1><p style="color:var(--soft);max-width:480px">Understand today\'s energies, ask what\'s on your mind, and move forward with timeless Vedic wisdom.</p><div class="am-chips"><button type="button" class="am-btn" data-route="ask">Ask the universe &rarr;</button><button type="button" class="am-link" data-route="chart">&#9784; Explore my chart</button></div><div class="am-trust"><div class="am-avs"><span>SM</span><span>RK</span><span>AD</span></div><div><strong style="font-size:.82rem;display:block">Trusted by 50,000+ seekers</strong><span style="font-size:.75rem;color:var(--soft)">Personal. Private. Rooted in Jyotish.</span></div></div></div>'+
-      '<div class="am-wcard"><div class="am-flex" style="font-size:.72rem;font-weight:700;color:var(--soft)"><span>YOUR CELESTIAL WEATHER</span><span>&#9679; Live</span></div><div class="am-wheel"><div class="am-ring"><span class="am-dot d1"></span><span class="am-dot d2"></span><div class="am-core"><span class="am-leo-sq" style="width:28px;height:28px">'+esc(p.active_symbol)+'</span><span style="font-size:.68rem;letter-spacing:.08em">'+esc(p.active_rashi_en.toUpperCase())+'</span></div></div></div><div class="am-flex" style="align-items:flex-end"><div><div style="font-size:.72rem;color:var(--soft)">Today\'s energy</div><strong style="font-size:.9rem">'+esc(p.energy_label)+'</strong></div><strong>'+esc(p.energy)+'%</strong></div><div class="am-bar"><span style="width:'+esc(p.energy)+'%"></span></div><div class="am-wcols"><div><div style="color:var(--soft)">Lucky hour</div><strong>'+esc(p.lucky_hour)+'</strong></div><div><div style="color:var(--soft)">Guiding planet</div><strong>'+esc(p.guiding_planet)+'</strong></div><div><div style="color:var(--soft)">Focus</div><strong>'+esc(p.focus)+'</strong></div></div></div></section>'+
-      '<section class="am-sec am-insight"><div class="am-row"><span style="width:36px;height:36px;border-radius:10px;background:var(--gsoft);display:flex;align-items:center;justify-content:center">&#9728;</span><div><div style="font-size:.68rem;font-weight:700;letter-spacing:.08em;color:#8c5c19">INSIGHT FOR TODAY</div><strong style="font-size:.92rem">Your voice carries unusual clarity today. Use it to begin the conversation you\'ve been postponing.</strong></div></div><button type="button" class="am-link" data-route="ask">Read full guidance &rarr;</button></section>'+
-      '<section class="am-sec am-card"><div class="am-flex" style="margin-bottom:14px"><div><span class="am-pill">PERSONAL GUIDANCE</span><h2 style="margin-top:6px">What\'s on your mind?</h2><p style="font-size:.86rem;color:var(--soft)">Ask Muni anything. Your answer is interpreted through your unique birth chart.</p></div><div class="am-seg"><button type="button" class="'+(STATE.askMode==="muni"?"active":"")+'" data-mode="muni">Muni AI</button><button type="button" class="'+(STATE.askMode==="astropedia"?"active":"")+'" data-mode="astropedia">Astropedia</button></div></div><div class="am-row"><input class="am-input" id="hubAskInput" placeholder="Ask about love, career, money, family, purpose..."><button type="button" class="am-btn" id="hubAskSend">&#10148;</button></div><div class="am-chips" style="margin-top:12px"><button type="button" class="am-chip" data-quick="What does my career path look like this year?">Career path this year?</button><button type="button" class="am-chip" data-quick="When is a supportive time for a new relationship?">Relationship timing?</button><button type="button" class="am-chip" data-quick="How is my current Mahadasha shaping my life?">Current Dasha impact?</button></div></section>'+
-      '<section class="am-sec"><div style="text-align:center;margin-bottom:16px"><span class="am-pill">DAILY HOROSCOPE</span><h2 style="margin:6px 0 4px">A glimpse of every sign</h2></div><div class="am-zgrid" style="margin-bottom:14px">'+zcards+'</div><div class="am-card am-flex"><div class="am-row"><span class="am-leo-sq" style="width:40px;height:40px;font-size:1.2rem">'+esc(actH.sym||actH.symbol)+'</span><div><div style="font-size:.7rem;font-weight:700;color:#8c5c19">'+esc(actH.en.toUpperCase())+' &bull; TODAY</div><h3 style="margin:3px 0">'+esc(actH.h||actH.headline)+'</h3><p style="font-size:.88rem;color:var(--soft)">'+esc(actH.r||actH.reading)+'</p></div></div><button type="button" class="am-link" data-route="horoscope">Read '+esc(actH.en)+' horoscope &rarr;</button></div></section>'+
-      '<section class="am-sec"><div class="am-sec-hd"><div><span class="am-pill">YOUR VEDIC TOOLKIT</span><h2 style="margin-top:4px">Explore the map of you</h2></div></div><div class="am-grid-3"><div class="am-card am-wcard"><span class="am-pill">YOUR CHART</span><h3 style="margin:8px 0 6px">Janam Kundli</h3><p style="font-size:.86rem;color:var(--soft);margin-bottom:14px">Planetary placements, houses, yogas &amp; dashas.</p><button type="button" class="am-link" data-route="chart">Open my birth chart &rarr;</button></div><div class="am-card"><span class="am-pill">RELATIONSHIPS</span><h3 style="margin:8px 0 6px">Compatibility</h3><p style="font-size:.86rem;color:var(--soft);margin-bottom:12px">36-point Ashtakoota harmony between two birth charts.</p><div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0"><span class="am-av-dark" style="width:40px;height:40px">SC</span><strong>'+STATE.compat.percentage+'%</strong><span style="width:40px;height:40px;border-radius:50%;background:#e7b949;display:flex;align-items:center;justify-content:center;font-weight:700">?</span></div><button type="button" class="am-link" data-route="compatibility">Check compatibility &rarr;</button></div><div class="am-card"><span class="am-pill">VEDIC CALENDAR</span><h3 style="margin:8px 0 6px">Today\'s Panchang</h3><div class="am-kv"><span>Tithi</span><strong>'+esc(p.tithi)+'</strong></div><div class="am-kv"><span>Nakshatra</span><strong>'+esc(p.nakshatra)+'</strong></div><div class="am-kv"><span>Abhijit</span><strong>'+esc(p.abhijit)+'</strong></div><button type="button" class="am-link" data-route="chart">View full Panchang &rarr;</button></div></div></section>'+
-      '<section class="am-sec"><div class="am-sec-hd"><div><span class="am-pill">FREE CALCULATORS</span><h2 style="margin-top:4px">Small questions, precise answers</h2></div><button type="button" class="am-btn am-ghost" data-route="calculators">View all calculators &rarr;</button></div><div class="am-grid-4">'+calcs+'</div></section>'+
-      '<section class="am-sec am-card am-dark"><span class="am-pill" style="background:rgba(231,185,73,.2);color:#f7d478">PERSONALISED REPORTS</span><h2 style="margin:10px 0 8px">Go beyond the daily forecast</h2><p style="color:rgba(255,250,240,.82);margin-bottom:16px">Astrologer-reviewed readings connecting your chart patterns to the questions that matter now.</p><div class="am-chips" style="margin-bottom:16px"><button type="button" class="am-chip" data-rep="career">Career &amp; purpose</button><button type="button" class="am-chip" data-rep="marriage">Love &amp; marriage</button><button type="button" class="am-chip" data-rep="year">Year ahead</button><button type="button" class="am-chip" data-rep="wealth">Wealth path</button></div><button type="button" class="am-btn am-gold" data-route="reports">Explore reports &rarr;</button></section>'+
-      '<section class="am-sec"><div class="am-sec-hd"><div><span class="am-pill">ASTROMUNI JOURNAL</span><h2 style="margin-top:4px">Wisdom to carry with you</h2></div><button type="button" class="am-link" data-route="journal">Browse the journal &rarr;</button></div><div class="am-grid-3">'+jcards+'</div></section>';
+  function loadFor(route) {
+    if (route === "hub") { load("pan"); load("horo"); }
+    if (route === "horoscope") load("horo");
+    if (route === "panchang") load("pan");
+    if (route === "chart") load("chart");
+    if (route === "reports" && !S.rep) runReport(S.repTopic);
+    if (route === "calculators" && !S.calc) runCalc(S.calcType);
   }
-  function renderAsk(){
-    var first=(STATE.profile.name||"Sachin").split(" ")[0];
-    var msgs=STATE.messages.map(function(m){
-      if(m.role==="user")return '<div class="am-u">'+esc(m.text)+'</div>';
-      var st=(m.steps||[]).map(function(s){return '<li>'+esc(s)+'</li>'}).join("");
-      return '<div class="am-ai"><strong style="color:#8c5c19">'+esc(m.title||"Astromuni")+'</strong><p style="margin:6px 0">'+esc(m.answer)+'</p>'+(st?'<ul>'+st+'</ul>':'')+'</div>';
-    }).join("");
-    return '<div class="am-ask"><div class="am-sage"><div class="am-sage-fig"></div><h3>Astromuni</h3></div><div class="am-card"><div class="am-flex" style="margin-bottom:12px"><h2>Namaste, '+esc(first)+'.</h2><div class="am-seg"><button type="button" class="'+(STATE.askMode==="muni"?"active":"")+'" data-mode="muni">Muni AI</button><button type="button" class="'+(STATE.askMode==="astropedia"?"active":"")+'" data-mode="astropedia">Astropedia</button></div></div><div class="am-log">'+(msgs||'<div class="am-ai">Ask in English, Hinglish, or Hindi.</div>')+'</div><div class="am-row"><input class="am-input" id="askMainInput" placeholder="Ask Astromuni..."><button type="button" class="am-btn" id="askMainSend">&#10148;</button></div></div></div>';
+
+  /* ------------------------------------------------------------ shell */
+  var NAV = [["hub", "n_hub"], ["ask", "n_ask"], ["horoscope", "n_horo"], ["chart", "n_chart"], ["calculators", "n_calc"], ["reports", "n_reports"], ["learn", "n_learn"]];
+  function navHtml() { return NAV.map(function (n) { return '<button type="button" data-go="' + n[0] + '" class="' + (S.route === n[0] ? "on" : "") + '" aria-label="' + esc(t(n[1])) + '">' + svg(n[0]) + '<span class="lbl">' + esc(t(n[1])) + '</span></button>'; }).join(""); }
+  function moonCard() {
+    var m = S.chart && S.chart.moon ? S.chart.moon : null, tz = (S.pan && S.pan.date_label) ? "" : "";
+    return '<button type="button" class="mini" data-act="settings"><span class="sym">' + esc(m ? glyph(m.sign) : "☾") + '</span><span class="t"><small>' + esc(t("moon_sign")) + '</small><b>' + esc(m ? signName(m.sign) + (m.nakshatra ? " • " + m.nakshatra : "") : "—") + '</b></span></button>' +
+      '<button type="button" class="mini" data-act="settings"><span class="av">' + esc((first() || "A").slice(0, 2).toUpperCase()) + '</span><span class="t"><b>' + esc(S.profile.name) + '</b><small>' + esc(t("member")) + '</small></span></button>';
   }
-  function renderSubpage(){
-    var r=STATE.route;
-    if(r==="horoscope"){var signs=STATE.horoscope.signs||SIGNS,actH=signs.find(function(s){return s.key===STATE.selectedSign})||signs[4];return '<div class="am-card"><h2>Daily Horoscope</h2><div class="am-zgrid" style="margin:14px 0">'+signs.map(function(s){return '<button type="button" class="am-zcard'+(s.key===STATE.selectedSign?" active":"")+'" data-sign="'+esc(s.key)+'"><span class="am-leo-sq">'+esc(s.sym||s.symbol)+'</span><span>'+esc(s.en)+'</span></button>'}).join("")+'</div><div class="am-card am-wcard"><h3>'+esc(actH.en+" - "+(actH.h||actH.headline))+'</h3><p>'+esc(actH.r||actH.reading)+'</p></div></div>'}
-    if(r==="compatibility"){var cp=STATE.compat;return '<div class="am-grid-2"><div class="am-card"><h2>Compatibility</h2><div class="am-field"><label>Partner</label><input class="am-input" id="ptName" value="'+esc(STATE.partner.name)+'"></div><div class="am-field"><label>DOB</label><input type="date" class="am-input" id="ptDob" value="'+esc(STATE.partner.dob)+'"></div><div class="am-field"><label>Time</label><input type="time" class="am-input" id="ptTob" value="'+esc(STATE.partner.tob)+'"></div><div class="am-field"><label>City</label><input class="am-input" id="ptCity" value="'+esc(STATE.partner.city)+'"></div><button type="button" class="am-btn" id="runCompatBtn">Calculate</button></div><div class="am-card am-wcard"><h2>'+cp.total_points+'/36 ('+cp.percentage+'%)</h2><p>'+esc(cp.summary)+'</p>'+(cp.kootas||[]).map(function(k){return '<div class="am-kv"><span>'+esc(k.name)+'</span><strong>'+k.obtained+'/'+k.max+'</strong></div>'}).join("")+'</div></div>'}
-    if(r==="calculators"){var cr=STATE.calcRes||{};return '<div class="am-card"><h2>Vedic Calculators</h2><div class="am-chips" style="margin:14px 0">'+[["moon","Moon Sign"],["ascendant","Ascendant"],["nakshatra","Nakshatra"],["sade_sati","Sade Sati"]].map(function(t){return '<button type="button" class="am-chip'+(STATE.calcType===t[0]?" active":"")+'" data-calc="'+t[0]+'">'+t[1]+'</button>'}).join("")+'</div><div class="am-card am-wcard"><h3>'+esc(cr.headline||"Moon Sign")+'</h3><p>'+esc(cr.summary||"")+'</p>'+(cr.highlights||[]).map(function(h){return '<div class="am-kv"><span>'+esc(h)+'</span></div>'}).join("")+'</div></div>'}
-    if(r==="reports"){var rp=STATE.reportRes||{};return '<div class="am-card"><h2>Personalised Reports</h2><div class="am-chips" style="margin:14px 0">'+[["career","Career"],["marriage","Marriage"],["year","Year Ahead"],["wealth","Wealth"]].map(function(t){return '<button type="button" class="am-chip'+(STATE.reportTopic===t[0]?" active":"")+'" data-rep="'+t[0]+'">'+t[1]+'</button>'}).join("")+'</div><h3>'+esc(rp.title||"Career Blueprint")+'</h3><p>'+esc(rp.summary||"")+'</p><div class="am-kv"><span>Window</span><strong>'+esc(rp.window||"")+'</strong></div></div>'}
-    if(r==="journal"){return '<div>'+STATE.journal.map(function(a){return '<div class="am-card" style="margin-bottom:14px"><div class="am-jcover '+esc(a.th||a.theme)+'">'+esc(a.sym||a.symbol)+'</div><h3>'+esc(a.t||a.title)+'</h3><p>'+esc((a.b||a.body||[])[0]||"")+'</p></div>'}).join("")+'</div>'}
-    if(r==="pandit"){return '<div class="am-card" style="max-width:560px"><h2>Talk to a real pundit</h2><div class="am-field"><label>Mobile / WhatsApp</label><input class="am-input" placeholder="+91 98765 43210"></div><button type="button" class="am-btn" id="pdSubmitBtn">Send request &rarr;</button>'+(STATE.panditMsg?'<p style="margin-top:10px;color:#2c6e3b">'+esc(STATE.panditMsg)+'</p>':'')+'</div>'}
-    var p=STATE.panchang,prof=(STATE.reportRes&&STATE.reportRes.profile)||{};return '<div class="am-grid-2"><div class="am-card am-wcard"><h2>'+esc(STATE.profile.name)+'</h2><div class="am-kv"><span>Birth</span><strong>'+esc(STATE.profile.dob+" "+STATE.profile.tob+" "+STATE.profile.city)+'</strong></div><div class="am-kv"><span>Rashi</span><strong>'+esc(prof.rashi||p.active_rashi)+'</strong></div><div class="am-kv"><span>Lagna</span><strong>'+esc(prof.lagna||"Meena")+'</strong></div><button type="button" class="am-btn" style="margin-top:14px" data-open-prof="1">Edit Birth Chart</button></div><div class="am-card"><h2>Today\'s Panchang</h2><div class="am-kv"><span>Tithi</span><strong>'+esc(p.tithi)+'</strong></div><div class="am-kv"><span>Nakshatra</span><strong>'+esc(p.nakshatra)+'</strong></div><div class="am-kv"><span>Abhijit</span><strong>'+esc(p.abhijit)+'</strong></div></div></div>';
+  function shell() {
+    var root = $("#amRoot");
+    root.innerHTML = '<div class="shell"><aside class="side"><div class="logo"><img src="/static/icon.svg" alt=""><div><b>astromuni</b><small>' + esc(t("tagline").slice(0, 0)) + 'Personal Vedic guide</small></div></div><nav class="nav" aria-label="Main">' + navHtml() + '</nav><div class="push"></div>' + moonCard() + '</aside>' +
+      '<div class="main"><header class="top"><button type="button" class="icon-btn menu" data-act="drawer" aria-label="Menu">' + svg("menu") + '</button><div class="date"><h4 id="topDate">—</h4><small id="topTithi"></small></div><span class="spacer"></span>' +
+      '<form class="search" id="topSearch" role="search"><span class="icon-btn">' + svg("search") + '</span><input id="topQ" type="search" placeholder="' + esc(t("search_ph")) + '" aria-label="' + esc(t("search_ph")) + '"></form>' +
+      '<button type="button" class="btn" data-go="ask">' + svg("ask").replace("<svg", '<svg width="18" height="18"') + esc(t("ask_muni")) + '</button></header><main class="page" id="view"></main></div></div>' +
+      '<nav class="tabbar" aria-label="Tabs">' + [["hub", "n_cosmic"], ["ask", "n_ask_s"], ["horoscope", "n_horo_s"], ["chart", "n_my"]].map(function (n) { return '<button type="button" data-go="' + n[0] + '" class="' + (S.route === n[0] ? "on" : "") + '">' + svg(n[0]) + '<span>' + esc(t(n[1])) + '</span></button>'; }).join("") + '</nav>';
+    paintTop();
   }
-  function render(){var root=document.getElementById("amRoot");if(root)root.innerHTML=renderShell(STATE.route==="hub"?renderHub():(STATE.route==="ask"?renderAsk():renderSubpage()))}
-  function sendQuestion(qText){var q=(qText||"").trim();if(!q)return;STATE.route="ask";STATE.messages.push({role:"user",text:q});render();post("/api/v09/ask",{mode:STATE.askMode,question:q,profile:STATE.profile,lang:STATE.lang}).then(function(res){STATE.messages.push({role:"ai",title:res.title,answer:res.answer,steps:res.steps});render()})}
-  function refreshAll(){
-    post("/api/v09/panchang",{city:STATE.profile.city,profile:STATE.profile}).then(function(r){if(r&&r.tithi){STATE.panchang=r;STATE.selectedSign=r.active_rashi||STATE.selectedSign;render()}});
-    post("/api/v09/horoscope",{lang:STATE.lang}).then(function(r){if(r&&r.signs&&r.signs.length){STATE.horoscope=r;render()}});
-    post("/api/v09/compatibility",{person_a:STATE.profile,person_b:STATE.partner,lang:STATE.lang}).then(function(r){if(r&&r.total_points){STATE.compat=r;render()}});
-    post("/api/v09/calculator",{type:STATE.calcType,profile:STATE.profile,lang:STATE.lang}).then(function(r){if(r&&r.headline){STATE.calcRes=r;render()}});
-    post("/api/v09/report",{topic:STATE.reportTopic,profile:STATE.profile,lang:STATE.lang}).then(function(r){if(r&&r.title){STATE.reportRes=r;render()}});
+  function paintTop() {
+    if (S.pan) { var d = $("#topDate"), s = $("#topTithi"); if (d) d.textContent = S.pan.date_label; if (s) s.textContent = S.pan.tithi; }
+    else { var dd = $("#topDate"); if (dd) dd.textContent = new Date().toLocaleDateString(lang() === "hi" ? "hi-IN" : "en-IN", { weekday: "long", day: "numeric", month: "long" }); }
   }
-  document.addEventListener("click",function(ev){
-    var t=ev.target,lb=t.closest("[data-lang]");
-    if(lb){STATE.lang=lb.getAttribute("data-lang")||"en";sSet("am_lang_v09",STATE.lang);var m=document.getElementById("amLangModal");if(m)m.classList.add("hidden");refreshAll();return}
-    var rt=t.closest("[data-route]");if(rt){STATE.route=rt.getAttribute("data-route");STATE.drawerOpen=false;render();return}
-    if(t.closest("#amMenuBtn")){STATE.drawerOpen=!STATE.drawerOpen;render();return}
-    if(t.id==="amDrawerBg"){STATE.drawerOpen=false;render();return}
-    if(t.closest("[data-open-prof]")){STATE.profileModal=true;render();return}
-    if(t.closest("#pfSkip")||t.id==="amProfBg"){STATE.profileModal=false;render();return}
-    if(t.closest("#pfSave")){STATE.profile.name=(document.getElementById("pfName").value||STATE.profile.name).trim();STATE.profile.dob=document.getElementById("pfDob").value||STATE.profile.dob;STATE.profile.tob=document.getElementById("pfTob").value||STATE.profile.tob;STATE.profile.city=(document.getElementById("pfCity").value||STATE.profile.city).trim();sSet("am_profile_v09",JSON.stringify(STATE.profile));STATE.profileModal=false;refreshAll();return}
-    var md=t.closest("[data-mode]");if(md){STATE.askMode=md.getAttribute("data-mode");render();return}
-    var sg=t.closest("[data-sign]");if(sg){STATE.selectedSign=sg.getAttribute("data-sign");render();return}
-    var cl=t.closest("[data-calc]");if(cl){STATE.calcType=cl.getAttribute("data-calc");STATE.route="calculators";post("/api/v09/calculator",{type:STATE.calcType,profile:STATE.profile,lang:STATE.lang}).then(function(r){STATE.calcRes=r;render()});return}
-    var rp=t.closest("[data-rep]");if(rp){STATE.reportTopic=rp.getAttribute("data-rep");STATE.route="reports";post("/api/v09/report",{topic:STATE.reportTopic,profile:STATE.profile,lang:STATE.lang}).then(function(r){STATE.reportRes=r;render()});return}
-    var qk=t.closest("[data-quick]");if(qk){sendQuestion(qk.getAttribute("data-quick"));return}
-    if(t.closest("#hubAskSend")){sendQuestion((document.getElementById("hubAskInput")||{}).value);return}
-    if(t.closest("#askMainSend")){sendQuestion((document.getElementById("askMainInput")||{}).value);return}
-    if(t.closest("#runCompatBtn")){STATE.partner.name=(document.getElementById("ptName").value||"Partner").trim();STATE.partner.dob=document.getElementById("ptDob").value||STATE.partner.dob;STATE.partner.tob=document.getElementById("ptTob").value||STATE.partner.tob;STATE.partner.city=(document.getElementById("ptCity").value||STATE.partner.city).trim();post("/api/v09/compatibility",{person_a:STATE.profile,person_b:STATE.partner,lang:STATE.lang}).then(function(r){STATE.compat=r;render()});return}
-    if(t.closest("#pdSubmitBtn")){STATE.panditMsg="Request received! Our Vedic Acharya team will reach out shortly.";render()}
+  function go(route, replace) {
+    S.route = route; S.drawer = false; closeDrawer();
+    if (location.hash.slice(1) !== route) { if (replace) history.replaceState(null, "", "#" + route); else location.hash = route; }
+    shell(); renderView(); loadFor(route); window.scrollTo(0, 0);
+  }
+  function openDrawer() {
+    var el = document.createElement("div"); el.className = "drawer"; el.id = "drawer";
+    el.innerHTML = '<div class="sheet"><div class="logo"><img src="/static/icon.svg" alt=""><b>astromuni</b></div><nav class="nav">' + navHtml() + '<button type="button" data-go="compat">' + svg("heart") + '<span class="lbl">' + esc(t("n_compat")) + '</span></button><button type="button" data-go="panchang">' + svg("cal") + '<span class="lbl">' + esc(t("n_panchang")) + '</span></button></nav><div class="push"></div>' + moonCard() + '</div>';
+    el.onclick = function (e) { if (e.target === el || e.target.closest("[data-go],[data-act]")) closeDrawer(); };
+    document.body.appendChild(el);
+  }
+  function closeDrawer() { var d = $("#drawer"); if (d) d.remove(); }
+
+  /* ------------------------------------------------------------ views */
+  function renderView() {
+    var v = $("#view"); if (!v) return;
+    var views = { hub: viewHub, ask: viewAsk, horoscope: viewHoro, chart: viewChart, calculators: viewCalc, reports: viewReports, learn: viewLearn, compat: viewCompat, panchang: viewPanchang };
+    v.innerHTML = (views[S.route] || viewHub)();
+    paintTop();
+    if (S.route === "ask") { var th = $("#thread"); if (th) th.scrollTop = th.scrollHeight; }
+    if (S.route === "compat") mountCompatPicker();
+  }
+  var skel = '<div class="card"><div class="skeleton"></div><p></p><div class="skeleton"></div></div>';
+  var errBox = function (m) { return '<div class="notice">' + esc(m) + ' <button type="button" class="btn link" data-act="retry">' + esc(t("retry")) + '</button></div>'; };
+
+  function greet() { var h = new Date().getHours(); return t(h < 12 ? "gm" : h < 17 ? "ga" : "ge"); }
+  function orbit(moonSign) {
+    return '<svg class="orbit" viewBox="0 0 300 300" role="img" aria-label="' + esc(t("weather")) + '"><circle class="ring" cx="150" cy="150" r="140"/><circle class="ring d" cx="150" cy="150" r="112"/><circle class="ring" cx="150" cy="150" r="82"/><g class="spin"><circle cx="150" cy="10" r="9" fill="#8a5a37"/><circle cx="48" cy="236" r="6" fill="#d9a93a"/></g><circle cx="150" cy="150" r="58" fill="#fbe9ae" stroke="#d9a93a"/><circle cx="150" cy="150" r="44" fill="#f4d675"/>' +
+      '<text x="150" y="152" text-anchor="middle" font-size="40" fill="#6b3a93">' + esc(glyph(moonSign)) + '</text><text x="150" y="182" text-anchor="middle" font-size="10" letter-spacing="3" fill="#6b4a2a">' + esc(signName(moonSign).toUpperCase()) + '</text></svg>';
+  }
+  function horoCard(sg) {
+    if (!sg) return skel;
+    return '<div class="card"><div class="reading"><div class="badge">' + esc(glyph(sg.key)) + '</div><div class="grow"><div class="eyebrow">' + esc(signName(sg.key)) + ' • ' + esc(t("daily_horo")) + '</div><h3>' + esc(sg.headline) + '</h3><div class="bar" role="img" aria-label="' + esc(t("support")) + ' ' + sg.support + '%"><i data-w="' + sg.support + '"></i></div><p class="small muted">' + esc(t("support")) + ': ' + sg.support + '%</p><ul>' + sg.lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join("") + '</ul></div></div></div>';
+  }
+  function viewHub() {
+    var mine = S.horo && S.horo.mine, moon = (S.chart && S.chart.moon && S.chart.moon.sign) || (mine && mine.key) || "Simha", p = S.pan;
+    var chips = CHIPS[lang()] || CHIPS.en;
+    var sel = S.horo && S.horo.signs ? S.horo.signs.filter(function (x) { return x.key === (S.sel || moon); })[0] : null;
+    return '<section class="hero"><div><div class="eyebrow line">' + esc(t("compass")) + '</div><h1>' + esc(greet()) + (first() ? ", " + esc(first()) + "." : ".") + '<em>' + esc(t("stars")) + '</em></h1><p class="lead">' + esc(t("hero_lead")) + '</p><div class="row"><button type="button" class="btn" data-go="ask">' + esc(t("cta_ask")) + ' →</button><button type="button" class="btn ghost" data-go="chart">' + esc(t("cta_chart")) + '</button></div></div>' +
+      '<div class="card weather tint"><div class="row between"><span class="eyebrow">' + esc(t("weather")) + '</span><span class="chip">● ' + esc(t("live")) + '</span></div>' + orbit(moon) +
+      '<div class="row between"><div><small class="muted">' + esc(t("support")) + '</small><div><b>' + (p ? esc(p.energy) + "%" : "—") + '</b></div></div><div class="grow"><div class="bar"><i data-w="' + (p ? esc(p.energy) : 0) + '"></i></div></div></div><p class="small muted">' + esc(t("support_note")) + '</p>' +
+      '<div class="stat3"><div><small>' + esc(t("guiding")) + '</small><b>' + esc(p ? plName(p.guiding_planet) : "—") + '</b></div><div><small>' + esc(t("focus")) + '</small><b>' + esc(p ? p.focus : "—") + '</b></div><div><small>' + esc(t("abhijit")) + '</small><b>' + esc(p && p.abhijit ? p.abhijit : "—") + '</b></div></div></div></section>' +
+      '<section class="card insight"><div><div class="eyebrow">' + esc(t("insight")) + '</div><h3>' + esc(mine ? mine.headline + " " + (mine.lines[0] || "") : "…") + '</h3></div><button type="button" class="btn link" data-go="horoscope">' + esc(t("read_full")) + ' →</button></section>' +
+      '<section><div class="sec-head"><div><div class="eyebrow">' + esc(t("personal")) + '</div><h2>' + esc(t("whats_mind")) + '</h2><p class="muted">' + esc(t("ask_sub")) + '</p></div><div class="seg" role="tablist"><button type="button" data-mode="muni" class="' + (S.mode === "muni" ? "on" : "") + '">' + esc(t("muni_ai")) + '</button><button type="button" data-mode="astropedia" class="' + (S.mode === "astropedia" ? "on" : "") + '">' + esc(t("astropedia")) + '</button></div></div>' +
+      '<form class="askbox" id="hubAsk"><input id="hubQ" type="text" maxlength="500" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form>' +
+      '<div class="row mt-s"><span class="eyebrow">' + esc(t("try_asking")) + '</span></div><div class="chips scroll">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></section>' +
+      '<section><div class="eyebrow center">' + esc(t("daily_horo")) + '</div><h2 class="center">' + esc(t("glimpse")) + '</h2><p class="center muted mb-s">' + esc(t("glimpse_sub")) + '</p>' + signStrip(S.sel || moon) + (S.horoErr ? "" : horoCard(sel)) + '</section>' +
+      '<section><div class="sec-head"><div><div class="eyebrow">' + esc(t("toolkit")) + '</div><h2>' + esc(t("map_of_you")) + '</h2><p class="muted">' + esc(t("toolkit_sub")) + '</p></div></div><div class="grid3">' +
+      '<button type="button" class="card tint tool" data-go="chart"><div class="ico">' + svg("chart").replace("<svg", '<svg width="24" height="24"') + '</div><div class="eyebrow">' + esc(t("your_chart")) + '</div><h3>' + esc(t("kundli_t")) + '</h3><p class="muted">' + esc(t("kundli_d")) + '</p><b>' + esc(t("open_chart")) + ' →</b></button>' +
+      '<button type="button" class="card tool" data-go="compat"><div class="ico">' + svg("heart").replace("<svg", '<svg width="24" height="24"') + '</div><div class="eyebrow">' + esc(t("relationships")) + '</div><h3>' + esc(t("compat_t")) + '</h3><p class="muted">' + esc(t("compat_d")) + '</p><b>' + esc(t("check_compat")) + ' →</b></button>' +
+      '<button type="button" class="card tool" data-go="panchang"><div class="ico">' + svg("cal").replace("<svg", '<svg width="24" height="24"') + '</div><div class="eyebrow">' + esc(t("vedic_cal")) + '</div><h3>' + esc(t("panchang_t")) + '</h3><div class="kv"><div><span>' + esc(t("tithi")) + '</span><b>' + esc(p ? p.tithi : "—") + '</b></div><div><span>' + esc(t("nakshatra")) + '</span><b>' + esc(p ? p.nakshatra : "—") + '</b></div><div><span>' + esc(t("abhijit")) + '</span><b>' + esc(p && p.abhijit ? p.abhijit : "—") + '</b></div></div><b>' + esc(t("view_panchang")) + ' →</b></button></div></section>' +
+      '<section><div class="sec-head"><div><div class="eyebrow">' + esc(t("free_calc")) + '</div><h2>' + esc(t("small_q")) + '</h2></div><button type="button" class="btn ghost" data-go="calculators">' + esc(t("view_calc")) + ' →</button></div><div class="grid4">' +
+      [["moon", "c_moon", "☾"], ["ascendant", "c_asc", "☀︎"], ["nakshatra", "c_nak", "✦"], ["sade_sati", "c_sade", "♄"]].map(function (c) { return '<button type="button" class="card flat calc" data-calc="' + c[0] + '"><span class="tool"><span class="ico">' + c[2] + '</span></span><span><h4>' + esc(t(c[1])) + '</h4><p class="small muted">' + esc(t(c[1] + "_d")) + '</p></span></button>'; }).join("") + '</div></section>' +
+      '<section class="card dark banner"><svg viewBox="0 0 300 260" aria-hidden="true"><circle cx="150" cy="130" r="100" fill="none" stroke="#c9972b" stroke-opacity=".5"/><circle cx="150" cy="130" r="64" fill="none" stroke="#c9972b" stroke-opacity=".7"/><path d="M168 76a56 56 0 100 108a44 44 0 010-108z" fill="#ecc65f"/></svg><div><div class="eyebrow">' + esc(t("pers_reports")) + '</div><h2>' + esc(t("beyond")) + '</h2><p>' + esc(t("reports_d")) + '</p><div class="chips mt-s">' + ["career", "marriage", "wealth"].map(function (r) { return '<span class="chip">' + esc(t("r_" + r)) + '</span>'; }).join("") + '</div><button type="button" class="btn gold mt-m" data-go="reports">' + esc(t("explore_reports")) + ' →</button></div></section>' +
+      '<section><div class="sec-head"><div><div class="eyebrow">' + esc(t("journal")) + '</div><h2>' + esc(t("wisdom")) + '</h2></div><button type="button" class="btn link" data-go="learn">' + esc(t("browse_j")) + ' →</button></div><div class="grid3">' +
+      [["a1", "♄", "PLANETS • 8 " + t("min"), "Saturn isn't punishing you. It's asking you to build.", "A gentler way to understand discipline, delay, and the gift of staying power.", "Saturn"], ["a2", "☾", "NAKSHATRAS • 6 " + t("min"), "What your Moon remembers", "Your nakshatra reveals the emotional home you instinctively return to.", "Nakshatra"], ["a3", "☉", "VEDIC LIVING • 5 " + t("min"), "Planning your week with the planets", "Work with each day's ruling energy instead of pushing against it.", "Graha"]].map(function (a) { return '<button type="button" class="article" data-learn="' + esc(a[5]) + '"><div class="art ' + a[0] + '">' + a[1] + '</div><div class="eyebrow">' + esc(a[2]) + '</div><h3>' + esc(a[3]) + '</h3><p class="muted small">' + esc(a[4]) + '</p></button>'; }).join("") + '</div></section>' +
+      '<footer class="foot"><div class="row between"><span><b>astromuni</b> · ' + esc(t("tagline")) + '</span><span>© 2026 AstroMuni. ' + esc(t("guidance_not_certainty")) + '</span></div></footer>';
+  }
+  function signStrip(sel) {
+    return '<div class="signs" role="listbox">' + SIGNS.map(function (s) { return '<button type="button" class="sign ' + (s[0] === sel ? "on" : "") + '" data-sign="' + s[0] + '" role="option" aria-selected="' + (s[0] === sel) + '"><span class="g">' + s[3] + '︎</span>' + esc(lang() === "hi" ? s[2] : s[1]) + '</button>'; }).join("") + '</div>';
+  }
+
+  function viewHoro() {
+    if (!S.horo) return S.err_horo ? errBox(S.err_horo) : skel;
+    var sg = S.horo.signs.filter(function (x) { return x.key === S.sel; })[0] || S.horo.signs[0];
+    return '<div><div class="eyebrow">' + esc(t("horo_title")) + '</div><h2>' + esc(t("glimpse")) + '</h2><p class="muted">' + esc(t("glimpse_sub")) + '</p></div>' + signStrip(sg.key) + horoCard(sg) +
+      '<div class="card"><h3>' + esc(t("horo_method")) + '</h3><p class="muted small mb-s">' + esc(S.horo.method) + '</p><div class="scroll-x"><table class="t"><thead><tr><th>' + esc(t("planet")) + '</th><th>' + esc(t("house")) + ' (' + esc(t("from_moon")) + ')</th><th>' + esc(t("sign")) + '</th><th></th></tr></thead><tbody>' +
+      sg.facts.map(function (f) { return '<tr><td>' + esc(plName(f.planet)) + (f.retrograde ? " ℞" : "") + '</td><td>' + f.house + '</td><td>' + esc(signName(f.sign)) + '</td><td class="' + (f.favourable ? "yes" : "no") + '">' + esc(t(f.favourable ? "fav" : "chall")) + '</td></tr>'; }).join("") + '</tbody></table></div></div>';
+  }
+
+  /* North Indian chart */
+  var POS = { 1: [150, 78], 2: [76, 30], 3: [30, 76], 4: [78, 150], 5: [30, 224], 6: [76, 270], 7: [150, 222], 8: [224, 270], 9: [270, 224], 10: [222, 150], 11: [270, 76], 12: [224, 30] };
+  function kundliSvg(c) {
+    var li = SIGNS.map(function (s) { return s[0]; }).indexOf(c.lagna), byH = {};
+    Object.keys(c.planets || {}).forEach(function (p) { var h = c.planets[p].house; if (h) (byH[h] = byH[h] || []).push(ABBR[p] + (c.planets[p].retrograde ? "ᴿ" : "")); });
+    var out = '<svg class="kundli" viewBox="0 0 300 300" role="img" aria-label="' + esc(t("chart_title")) + '"><rect class="ln" x="1" y="1" width="298" height="298"/><path class="ln" d="M1 1L299 299M299 1L1 299M150 1L299 150L150 299L1 150Z"/>';
+    for (var h = 1; h <= 12; h++) {
+      var p = POS[h], n = ((li + h - 1) % 12) + 1, ps = byH[h] || [];
+      out += '<text class="sg' + (h === 1 ? " lag" : "") + '" x="' + p[0] + '" y="' + (p[1] - (ps.length ? 12 : -4)) + '" text-anchor="middle">' + n + '</text>';
+      for (var i = 0; i < ps.length; i += 2) out += '<text class="pl" x="' + p[0] + '" y="' + (p[1] + 4 + (i / 2) * 15) + '" text-anchor="middle">' + esc(ps.slice(i, i + 2).join(" ")) + '</text>';
+    }
+    return out + '</svg>';
+  }
+  function viewChart() {
+    var c = S.chart; if (!c) return S.err_chart ? errBox(S.err_chart) : skel;
+    var noHouse = !c.lagna;
+    var rows = Object.keys(c.planets || {}).map(function (p) { var x = c.planets[p]; return '<tr><td><b>' + esc(plName(p)) + '</b></td><td>' + esc(signName(x.sign)) + '</td><td>' + (x.house || "—") + '</td><td>' + esc(x.nakshatra || "") + '</td><td>' + (x.retrograde ? esc(t("yes")) : "") + '</td></tr>'; }).join("");
+    var d = c.dasha;
+    return '<div class="sec-head"><div><div class="eyebrow">' + esc(t("your_chart")) + '</div><h2>' + esc(t("chart_title")) + '</h2><p class="muted">' + esc(S.profile.name) + ' · ' + esc(S.profile.dob) + (S.profile.tob ? " " + esc(S.profile.tob) : "") + ' · ' + esc(S.profile.place) + '</p></div><button type="button" class="btn ghost" data-act="edit">' + esc(t("edit")) + '</button></div>' +
+      (noHouse ? '<div class="notice">' + esc(t("needs_time")) + '</div>' : "") +
+      '<div class="grid2"><div class="card tint">' + (noHouse ? "" : kundliSvg(c)) + '<p class="small muted center">' + esc(t("chart_note")) + '</p></div><div class="card"><div class="kv">' +
+      '<div><span>' + esc(t("lagna")) + '</span><b>' + esc(c.lagna ? signName(c.lagna) : "—") + '</b></div><div><span>' + esc(t("moon")) + '</span><b>' + esc(signName(c.moon.sign)) + (c.moon.pada ? ' · ' + esc(c.moon.nakshatra) + ' ' + c.moon.pada : "") + '</b></div>' +
+      (d ? '<div><span>' + esc(t("dasha_now")) + '</span><b>' + esc(plName(d.maha)) + ' – ' + esc(plName(d.antar)) + '</b></div><div><span>' + esc(t("until")) + '</span><b>' + esc(d.antar_end) + '</b></div>' : "") + '</div>' +
+      (c.withheld && c.withheld.length ? '<div class="notice mt-m"><b>' + esc(t("withheld_t")) + ':</b> ' + esc(c.withheld.join(", ")) + '</div>' : "") + (c.warnings && c.warnings.length ? '<p class="small muted mt-m">' + esc(c.warnings.join(" ")) + '</p>' : "") +
+      '<div class="row mt-m"><button type="button" class="btn" data-act="pandit">' + esc(t("pandit")) + '</button><button type="button" class="btn ghost" data-go="ask">' + esc(t("cta_ask")) + '</button></div></div></div>' +
+      '<div class="card"><div class="scroll-x"><table class="t"><thead><tr><th>' + esc(t("planet")) + '</th><th>' + esc(t("sign")) + '</th><th>' + esc(t("house")) + '</th><th>' + esc(t("nakshatra")) + '</th><th>' + esc(t("retro")) + '</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  }
+
+  function viewPanchang() {
+    var p = S.pan; if (!p) return S.err_pan ? errBox(S.err_pan) : skel;
+    var item = function (k, v) { return '<div class="card flat"><div class="eyebrow">' + esc(k) + '</div><h3>' + esc(v || "—") + '</h3></div>'; };
+    return '<div class="sec-head"><div><div class="eyebrow">' + esc(t("vedic_cal")) + '</div><h2>' + esc(t("panchang_t")) + '</h2><p class="muted">' + esc(p.date_label) + ' · ' + esc(p.paksha) + ' · 📍 ' + esc(p.place || "") + '</p></div><button type="button" class="btn ghost" data-act="where">📍 ' + esc(t("f_place")) + '</button></div><div class="grid3">' +
+      item(t("tithi"), p.tithi) + item(t("nakshatra"), p.nakshatra + " (" + plName(p.nakshatra_lord) + ")") + item(t("yoga"), p.yoga) + item(t("karana"), p.karana) + item(t("guiding"), plName(p.guiding_planet)) + item(t("focus"), p.focus) +
+      item("Sunrise", p.sunrise) + item("Sunset", p.sunset) + item(t("abhijit"), p.abhijit) + item("Rahu Kaal", p.rahu_kaal) + '</div><p class="small muted">' + esc(p.method || "") + '</p>';
+  }
+
+  function replyHtml(m) {
+    var d = m.data; if (!d) return '<div class="reply"><span class="typing"><i></i><i></i><i></i></span> <span class="muted small">' + esc(t("thinking")) + '</span></div>';
+    var more = (d.reasons && d.reasons.length > 1) || (d.evidence && d.evidence.length);
+    return '<div class="reply">' + (d.title ? '<div class="row between"><h3>' + esc(d.title) + '</h3>' + (d.confidence && d.confidence.level !== "n/a" ? '<span class="badge-pill ' + esc(d.confidence.level) + '">' + esc(t("confidence")) + ': ' + esc(t(d.confidence.level)) + '</span>' : "") + '</div>' : "") + '<p class="ans">' + esc(d.answer) + '</p>' +
+      (more && !d.safety ? '<details><summary>' + esc(t("why")) + '</summary>' + (d.reasons && d.reasons.length ? '<div class="eyebrow">' + esc(t("basis")) + '</div><ul>' + d.reasons.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") + (d.timing && d.timing.length ? '<div class="eyebrow">' + esc(t("timing")) + '</div><ul>' + d.timing.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") +
+        (d.confidence && d.confidence.why ? '<p class="small muted">' + esc(d.confidence.why) + '</p>' : "") + (d.evidence && d.evidence.length ? '<div class="eyebrow">' + esc(t("sources")) + '</div><ul>' + d.evidence.map(function (e) { return '<li><b>' + esc(e.title) + '</b> <span class="src">' + (/^https?:\/\//.test(e.url) ? '<a href="' + esc(e.url) + '" target="_blank" rel="noopener noreferrer">' + esc(e.source) + '</a>' : esc(e.source)) + ' · ' + esc(e.licence) + '</span></li>'; }).join("") + '</ul>' : "") + '</details>' : "") +
+      (d.caveats && d.caveats.length && !d.safety ? '<p class="small muted">' + esc(d.caveats.join(" ")) + '</p>' : "") + '</div>';
+  }
+  function threadHtml() {
+    if (!S.msgs.length) return '<div class="reply"><div class="eyebrow">' + esc(t("today_reading")) + '</div><h3>' + esc(t("namaste", { n: first() })) + '</h3><p class="muted">' + esc(t("namaste_sub")) + '</p></div><div class="center"><b>' + esc(t("muni_listening")) + '</b><p class="small muted">' + esc(t("muni_q")) + '</p></div>';
+    return S.msgs.map(function (m) { return m.role === "user" ? '<div class="bubble">' + esc(m.text) + '</div>' : replyHtml(m); }).join("");
+  }
+  function muniSvg() {
+    return '<svg viewBox="0 0 240 280" aria-hidden="true"><circle cx="120" cy="140" r="104" fill="none" stroke="#d9a93a" stroke-opacity=".5"/><circle cx="120" cy="140" r="76" fill="none" stroke="#d9a93a" stroke-opacity=".4"/><circle cx="120" cy="82" r="24" fill="#4b2a18"/><circle cx="120" cy="100" r="30" fill="#6a4026"/><path d="M52 262c0-62 28-96 68-96s68 34 68 96z" fill="#5b3822"/><path d="M96 190l24 40 24-40" fill="none" stroke="#c9972b" stroke-width="3"/></svg>';
+  }
+  function viewAsk() {
+    var chips = CHIPS[lang()] || CHIPS.en;
+    return '<div class="ask"><div class="muni">' + muniSvg() + '<h3>Astromuni</h3><span class="chip">AI guide</span><p class="small muted">' + esc(t("hero_lead").slice(0, 0)) + (S.chart && S.chart.moon ? esc(t("moon_sign")) + ': ' + esc(signName(S.chart.moon.sign)) : "") + '</p></div>' +
+      '<div class="chat"><div class="row between pad-s"><div><b>' + esc(t("private")) + '</b></div><div class="seg"><button type="button" data-mode="muni" class="' + (S.mode === "muni" ? "on" : "") + '">' + esc(t("muni_ai")) + '</button><button type="button" data-mode="astropedia" class="' + (S.mode === "astropedia" ? "on" : "") + '">' + esc(t("astropedia")) + '</button></div></div><div class="thread" id="thread">' + threadHtml() + '</div>' +
+      '<div class="composer"><div class="chips scroll">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div><form class="askbox" id="askForm"><input id="askQ" type="text" maxlength="500" autocomplete="off" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form><p class="disclaimer">' + esc(t("disclaimer")) + '</p></div></div></div>';
+  }
+  async function ask(q) {
+    q = (q || "").trim(); if (!q || S.busy) return;
+    S.busy = true; S.msgs.push({ role: "user", text: q }); var m = { role: "bot", data: null }; S.msgs.push(m);
+    if (S.route !== "ask") go("ask"); else renderView();
+    try { m.data = await api("/api/v10/ask", Object.assign(body({ question: q, mode: S.mode }), S.mode === "astropedia" ? { profile: null } : {})); }
+    catch (e) { m.data = { answer: e.message, title: "", reasons: [], evidence: [], caveats: [], safety: "error" }; }
+    S.busy = false; renderView(); var i = $("#askQ"); if (i) i.focus();
+  }
+
+  async function runCalc(type) {
+    S.calcType = type; S.calc = { loading: true }; renderView();
+    try { S.calc = await api("/api/v10/calculator", body({ type: type })); } catch (e) { S.calc = { error: e.message }; }
+    renderView();
+  }
+  function viewCalc() {
+    var items = [["moon", "c_moon", "☾"], ["ascendant", "c_asc", "☀︎"], ["nakshatra", "c_nak", "✦"], ["sade_sati", "c_sade", "♄"]], r = S.calc;
+    return '<div><div class="eyebrow">' + esc(t("free_calc")) + '</div><h2>' + esc(t("calc_title")) + '</h2></div><div class="grid4">' + items.map(function (c) { return '<button type="button" class="card calc ' + (S.calcType === c[0] ? "tint" : "flat") + '" data-calc="' + c[0] + '"><span class="tool"><span class="ico">' + c[2] + '</span></span><span><h4>' + esc(t(c[1])) + '</h4><p class="small muted">' + esc(t(c[1] + "_d")) + '</p></span></button>'; }).join("") + '</div>' +
+      (!r || r.loading ? skel : r.error ? errBox(r.error) : '<div class="card tint"><div class="eyebrow">' + esc(r.calculator || "") + '</div><h2>' + esc(r.headline) + '</h2><p class="muted">' + esc(r.subline || "") + '</p><p class="mt-m">' + esc(r.summary || "") + '</p>' + ((r.highlights || []).length ? '<ul>' + r.highlights.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>' : "") + '</div>');
+  }
+
+  async function runReport(topic) {
+    S.repTopic = topic; S.rep = { loading: true }; renderView();
+    try { S.rep = await api("/api/v10/report", body({ topic: topic })); } catch (e) { S.rep = { error: e.message }; }
+    renderView();
+  }
+  function viewReports() {
+    var r = S.rep;
+    return '<div><div class="eyebrow">' + esc(t("pers_reports")) + '</div><h2>' + esc(t("report_title")) + '</h2><p class="muted">' + esc(t("reports_d")) + '</p></div><div class="chips">' + TOPICS.map(function (k) { return '<button type="button" class="chip ' + (S.repTopic === k ? "on" : "") + '" data-rep="' + k + '">' + esc(t("r_" + k)) + '</button>'; }).join("") + '</div>' +
+      (!r || r.loading ? skel : r.error ? errBox(r.error) : '<div class="card tint">' + replyHtml({ data: Object.assign({}, r, { title: t("r_" + S.repTopic) }) }).replace('class="reply"', 'class="reply flat"') + '</div>' + (r.houses && r.houses.length ? '<div class="card"><div class="scroll-x"><table class="t"><thead><tr><th>' + esc(t("house")) + '</th><th>' + esc(t("sign")) + '</th><th>Lord</th><th></th></tr></thead><tbody>' + r.houses.map(function (h) { return '<tr><td>' + h.house + '</td><td>' + esc(signName(h.sign)) + '</td><td>' + esc(plName(h.lord)) + '</td><td class="' + (h.points > 0 ? "yes" : h.points < 0 ? "no" : "") + '">' + (h.points > 0 ? esc(t("fav")) : h.points < 0 ? esc(t("chall")) : "") + '</td></tr>'; }).join("") + '</tbody></table></div></div>' : ""));
+  }
+
+  async function runLearn(q) {
+    S.learnQ = q; S.learn = { loading: true }; if (S.route !== "learn") go("learn"); else renderView();
+    try { S.learn = await api("/api/v10/ask", { question: q, lang: lang(), mode: "astropedia" }); } catch (e) { S.learn = { error: e.message }; }
+    renderView();
+  }
+  function viewLearn() {
+    var r = S.learn;
+    return '<div><div class="eyebrow">' + esc(t("n_learn")) + '</div><h2>' + esc(t("learn_title")) + '</h2><p class="muted">' + esc(t("learn_sub")) + '</p></div><form class="askbox" id="learnForm"><input id="learnQ" type="text" maxlength="200" value="' + esc(S.learnQ) + '" placeholder="' + esc(t("learn_ph")) + '" aria-label="' + esc(t("learn_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("search")) + '">' + svg("search").replace("<svg", '<svg width="20" height="20"') + '</button></form>' +
+      '<div class="chips">' + LEARN.map(function (x) { return '<button type="button" class="chip" data-learn="' + esc(x[1]) + '">' + esc(x[0]) + '</button>'; }).join("") + '</div>' +
+      (!r ? "" : r.loading ? skel : r.error ? errBox(r.error) : '<div class="card tint">' + replyHtml({ data: Object.assign({}, r, { confidence: null }) }) + '</div>');
+  }
+
+  /* compatibility */
+  var partnerPick = null;
+  function viewCompat() {
+    var r = S.compat, f = S.partner || { name: "", dob: "", tob: "", time_certainty: "exact" };
+    return '<div><div class="eyebrow">' + esc(t("relationships")) + '</div><h2>' + esc(t("compat_title")) + '</h2><p class="muted">' + esc(t("compat_d")) + '</p></div><form class="card" id="compatForm" novalidate><h3 class="mb-s">' + esc(t("partner")) + '</h3><div class="form-grid"><label class="field"><span>' + esc(t("p_name")) + '</span><input id="cpName" type="text" maxlength="60" value="' + esc(f.name) + '"></label><label class="field"><span>' + esc(t("f_dob")) + '</span><input id="cpDob" type="date" value="' + esc(f.dob) + '"></label>' +
+      '<label class="field"><span>' + esc(t("f_cert")) + '</span><select id="cpCert">' + ["exact", "approx_15min", "part_of_day", "unknown"].map(function (c) { return '<option value="' + c + '"' + (f.time_certainty === c ? " selected" : "") + '>' + esc(t("cert_" + c)) + '</option>'; }).join("") + '</select></label><label class="field"><span>' + esc(t("f_tob")) + '</span><input id="cpTob" type="time" value="' + esc(f.tob || "") + '"></label><div class="full" id="cpPlace"></div></div><p class="err" id="cpErr"></p><button class="btn mt-m" type="submit">' + esc(t("calc_btn")) + '</button></form>' +
+      (!r ? "" : r.loading ? skel : !r.ok ? errBox(r.error || r.message || "") : compatResult(r));
+  }
+  function compatResult(r) {
+    return '<div class="card tint"><div class="row between"><div><div class="eyebrow">' + esc(r.person_a.name || t("you")) + ' & ' + esc(r.person_b.name) + '</div><div class="big">' + r.total + '<small class="muted"> / 36</small></div><p class="muted">' + esc(r.band) + ' · ' + r.percent + '%</p></div></div><div class="mt-m">' +
+      r.kootas.map(function (k) { return '<div class="koota"><b>' + esc(k.name) + (k.exact ? "" : ' <span class="chip">' + esc(t("approx")) + '</span>') + '</b><span>' + k.obtained + ' / ' + k.max + '</span><span class="note small muted">' + esc(k.note) + '</span></div>'; }).join("") + '</div>' + r.notes.map(function (n) { return '<p class="small muted mt-s">• ' + esc(n) + '</p>'; }).join("") + '</div>';
+  }
+  function mountCompatPicker() { if (partnerPick) partnerPick.destroy(); var el = $("#cpPlace"); if (el) partnerPick = AM.placePicker(el, S.partner || null, { noMap: true }); }
+
+  /* ------------------------------------------------------------ modals: settings, where, pandit */
+  function modal(html) { var m = $("#amModal"); m.className = "am-overlay dim"; m.innerHTML = html; m.hidden = false; return m; }
+  function settingsModal() {
+    var m = modal('<div class="win"><h2>' + esc(t("settings")) + '</h2><div class="kv"><div><span>' + esc(t("f_name")) + '</span><b>' + esc(S.profile.name) + '</b></div><div><span>' + esc(t("f_dob")) + '</span><b>' + esc(S.profile.dob) + '</b></div><div><span>' + esc(t("f_tob")) + '</span><b>' + esc(S.profile.tob || "—") + '</b></div><div><span>' + esc(t("f_place")) + '</span><b>' + esc(S.profile.place) + '</b></div></div>' +
+      '<p class="eyebrow mt-m">' + esc(t("change_lang")) + '</p><div class="seg">' + AM.langs.map(function (l) { return '<button type="button" data-l="' + l[0] + '" class="' + (lang() === l[0] ? "on" : "") + '">' + esc(l[1]) + '</button>'; }).join("") + '</div>' +
+      '<div class="actions"><button type="button" class="btn" data-act="edit">' + esc(t("edit")) + '</button><button type="button" class="btn ghost" data-act="pandit">' + esc(t("pandit")) + '</button></div><div class="actions"><button type="button" class="btn ghost" data-act="reset">' + esc(t("reset")) + '</button><button type="button" class="btn link" data-act="close">' + esc(t("close")) + '</button></div></div>');
+    m.onclick = function (e) {
+      var l = e.target.closest("[data-l]"); if (l) { AM.setLang(l.dataset.l); AM.store.set("astromuni_lang", l.dataset.l, true); save(!!localStorage.getItem(KEY)); S.loaded = {}; AM.closeModal(); go(S.route, true); return; }
+      var a = e.target.closest("[data-act]"); if (!a) { if (e.target === m) AM.closeModal(); return; } act(a.dataset.act);
+    };
+  }
+  function whereModal() {
+    var m = modal('<div class="win wide"><h2>' + esc(t("f_place")) + '</h2><div id="whPick"></div><div class="actions"><button type="button" class="btn ghost" data-act="close">' + esc(t("cancel")) + '</button><button type="button" class="btn" id="whSave">' + esc(t("save")) + '</button></div></div>');
+    var pk = AM.placePicker($("#whPick", m), S.where ? { place: S.where.name, lat: S.where.lat, lon: S.where.lon, tz: S.where.tz } : null, {});
+    $("#whSave", m).onclick = function () { var p = pk.get(); if (p.lat == null || !p.tz) return; S.where = { name: p.place, lat: p.lat, lon: p.lon, tz: p.tz }; pk.destroy(); AM.closeModal(); S.loaded.pan = null; load("pan"); };
+    m.onclick = function (e) { if (e.target.closest('[data-act="close"]')) { pk.destroy(); AM.closeModal(); } };
+  }
+  function panditModal() {
+    var minor = (Date.now() - new Date(S.profile.dob).getTime()) / 3.156e10 < 18, hasP = S.palms.left && S.palms.right;
+    var m = modal('<div class="win"><h2>' + esc(t("pandit")) + '</h2><p class="lead">' + esc(t("pandit_d")) + '</p>' + (minor ? '<div class="notice">Guardian consent is needed for under-18 profiles, so pandit requests are off here.</div>' :
+      '<form id="pdForm" novalidate><div class="form-grid"><label class="field full"><span>' + esc(t("phone")) + '</span><input id="pdPhone" type="tel" inputmode="tel" placeholder="+91…"></label><label class="field"><span>' + esc(t("slot")) + '</span><select id="pdSlot">' + [["morning", "s_morning"], ["afternoon", "s_afternoon"], ["evening", "s_evening"], ["anytime", "s_anytime"]].map(function (s) { return '<option value="' + s[0] + '">' + esc(t(s[1])) + '</option>'; }).join("") + '</select></label><label class="field"><span>' + esc(t("about_what")) + '</span><select id="pdTopic">' + ["career", "marriage", "wealth", "education", "children", "other"].map(function (s) { return '<option value="' + s + '">' + esc(s === "other" ? "…" : t("r_" + s)) + '</option>'; }).join("") + '</select></label><label class="field full"><span>' + esc(t("note_opt")) + '</span><textarea id="pdNote" maxlength="300" rows="2"></textarea></label></div>' +
+      '<label class="check mt-m"><input type="checkbox" id="pdShare"><span>' + esc(t("share_birth")) + '</span></label>' + (hasP ? '<label class="check mt-s"><input type="checkbox" id="pdPalms"><span>' + esc(t("share_palms")) + '</span></label>' : "") + '<p class="err" id="pdErr"></p><div class="actions"><button type="button" class="btn ghost" data-act="close">' + esc(t("cancel")) + '</button><button type="submit" class="btn">' + esc(t("send")) + '</button></div></form>') + '</div>');
+    m.onclick = function (e) { if (e.target.closest('[data-act="close"]') || e.target === m) AM.closeModal(); };
+    var f = $("#pdForm", m); if (!f) return;
+    f.onsubmit = async function (e) {
+      e.preventDefault(); var err = $("#pdErr", m), p = S.profile, pal = hasP && $("#pdPalms", m) && $("#pdPalms", m).checked;
+      try {
+        var st = await api("/api/start", { name: p.name, date: p.dob, time: p.tob, certainty: p.time_certainty, place: p.place, lat: p.lat, lon: p.lon, tz: p.tz, who: "adult", gender: p.gender === "other" ? "prefer_not_to_say" : p.gender, consent: false,
+          palms: pal ? { left: S.palms.left.split(",")[1], right: S.palms.right.split(",")[1] } : undefined });
+        var r = await api("/api/pandit-request", { session: st.session, phone: $("#pdPhone", m).value, slot: $("#pdSlot", m).value, topic: $("#pdTopic", m).value, note: $("#pdNote", m).value, share_details: $("#pdShare", m).checked, share_palms: !!pal });
+        AM.closeModal(); AM.toast(t("sent", { ref: r.ref }), 6000);
+      } catch (ex) { err.textContent = ex.message; }
+    };
+  }
+  function editDetails() {
+    AM.closeModal(); AM.runOnboarding({ profile: S.profile, palms: S.palms, startAt: "details", onCancel: function () {}, onDone: function (r) { applyProfile(r); go(S.route, true); } });
+  }
+  function applyProfile(r) { S.profile = r.profile; S.palms = r.palms || {}; S.chart = r.chart; S.loaded = {}; S.horo = S.pan = S.calc = S.rep = S.compat = null; S.sel = null; S.msgs = []; save(r.remember); }
+
+  function act(a) {
+    if (a === "settings") settingsModal();
+    else if (a === "drawer") openDrawer();
+    else if (a === "close") AM.closeModal();
+    else if (a === "edit") editDetails();
+    else if (a === "pandit") panditModal();
+    else if (a === "where") whereModal();
+    else if (a === "retry") { S.loaded = {}; renderView(); loadFor(S.route); }
+    else if (a === "reset") { resetAll(); AM.closeModal(); location.hash = ""; start(); }
+  }
+
+  /* ------------------------------------------------------------ events */
+  document.addEventListener("click", function (e) {
+    var el;
+    if ((el = e.target.closest("[data-go]"))) { e.preventDefault(); return go(el.dataset.go); }
+    if ((el = e.target.closest("[data-act]")) && !e.target.closest("#amModal")) return act(el.dataset.act);
+    if ((el = e.target.closest("[data-sign]"))) { S.sel = el.dataset.sign; return renderView(); }
+    if ((el = e.target.closest("[data-mode]"))) { S.mode = el.dataset.mode; return renderView(); }
+    if ((el = e.target.closest("[data-q]"))) return ask(el.dataset.q);
+    if ((el = e.target.closest("[data-calc]"))) { if (S.route !== "calculators") { S.route = "calculators"; shell(); } return runCalc(el.dataset.calc); }
+    if ((el = e.target.closest("[data-rep]"))) return runReport(el.dataset.rep);
+    if ((el = e.target.closest("[data-learn]"))) return runLearn(el.dataset.learn);
   });
-  document.addEventListener("keydown",function(ev){if(ev.key==="Enter"&&ev.target&&(ev.target.id==="hubAskInput"||ev.target.id==="askMainInput")){ev.preventDefault();sendQuestion(ev.target.value)}});
-  render();refreshAll();
+  document.addEventListener("submit", function (e) {
+    var id = e.target.id;
+    if (id === "hubAsk") { e.preventDefault(); var v = $("#hubQ").value; ask(v); }
+    else if (id === "askForm") { e.preventDefault(); var i = $("#askQ"), q = i.value; i.value = ""; ask(q); }
+    else if (id === "learnForm") { e.preventDefault(); runLearn($("#learnQ").value); }
+    else if (id === "topSearch") { e.preventDefault(); var q2 = $("#topQ").value; if (q2.trim()) runLearn(q2); }
+    else if (id === "compatForm") { e.preventDefault(); submitCompat(); }
+  });
+  async function submitCompat() {
+    var err = $("#cpErr"), p = partnerPick ? partnerPick.get() : {}, f = { name: $("#cpName").value.trim(), dob: $("#cpDob").value, tob: $("#cpTob").value, time_certainty: $("#cpCert").value };
+    S.partner = Object.assign({}, f, { place: p.place, lat: p.lat, lon: p.lon, tz: p.tz });
+    if (!f.name || !f.dob) return err.textContent = t("e_dob");
+    if (f.time_certainty !== "unknown" && !f.tob) return err.textContent = t("e_tob");
+    if (p.lat == null || !p.tz) return err.textContent = t("e_place");
+    var pb = { name: f.name, dob: f.dob, tob: f.time_certainty === "unknown" ? null : f.tob, time_certainty: f.time_certainty, place: p.place, lat: p.lat, lon: p.lon, tz: p.tz, gender: "prefer_not_to_say" };
+    S.compat = { loading: true }; renderView(); mountCompatPickerKeep(S.partner);
+    try { S.compat = await api("/api/v10/compat", { person_a: S.profile, person_b: pb, lang: lang() }); } catch (ex) { S.compat = { ok: false, error: ex.message }; }
+    renderView();
+  }
+  function mountCompatPickerKeep() { /* the picker re-mounts in renderView with S.partner */ }
+  window.addEventListener("hashchange", function () { var r = location.hash.slice(1); if (r && r !== S.route && S.profile) { S.route = r; shell(); renderView(); loadFor(r); } });
+  document.addEventListener("transitionend", function () {});
+  var obs = new MutationObserver(function () { document.querySelectorAll("[data-w]").forEach(function (b) { if (!b.dataset.d) { b.dataset.d = "1"; requestAnimationFrame(function () { b.style.width = b.dataset.w + "%"; }); } }); });
+  obs.observe(document.body, { childList: true, subtree: true });
+
+  /* ------------------------------------------------------------ boot */
+  function start() {
+    if (!S.profile) {
+      AM.setLang(AM.store.get("astromuni_lang") || "en"); $("#amRoot").innerHTML = "";
+      return AM.runOnboarding({ onDone: function (r) { applyProfile(r); startApp(); } });
+    }
+    startApp();
+  }
+  function startApp() {
+    var r = location.hash.slice(1); S.route = /^(hub|ask|horoscope|chart|calculators|reports|learn|compat|panchang)$/.test(r) ? r : "hub";
+    shell(); renderView(); loadFor(S.route);
+    if (!S.chart) load("chart").then(function () { shell(); });
+    else shell();
+  }
+  (function boot() {
+    var raw = AM.store.get(KEY);
+    if (raw) { try { var o = JSON.parse(raw); if (o && o.profile && o.profile.lat != null) { S.profile = o.profile; AM.setLang(o.lang || "en"); } } catch (e) { /* corrupt */ } }
+    if (!S.profile) AM.setLang(AM.store.get("astromuni_lang") || "en");
+    start();
+  })();
 })();
