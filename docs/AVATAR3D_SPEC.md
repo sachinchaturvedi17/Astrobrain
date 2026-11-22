@@ -23,7 +23,7 @@ Honest expectation: a rigged 3D character is a stylised game-style face. It will
 Needed: upper body of the man in `naradvani.jpg`: about 40, long wavy black hair past the shoulders, no beard, Vaishnava tilak (white U with a red line), saffron shawl. Match the photo as closely as possible. Build steps are in `docs/AVATAR_BUILD_RUNBOOK.md`. Rig: Mixamo-compatible or at least a head and neck bone; blendshapes: ARKit 52 + Oculus 15 (`viseme_aa`, `viseme_E`, `viseme_I`, `viseme_O`, `viseme_U`, `viseme_PP`, `viseme_FF`, `viseme_TH`, `viseme_DD`, `viseme_kk`, `viseme_CH`, `viseme_SS`, `viseme_nn`, `viseme_RR`, `viseme_sil`).
 
 Options, in order:
-1. Blender + MPFB (CC0 base, beard and clothes assets), then run the repo's `blender/` scripts to build visemes from ARKit shapes. Clean licence, most work.
+1. Blender + MPFB (CC0 base, hair and clothes assets), then run the repo's `blender/` scripts to build visemes from ARKit shapes. Clean licence, most work.
 2. Avaturn from `naradvani.jpg` (user's own account, user reads the Terms first). Fast and closest likeness; commercial licence must be confirmed.
 3. A purchased or CC0 model with ARKit shapes (check licence per asset).
 Record the source and licence of the final GLB in `docs/ASSETS.md`.
