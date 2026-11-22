@@ -6,7 +6,7 @@ The page code for v1.3.0 is written and unit-tested, but it could not be run in 
 ```
 python3 tools/vendor_three.py
 ```
-Creates `three.module.min.js`, `three.core.min.js`, `GLTFLoader.js`, `BufferGeometryUtils.js`, `meshopt_decoder.module.js` and `LICENSE-three.txt` in `src/aipandit/web/static/vendor/`. If it reports a missing path, the three.js build layout changed: adjust `FILES` in the tool, keep the vendor folder flat. Add three.js (MIT) and the meshopt decoder (MIT) to `docs/ASSETS.md`.
+Creates `three.module.js`, `three.core.js` (r186 ships no minified builds), `GLTFLoader.js`, `BufferGeometryUtils.js`, `meshopt_decoder.module.js` and `LICENSE-three.txt` in `src/aipandit/web/static/vendor/`. If it reports a missing path, the three.js build layout changed: adjust `FILES` in the tool, keep the vendor folder flat. Add three.js (MIT) and the meshopt decoder (MIT) to `docs/ASSETS.md`.
 
 ## 2. Tests
 Run the full suite, including the pytest ones: `python3 -m pytest -q` (and `PYTHONPATH=src python3 -m unittest discover -s tests -p "test_v*pure.py"`). `tests/test_v130_pure.py::VendorToolTests` also checks the vendored loaders have no bare imports.

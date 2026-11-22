@@ -7,8 +7,15 @@ NaradVani in 3D (page side). The Ask screen can now show a real-time 3D NaradVan
 - **Fallback chain:** 3D, then the 2D portrait, then the still image. No WebGL, a missing or failed GLB, a lost context, or a device that stays slow (drops to 1x pixels once, then gives up) all keep or restore the portrait. `?avatar=2d` forces the portrait.
 - **Server:** `.glb` is served as `model/gltf-binary`. The CSP gains `'wasm-unsafe-eval'` in `script-src` only, which the meshopt decoder needs to compile WebAssembly. No `'unsafe-inline'`, no `'unsafe-eval'`.
 - **Avatar:** `static/vendor/naradvani.glb` (our own MPFB build, 5 MB, licences in `docs/ASSETS.md`). `?model=mp` loads `vendor/naradvani_mp.glb` for private local testing only; that file is git-ignored because its licence is unresolved.
-- **Still to do by hand (no npm in the build sandbox):** run `python3 tools/vendor_three.py` once, then follow `docs/AVATAR_PAGE_VERIFY.md` (real browser check, camera framing, Playwright).
-- 23 new tests (`tests/test_v130_pure.py`, with node harnesses for the driver and the hand-over); 83 pure tests pass in total.
+- **Verified in a real browser (Chrome on macOS, 2026-11-23, `docs/AVATAR_PAGE_VERIFY.md`):** `AM3D.report()` active with no missing shapes, bones head/neck/chest/eyeL/eyeR, 120 fps on a 120 Hz display (also 120 fps in phone emulation with 6x CPU throttling); faces the camera; framed in the circle with the eyes about 40% from the top and the cut edge hidden; nod, turn, roll and eye directions correct; lip-sync on English, Hindi (Devanagari) and a 560-character reply (lips close on 89-94% of m/b/p samples, mouth rests on 92-93% of spaces and punctuation, word-boundary re-sync seen, position never jumps back); Chat silent with blinks only; no leaked WebGL contexts or extra canvases after mode switches, leaving and returning to Ask, and resizes; `?avatar=2d`, no WebGL, a missing GLB and a forced "too slow" device all fall back to the 2D portrait with the page still working.
+- **Fixed during verification:**
+  - three r186 ships no minified builds and GLTFLoader now imports `SkeletonUtils`: `tools/vendor_three.py` vendors `three.module.js`/`three.core.js` and `SkeletonUtils.js`, rewrites every `../utils/*.js` import, and its leftover-import check ignores example code in doc comments.
+  - The CSP blocked every GLB texture (GLTFLoader fetches embedded images from `blob:` URLs): `connect-src` is now `'self' blob:` (still no remote or `data:` connections).
+  - The skin rendered far too dark and the eyes pale: neutral tone mapping, exposure 1.2 and 1.8x lights by default (`CFG.tone`, `CFG.light`); the transmission cornea is replaced at runtime by a thin gloss layer (`CFG.cornea`) and the eyeball is warmed slightly (`CFG.eyeTint`); framing margin 0.92.
+  - `AMLive.is3d()` stayed true after leaving Ask; it now follows `AM3D.isActive()`.
+  - A stale web test still looked for the old "AstroMuni" brand.
+- **Debug helpers:** `AM3D.materials()`, `AM3D.morphValues()` and `AM3D.CFG.pose` (forced head/eye angles, off by default) for checks like these.
+- 24 tests in `tests/test_v130_pure.py` (node harnesses for the driver and the hand-over); full suite: 319 pytest passed.
 
 # AstroNaradMuni 1.2.0
 

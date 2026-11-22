@@ -4,7 +4,7 @@
     python3 tools/vendor_three.py            # three@0.186.0
     python3 tools/vendor_three.py --version 0.186.0
 
-Copies the minified build, GLTFLoader, BufferGeometryUtils and the meshopt decoder, and rewrites their bare imports to absolute
+Copies the ES module build, GLTFLoader, BufferGeometryUtils and the meshopt decoder, and rewrites their bare imports to absolute
 /static/vendor/ paths, because the page has a strict CSP (script-src 'self', no import maps). Also writes LICENSE-three.txt.
 The flat vendor/ layout is required: the static server serves only files directly under static/vendor/.
 """
@@ -19,24 +19,30 @@ from pathlib import Path
 DEST = Path(__file__).resolve().parent.parent / "src" / "aipandit" / "web" / "static" / "vendor"
 BASE = "/static/vendor/"
 FILES = [  # (path inside the npm package, name in vendor/, rewrite imports?)
-    ("build/three.module.min.js", "three.module.min.js", False),
-    ("build/three.core.min.js", "three.core.min.js", False),
+    ("build/three.module.js", "three.module.js", False),   # three r186 ships no .min builds; module imports ./three.core.js
+    ("build/three.core.js", "three.core.js", False),
     ("examples/jsm/loaders/GLTFLoader.js", "GLTFLoader.js", True),
     ("examples/jsm/utils/BufferGeometryUtils.js", "BufferGeometryUtils.js", True),
+    ("examples/jsm/utils/SkeletonUtils.js", "SkeletonUtils.js", True),        # GLTFLoader imports clone() from it (r18x)
     ("examples/jsm/libs/meshopt_decoder.module.js", "meshopt_decoder.module.js", False),
 ]
 
 
 def rewrite(text: str) -> str:
-    """Point the bare 'three' import and the sibling utils import at absolute vendor paths."""
-    text = re.sub(r"""(from\s*)(['"])three\2""", lambda m: "%s'%sthree.module.min.js'" % (m.group(1), BASE), text)
-    text = re.sub(r"""(from\s*)(['"])\.\./utils/BufferGeometryUtils\.js\2""", lambda m: "%s'%sBufferGeometryUtils.js'" % (m.group(1), BASE), text)
+    """Point the bare 'three' import and sibling ../utils/ imports at absolute vendor paths."""
+    text = re.sub(r"""(from\s*)(['"])three\2""", lambda m: "%s'%sthree.module.js'" % (m.group(1), BASE), text)
+    text = re.sub(r"""(from\s*)(['"])\.\./utils/([A-Za-z0-9_]+\.js)\2""", lambda m: "%s'%s%s'" % (m.group(1), BASE, m.group(3)), text)
     return text
 
 
 def leftovers(text: str) -> list:
-    """Import specifiers that would break under the CSP (bare names or parent-relative paths)."""
-    return [s for s in re.findall(r"""\bfrom\s*['"]([^'"]+)['"]""", text) if not (s.startswith(BASE) or s.startswith("./"))]
+    """Import specifiers that would break under the CSP (bare names or parent-relative paths).
+
+    Only real module statements count: lines that start with import/export. Example code inside doc comments
+    (" * import ... from 'three/addons/...'") is ignored."""
+    specs = re.findall(r"""(?m)^(?:import|export)\b[^;'"]*?\bfrom\s*['"]([^'"]+)['"]""", text)
+    specs += re.findall(r"""(?m)^import\s*['"]([^'"]+)['"]""", text)
+    return [s for s in specs if not (s.startswith(BASE) or s.startswith("./"))]
 
 
 def main() -> int:

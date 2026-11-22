@@ -19,7 +19,7 @@
   "use strict";
   var VENDOR = "/static/vendor/";
   var MODELS = { naradvani: VENDOR + "naradvani.glb", mp: VENDOR + "naradvani_mp.glb" };   // ?model=mp is for private local testing only
-  var CFG = { fov: 24, margin: 1.0, shiftY: 0.0, faceYaw: 0, exposure: 1.05, maxDpr: 2, slowMs: 42 };
+  var CFG = { fov: 24, margin: 0.92, shiftY: 0.0, faceYaw: 0, exposure: 1.2, tone: "neutral", light: 1.8, cornea: 0.18, eyeTint: 0.8, pose: null, maxDpr: 2, slowMs: 42 };   // pose: {x,y,z,ex,ey} forces head/eye angles (verification only)   // tone: "aces" | "neutral" | "agx"
   var VIS = ["aa", "E", "I", "O", "U", "PP", "FF", "TH", "DD", "kk", "CH", "SS", "nn", "RR"];
   var REQUIRED = ["eyeBlinkLeft", "eyeBlinkRight", "browInnerUp", "jawOpen", "mouthSmileLeft", "mouthSmileRight"].concat(VIS.map(function (v) { return "viseme_" + v; }));
 
@@ -137,7 +137,7 @@
   var CACHE = {};
   function modelKey() { var m = /[?&]model=([a-z0-9_]+)/i.exec(search()); return m && MODELS[m[1]] ? m[1] : "naradvani"; }
   function loadFrom(url) {
-    return Promise.all([import(VENDOR + "three.module.min.js"), import(VENDOR + "GLTFLoader.js"), import(VENDOR + "meshopt_decoder.module.js")]).then(function (m) {
+    return Promise.all([import(VENDOR + "three.module.js"), import(VENDOR + "GLTFLoader.js"), import(VENDOR + "meshopt_decoder.module.js")]).then(function (m) {
       var loader = new m[1].GLTFLoader(), dec = m[2].MeshoptDecoder;
       return Promise.resolve(dec && dec.ready).then(function () { if (dec) loader.setMeshoptDecoder(dec); return loader.loadAsync(url); })
         .then(function (g) { return { THREE: m[0], gltf: g, url: url, rig: null }; });
@@ -156,6 +156,10 @@
         m.alphaToCoverage = true; m.transparent = false; m.depthWrite = true; if (!(m.alphaTest > 0)) m.alphaTest = 0.3; m.side = 2;   // hair cards: cut-out edges, smoothed by MSAA
       }
       if (/cloth|shawl|drape/i.test(nm)) m.side = 2;
+      if (/(^|[^a-z])eye(ball)?([^a-z]|$)/i.test(m.name || "") && !/cornea|lash|brow/i.test(nm) && m.color) m.color.setRGB(CFG.eyeTint, CFG.eyeTint * 0.94, CFG.eyeTint * 0.88);   // calm the sclera against the skin, warm the iris
+      if (/cornea/i.test(nm)) {                                                        // a thin gloss layer: transmission would hide the iris on a transparent canvas and costs a pass
+        m.transmission = 0; m.transparent = true; m.opacity = CFG.cornea; m.depthWrite = false; m.roughness = 0.05; if ("thickness" in m) m.thickness = 0;
+      }
       m.needsUpdate = true;
     });
   }
@@ -208,13 +212,14 @@
       canvas = root.document.createElement("canvas"); canvas.className = "nv3d"; canvas.setAttribute("aria-hidden", "true"); host.appendChild(canvas);
       renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
     } catch (e) { if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas); LAST_ERR = "webgl: " + (e && e.message); return false; }
-    renderer.setClearColor(0x000000, 0); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = CFG.exposure;
+    renderer.setClearColor(0x000000, 0); renderer.toneMappingExposure = CFG.exposure;
+    renderer.toneMapping = CFG.tone === "neutral" && THREE.NeutralToneMapping ? THREE.NeutralToneMapping : CFG.tone === "agx" && THREE.AgXToneMapping ? THREE.AgXToneMapping : THREE.ACESFilmicToneMapping;
     var dpr = Math.min(root.devicePixelRatio || 1, CFG.maxDpr); renderer.setPixelRatio(dpr);
     var scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(CFG.fov, 1, 0.05, 20);
-    var key = new THREE.DirectionalLight(0xffe2bd, 2.4); key.position.set(0.7, 0.9, 1.2);
-    var fill = new THREE.DirectionalLight(0xffd2a0, 0.7); fill.position.set(-0.9, 0.2, 1);
-    var rim = new THREE.DirectionalLight(0xbcd4ff, 1.1); rim.position.set(-0.8, 0.6, -1);
-    scene.add(new THREE.HemisphereLight(0xfff1dc, 0x3a2a22, 0.9), key, fill, rim, M.gltf.scene);
+    var Lk = CFG.light, key = new THREE.DirectionalLight(0xffe2bd, 2.4 * Lk); key.position.set(0.7, 0.9, 1.2);
+    var fill = new THREE.DirectionalLight(0xffd2a0, 0.7 * Lk); fill.position.set(-0.9, 0.2, 1);
+    var rim = new THREE.DirectionalLight(0xbcd4ff, 1.1 * Lk); rim.position.set(-0.8, 0.6, -1);
+    scene.add(new THREE.HemisphereLight(0xfff1dc, 0x3a2a22, 0.9 * Lk), key, fill, rim, M.gltf.scene);
     M.gltf.scene.rotation.y = CFG.faceYaw;
     var aniso = renderer.capabilities && renderer.capabilities.getMaxAnisotropy ? Math.min(8, renderer.capabilities.getMaxAnisotropy()) : 1;
     M.gltf.scene.traverse(function (o) { if (o.isMesh && o.material && o.material.map) o.material.map.anisotropy = aniso; });
@@ -235,7 +240,8 @@
       var out = a.driver.update(dt, now / 1000, { speaking: !!(S.speaking && S.track), text: S.text || "", pos: S.pos || 0, paused: S.paused > 0,
         listening: !!S.listening, talk: S.mode === "talk", reduced: a.reduced });
       Object.keys(out.morph).forEach(function (k) { var l = rig.morphs[k]; if (l) for (var i = 0; i < l.length; i++) l[i][0].morphTargetInfluences[l[i][1]] = out.morph[k]; });
-      var r = rig.bones, hd = out.head;
+      var r = rig.bones, hd = out.head, P = CFG.pose;
+      if (P) { hd = { x: P.x || 0, y: P.y || 0, z: P.z || 0 }; out.eyes = { x: P.ex || 0, y: P.ey || 0 }; }
       rotate(r.neck, hd.x * 0.4, hd.y * 0.4, hd.z * 0.4, a.tmp); rotate(r.head, hd.x * 0.6, hd.y * 0.6, hd.z * 0.6, a.tmp);
       rotate(r.chest, out.breath * 0.004, 0, 0, a.tmp);
       rotate(r.eyeL, out.eyes.y, out.eyes.x, 0, a.tmp); rotate(r.eyeR, out.eyes.y, out.eyes.x, 0, a.tmp);
@@ -262,7 +268,23 @@
     return { active: !!A, enabled: enabled(), model: A ? A.model.url : null, missing: A ? A.rig.missing : [], bones: A ? Object.keys(A.rig.bones) : [],
       morphs: A ? Object.keys(A.rig.morphs).length : 0, fps: A ? A.fps : 0, error: LAST_ERR };
   }
-  var API = { supported: supported, enabled: enabled, mount: mount, unmount: unmount, isActive: function () { return !!A; }, report: report,
+  function materials() {                                                               // debug: what three.js built from the GLB
+    var r = []; if (!A) return r;
+    A.model.gltf.scene.traverse(function (o) {
+      if (!o.isMesh) return;
+      [].concat(o.material).forEach(function (m) {
+        r.push({ mesh: o.name, mat: m.name, type: m.type, color: m.color && m.color.getHexString(), map: !!m.map, metal: m.metalness, rough: m.roughness,
+          transmission: m.transmission || 0, transparent: m.transparent, opacity: m.opacity, alphaTest: m.alphaTest, normalMap: !!m.normalMap, spec: m.specularIntensity === undefined ? null : m.specularIntensity });
+      });
+    });
+    return r;
+  }
+  function morphValues(names) {                                                       // debug: current influence of named shape keys (first mesh that has each)
+    var o = {}; if (!A) return o;
+    (names || Object.keys(A.rig.morphs)).forEach(function (n) { var l = A.rig.morphs[n]; if (l && l[0]) o[n] = l[0][0].morphTargetInfluences[l[0][1]]; });
+    return o;
+  }
+  var API = { supported: supported, enabled: enabled, mount: mount, unmount: unmount, isActive: function () { return !!A; }, report: report, materials: materials, morphValues: morphValues,
     disable: function () { DISABLED = true; unmount(); }, createDriver: createDriver, visemeFor: visemeFor, targets: targets, VIS: VIS, CFG: CFG, MODELS: MODELS };
   root.AM3D = API;
   if (typeof module !== "undefined" && module.exports) module.exports = API;

@@ -84,7 +84,8 @@ class ServerTests(unittest.TestCase):
         self.assertIn("script-src 'self' 'wasm-unsafe-eval'", csp)
         self.assertNotIn("'unsafe-inline'", csp)
         self.assertNotIn("'unsafe-eval'", csp)
-        self.assertIn("connect-src 'self'", csp)
+        self.assertIn("connect-src 'self' blob:;", csp)                          # GLTFLoader fetches GLB-embedded textures from blob: URLs
+        self.assertNotRegex(csp, r"connect-src[^;]*(https?:|\*|data:)")              # still no remote or data: connections
         self.assertIn("frame-ancestors 'none'", csp)
 
 
@@ -185,6 +186,11 @@ class HandOverTests(unittest.TestCase):
                             "setTimeout(()=>console.log(JSON.stringify({is3d:A.is3d(),display:cv.style.display})),10)")
         self.assertEqual(out, {"is3d": True, "display": "none"})
 
+    def test_is3d_is_false_once_the_3d_view_has_unmounted(self):
+        out = self.run_live("{enabled:()=>true,isActive:()=>global.on,mount:()=>{global.on=true;return Promise.resolve(true)}}",
+                            "setTimeout(()=>{const a=A.is3d();global.on=false;console.log(JSON.stringify({mounted:a,afterUnmount:A.is3d()}))},10)")
+        self.assertEqual(out, {"mounted": True, "afterUnmount": False})
+
     def test_portrait_stays_when_3d_cannot_load(self):
         out = self.run_live("{enabled:()=>true,mount:()=>Promise.resolve(false)}",
                             "setTimeout(()=>console.log(JSON.stringify({is3d:A.is3d(),display:cv.style.display})),10)")
@@ -214,15 +220,18 @@ class VendorToolTests(unittest.TestCase):
         src = ("import { Mesh } from 'three';\nimport {\n  toTrianglesDrawMode\n} from '../utils/BufferGeometryUtils.js';\n"
                "import * as T from \"three\";\n")
         out = m.rewrite(src)
-        self.assertIn("from '/static/vendor/three.module.min.js'", out)
+        self.assertIn("from '/static/vendor/three.module.js'", out)
         self.assertIn("from '/static/vendor/BufferGeometryUtils.js'", out)
         self.assertEqual(m.leftovers(out), [])
         self.assertEqual(m.leftovers("import x from 'three';"), ["three"])           # a missed bare import is caught
         self.assertEqual(m.leftovers("import x from '../utils/a.js';"), ["../utils/a.js"])
+        self.assertIn("from '/static/vendor/SkeletonUtils.js'", m.rewrite("import { clone } from '../utils/SkeletonUtils.js';"))
+        doc = "/**\n * import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';\n */\nimport { A } from '/static/vendor/three.module.js';\n"
+        self.assertEqual(m.leftovers(doc), [])                                          # examples inside doc comments are not imports
 
     def test_vendored_files_if_present_are_csp_safe(self):
         m = self.load()
-        for name in ("GLTFLoader.js", "BufferGeometryUtils.js"):
+        for name in ("GLTFLoader.js", "BufferGeometryUtils.js", "SkeletonUtils.js"):
             f = ST / "vendor" / name
             if f.exists():
                 self.assertEqual(m.leftovers(f.read_text(encoding="utf-8")), [], name)

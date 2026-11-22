@@ -49,6 +49,14 @@ If any CC-BY asset is ever shipped, add a credit line on the site naming the ass
 | MCP for Blender add-on + `mcp-for-blender` 2.3.1 | github.com/ahujasid/mcp-for-blender | MIT |
 | glTF-Transform CLI 4 | npm `@gltf-transform/cli` | MIT |
 
+## Vendored runtime libraries (shipped in static/vendor/)
+
+| File | Source | Licence |
+|---|---|---|
+| `three.module.js`, `three.core.js` | three.js r186 (npm `three@0.186.0`, `build/`) | MIT (three.js authors), see `static/vendor/LICENSE-three.txt` |
+| `GLTFLoader.js`, `BufferGeometryUtils.js`, `SkeletonUtils.js` | three.js r186 `examples/jsm/`, bare imports rewritten to `/static/vendor/` by `tools/vendor_three.py` | MIT |
+| `meshopt_decoder.module.js` | three.js r186 `examples/jsm/libs/` (meshoptimizer by Arseny Kapoulkine) | MIT |
+
 ## Runtime requirements of the GLB
 
 `EXT_meshopt_compression`, `EXT_texture_webp` and `KHR_mesh_quantization` are required extensions. three.js `GLTFLoader` needs `MeshoptDecoder` (from three's `examples/jsm/libs/meshopt_decoder.module.js`, MIT), vendored flat in `static/vendor/` when the page part is built. The cornea uses `KHR_materials_transmission`, which needs `MeshPhysicalMaterial` (GLTFLoader handles this).

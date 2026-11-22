@@ -220,5 +220,7 @@
   function preview(blink, mouth, brow) { L.frozen = true; L.blink = blink; L.mouth = mouth; L.brow = brow; L.sig = ""; draw(); }   // for calibration and tests
   function unfreeze() { L.frozen = false; }
   window.AMLive = { preview: preview, unfreeze: unfreeze, mount: mount, setMode: setMode, speak: speak, stop: stop, listen: listen, stopListening: stopListening, micSupported: micSupported,
-    is3d: function () { return !!L.three; }, speaking: function () { return L.speaking; }, listening: function () { return L.listening; }, visemeTrack: visemeTrack, openness: openness, CAL: CAL, _state: L };
+    // is3d is false once the 3D view has unmounted (left Ask); isActive is optional so older AM3D builds still work
+    is3d: function () { var A3 = window.AM3D; return !!L.three && !(A3 && typeof A3.isActive === "function" && !A3.isActive()); },
+    speaking: function () { return L.speaking; }, listening: function () { return L.listening; }, visemeTrack: visemeTrack, openness: openness, CAL: CAL, _state: L };
 })();
