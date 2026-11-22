@@ -38,4 +38,19 @@
     low_time_note: "जन्म समय पता नहीं, इसलिए चंद्र राशि से पढ़ रहा हूँ।", edit_birth: "जन्म समय जोड़ें", try_tap: "इनमें से कोई आज़माएँ",
     listening: "आपकी बात सुन रहा हूँ", ai_guide: "AI गाइड", stage_cap: "आपकी कुंडली, दशाएँ और मौजूदा गोचर इस बातचीत में साथ हैं।", ai_char: "NaradVani एक AI-निर्मित पात्र है, असली व्यक्ति नहीं।", voice_on: "आवाज़ चालू", voice_off: "उत्तर बोलकर सुनाएँ", useful_q: "क्या यह काम का लगा?", not_quite: "पूरा नहीं", fb_yes: "अच्छा लगा कि काम आया। और कुछ पूछना हो तो पूछिए।", fb_no: "क्षमा कीजिए। थोड़ा और बताइए या दूसरे तरीके से पूछिए, मैं फिर कोशिश करूँगा।"
   });
+  AM.extend("en", {
+    mode_chat: "Chat", mode_talk: "Talk", mode_aria: "How do you want to talk to NaradVani?", tap_to_talk: "Tap the mic and speak", mic_listening: "Listening… speak now", speaking: "NaradVani is speaking…",
+    mic_unsupported: "Voice input is not available in this browser. You can still type.", mic_denied: "Microphone access is blocked. Allow it in your browser to talk.", mic_btn: "Speak to NaradVani",
+    talk_hello: "Namaste. I am NaradVani. Ask me anything about your chart.", voice_note: "The voice comes from your browser and the lip movement is an approximation."
+  });
+  AM.extend("hg", {
+    mode_chat: "Chat", mode_talk: "Baat karein", mode_aria: "NaradVani se kaise baat karni hai?", tap_to_talk: "Mic dabaiye aur boliye", mic_listening: "Sun raha hoon… boliye", speaking: "NaradVani bol rahe hain…",
+    mic_unsupported: "Is browser mein voice input nahi hai. Aap type kar sakte hain.", mic_denied: "Microphone ki ijazat band hai. Baat karne ke liye browser mein allow kijiye.", mic_btn: "NaradVani se boliye",
+    talk_hello: "Namaste. Main NaradVani hoon. Apni kundli ke baare mein kuch bhi poochhiye.", voice_note: "Awaaz aapke browser se aati hai aur honth ki harkat andaazi hai."
+  });
+  AM.extend("hi", {
+    mode_chat: "चैट", mode_talk: "बात करें", mode_aria: "नारदवाणी से कैसे बात करनी है?", tap_to_talk: "माइक दबाइए और बोलिए", mic_listening: "सुन रहा हूँ… बोलिए", speaking: "नारदवाणी बोल रहे हैं…",
+    mic_unsupported: "इस ब्राउज़र में आवाज़ से पूछना उपलब्ध नहीं है। आप टाइप कर सकते हैं।", mic_denied: "माइक्रोफ़ोन की अनुमति बंद है। बात करने के लिए ब्राउज़र में अनुमति दीजिए।", mic_btn: "नारदवाणी से बोलिए",
+    talk_hello: "नमस्ते। मैं नारदवाणी हूँ। अपनी कुंडली के बारे में कुछ भी पूछिए।", voice_note: "आवाज़ आपके ब्राउज़र से आती है और होंठों की हरकत अंदाज़ी है।"
+  });
 })();

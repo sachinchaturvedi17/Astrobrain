@@ -1,3 +1,14 @@
+# AstroNaradMuni 1.2.0
+
+NaradVani comes alive. The Ask screen now has two modes.
+
+- **Chat (default): silent.** NaradVani only blinks naturally and breathes.
+- **Talk:** he greets you, reads his replies in a male Indian-English / Hindi voice (the browser's own speech engine), his lips follow the words, eyebrows lift on questions, and his head nods slightly. A mic button lets you ask by speaking (browser speech recognition, Hindi or English). Tap the mic while he speaks to stop him. Leaving the Ask page silences him.
+- **How:** `static/live.js`, no dependencies, CSP-safe. The portrait is drawn on a canvas: eyelids are built from the skin above each eye, and the mouth opens by stretching the mouth interior and moving the lower lip and chin, feathered into the photo. Lip movement comes from the text (vowel openness, lips closed on m/b/p) and is re-synced on every word boundary the browser reports. It is an approximation, not audio-exact.
+- **Honest limits:** this is a 2D living portrait, not 3D or Unreal. Voice quality and Hindi voice availability depend on the browser and OS. `docs/AVATAR_ROADMAP.md` lays out the real 3D / TTS / Unreal path with costs and licence cautions.
+- The old "read replies aloud" chip is replaced by the Chat | Talk switch. Voice and lip-sync are never on in Chat mode. The "AI-generated character" note stays.
+- 12 new tests (`tests/test_v120_pure.py`, including a node harness for the lip-sync logic); 60 pass in total.
+
 # AstroNaradMuni 1.1.3
 
 - **Raja yogas, computed** (`yogas.py`): kendra-trikona links (same sign, facing, or exchanging signs), yogakaraka planet, Dharma-Karmadhipati, and Neecha Bhanga cancellation. Sign-level only; skipped when the Lagna is unreliable.

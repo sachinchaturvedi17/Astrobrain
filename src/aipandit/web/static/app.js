@@ -82,6 +82,7 @@
     else { var dd = $("#topDate"); if (dd) dd.textContent = new Date().toLocaleDateString(lang() === "hi" ? "hi-IN" : "en-IN", { weekday: "long", day: "numeric", month: "long" }); }
   }
   function go(route, replace) {
+    if (route !== "ask" && window.AMLive) { window.AMLive.stop(); window.AMLive.stopListening(); }
     S.route = route; S.drawer = false; closeDrawer();
     if (location.hash.slice(1) !== route) { if (replace) history.replaceState(null, "", "#" + route); else location.hash = route; }
     shell(); renderView(); loadFor(route); window.scrollTo(0, 0);
@@ -100,7 +101,7 @@
     var views = { hub: viewHub, ask: viewAsk, horoscope: viewHoro, chart: viewChart, calculators: viewCalc, reports: viewReports, learn: viewLearn, compat: viewCompat, panchang: viewPanchang };
     v.innerHTML = (views[S.route] || viewHub)();
     paintTop();
-    if (S.route === "ask") { var th = $("#thread"); if (th) th.scrollTop = S.msgs.length ? th.scrollHeight : 0; }
+    if (S.route === "ask") { var th = $("#thread"); if (th) th.scrollTop = S.msgs.length ? th.scrollHeight : 0; var cv = $("#nvCanvas"); if (cv && window.AMLive) { window.AMLive.mount(cv, { mode: S.talk ? "talk" : "chat" }); paintStage(); } }
     if (S.route === "compat") mountCompatPicker();
   }
   var skel = '<div class="card"><div class="skeleton"></div><p></p><div class="skeleton"></div></div>';
@@ -211,34 +212,61 @@
     if (c && c.dasha && c.dasha.maha) out.push(t("dasha_now") + ": " + plName(c.dasha.maha));
     return out.length ? '<div class="ctx">' + out.map(function (x) { return '<span class="chip">' + esc(x) + '</span>'; }).join("") + '</div>' : "";
   }
+  var micErr = "";
+  function statusText() {
+    var A = window.AMLive;
+    if (micErr) return micErr;
+    if (A && A.listening()) return t("mic_listening");
+    if (A && A.speaking()) return t("speaking");
+    if (S.busy) return t("typing_label");
+    if (S.talk) return A && A.micSupported() ? t("tap_to_talk") : t("mic_unsupported");
+    return t("listening");
+  }
+  function paintStage() {
+    var A = window.AMLive, s = $("#nvStatus"), st = $(".nv-stage"), mic = $("[data-mic]");
+    if (s) s.textContent = statusText();
+    if (st && A) { st.classList.toggle("speaking", !!A.speaking()); st.classList.toggle("hearing", !!A.listening()); }
+    if (mic && A) { var on = A.listening() || A.speaking(); mic.classList.toggle("on", on); mic.setAttribute("aria-pressed", on ? "true" : "false"); }
+  }
   function stageHtml() {
-    var st = S.busy ? t("typing_label") : t("listening");
-    return '<aside class="nv-stage' + (S.busy ? " busy" : "") + '" aria-label="NaradVani"><div class="rings"><span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>' +
-      '<div class="portrait"><img src="/static/naradvani.jpg" alt="NaradVani, the AI guide" width="900" height="1199"></div></div>' +
+    var talk = !!S.talk;
+    return '<aside class="nv-stage' + (S.busy ? " busy" : "") + (talk ? " talk" : "") + '" aria-label="NaradVani"><div class="rings"><span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>' +
+      '<div class="portrait"><canvas id="nvCanvas" width="900" height="1199" role="img" aria-label="NaradVani, the AI guide"></canvas></div></div>' +
       '<div class="stage-info"><div class="stage-name"><h2>NaradVani</h2><span class="live" aria-hidden="true"></span><span class="chip ai">' + esc(t("ai_guide")) + '</span></div>' +
-      '<p class="stage-status" role="status">' + esc(st) + '</p><p class="stage-cap">' + esc(t("stage_cap")) + '</p>' +
-      (window.speechSynthesis ? '<button type="button" class="chip voice' + (S.voice ? " on" : "") + '" data-voice="1" aria-pressed="' + (S.voice ? "true" : "false") + '">' + esc(t(S.voice ? "voice_on" : "voice_off")) + '</button>' : "") +
-      '<p class="small muted ai-note">' + esc(t("ai_char")) + '</p></div></aside>';
+      '<p class="stage-status" id="nvStatus" role="status">' + esc(statusText()) + '</p><p class="stage-cap">' + esc(t("stage_cap")) + '</p>' +
+      '<div class="modes" role="group" aria-label="' + esc(t("mode_aria")) + '"><button type="button" class="seg' + (talk ? "" : " on") + '" data-talk="chat" aria-pressed="' + (talk ? "false" : "true") + '">' + esc(t("mode_chat")) + '</button><button type="button" class="seg' + (talk ? " on" : "") + '" data-talk="talk" aria-pressed="' + (talk ? "true" : "false") + '">' + esc(t("mode_talk")) + '</button></div>' +
+      '<p class="small muted ai-note">' + esc(t("ai_char")) + (talk ? " " + esc(t("voice_note")) : "") + '</p></div></aside>';
   }
   function viewAsk() {
     return '<div class="askpage">' + stageHtml() + '<section class="chat" aria-label="Chat"><div class="chat-head"><div><b>' + esc(t("talk_to")) + '</b><small class="muted">' + esc(t("free_chat")) + '</small></div>' + ctxChips() + '</div><div class="thread" id="thread">' + threadHtml() + '</div>' +
-      '<div class="composer"><form class="askbox pill" id="askForm"><span class="live" aria-hidden="true"></span><input id="askQ" type="text" maxlength="500" autocomplete="off" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn send" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form><p class="disclaimer">' + esc(t("disclaimer")) + '</p></div></section></div>';
+      '<div class="composer"><form class="askbox pill" id="askForm"><span class="live" aria-hidden="true"></span><input id="askQ" type="text" maxlength="500" autocomplete="off" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '">' + (S.talk && window.AMLive && window.AMLive.micSupported() ? '<button type="button" class="btn mic" data-mic="1" aria-pressed="false" aria-label="' + esc(t("mic_btn")) + '">' + '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>' + '</button>' : "") + '<button class="btn send" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form><p class="disclaimer">' + esc(t("disclaimer")) + '</p></div></section></div>';
   }
-  function speak(txt) {
-    try {
-      var ss = window.speechSynthesis; if (!ss || !S.voice || !txt) return;
-      ss.cancel(); var u = new SpeechSynthesisUtterance(String(txt).slice(0, 900)); u.lang = lang() === "hi" ? "hi-IN" : "en-IN"; u.rate = 0.95; ss.speak(u);
-    } catch (e) { /* voice is optional */ }
+  function talkSay(txt) {
+    var A = window.AMLive; if (!A || !S.talk || !txt) return;
+    var s = String(txt); if (s.length > 900) { s = s.slice(0, 900); var k = Math.max(s.lastIndexOf(". "), s.lastIndexOf("। ")); if (k > 300) s = s.slice(0, k + 1); }
+    A.speak(s, lang() === "hi" ? "hi" : "en", { onStart: paintStage, onEnd: paintStage, onError: paintStage }); paintStage();
+  }
+  function micToggle() {
+    var A = window.AMLive; if (!A) return;
+    if (A.listening()) { A.stopListening(); return paintStage(); }
+    if (A.speaking()) { A.stop(); return paintStage(); }
+    micErr = "";
+    A.listen(lang() === "hi" ? "hi" : "en", {
+      onStart: paintStage,
+      onText: function (tx) { var f = $("#askQ"); if (f) f.value = tx; },
+      onEnd: function (tx) { paintStage(); if (tx) { var f = $("#askQ"); if (f) f.value = ""; ask(tx); } },
+      onError: function (c) { micErr = c === "not-allowed" || c === "service-not-allowed" ? t("mic_denied") : (c === "no-speech" || c === "aborted") ? "" : t("mic_unsupported"); paintStage(); micErr = ""; }
+    });
   }
   async function ask(q) {
-    q = (q || "").trim(); if (!q || S.busy) return;
+    q = (q || "").trim(); if (!q || S.busy) return; if (window.AMLive) window.AMLive.stop();
     var hist = S.msgs.filter(function (x) { return x.role === "user" || x.data; }).slice(-6).map(function (x) { return x.role === "user" ? { role: "user", text: x.text } : { role: "bot", text: x.data.answer || "", topic: x.data.topic || "", expects: x.data.expects || "" }; });
     S.busy = true; S.msgs.push({ role: "user", text: q }); var m = { role: "bot", data: null }; S.msgs.push(m);
     if (S.route !== "ask") go("ask"); else renderView();
     try { m.data = await api("/api/v10/ask", Object.assign(body({ question: q, mode: S.mode, history: hist }), S.mode === "astropedia" ? { profile: null } : {})); }
     catch (e) { m.data = { answer: e.message, title: "", reasons: [], evidence: [], caveats: [], safety: "error" }; }
     S.busy = false; renderView(); var i = $("#askQ"); if (i) i.focus();
-    if (m.data && !m.data.safety && m.data.answer) speak(m.data.answer);
+    if (m.data && !m.data.safety && m.data.answer) talkSay(m.data.answer);
   }
 
   async function runCalc(type) {
@@ -347,7 +375,8 @@
     if ((el = e.target.closest("[data-sign]"))) { S.sel = el.dataset.sign; return renderView(); }
     if ((el = e.target.closest("[data-mode]"))) { S.mode = el.dataset.mode; return renderView(); }
     if ((el = e.target.closest("[data-fb]"))) { var lm = S.msgs.filter(function (x) { return x.role !== "user" && x.data; }).pop(); if (lm) lm.fb = el.dataset.fb; return renderView(); }
-    if ((el = e.target.closest("[data-voice]"))) { S.voice = !S.voice; try { if (!S.voice && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (x) { } return renderView(); }
+    if ((el = e.target.closest("[data-talk]"))) { var tk = el.dataset.talk === "talk"; if (tk === !!S.talk) return; S.talk = tk; if (window.AMLive) window.AMLive.setMode(tk ? "talk" : "chat"); renderView(); if (tk) talkSay(t("talk_hello")); return; }
+    if ((el = e.target.closest("[data-mic]"))) return micToggle();
     if ((el = e.target.closest("[data-q]"))) return ask(el.dataset.q);
     if ((el = e.target.closest("[data-calc]"))) { if (S.route !== "calculators") { S.route = "calculators"; shell(); } return runCalc(el.dataset.calc); }
     if ((el = e.target.closest("[data-rep]"))) return runReport(el.dataset.rep);

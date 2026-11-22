@@ -81,7 +81,7 @@ class AssetTests(unittest.TestCase):
     def test_csp_friendly_no_inline_style_or_handlers_in_new_markup(self):
         js = (STATIC / "app.js").read_text(encoding="utf-8")
         i = js.index("function stageHtml")
-        j = js.index("function speak")
+        j = js.index("function talkSay")
         self.assertNotRegex(js[i:j], r"style=|onclick=")
 
 

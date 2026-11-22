@@ -132,3 +132,18 @@ p.fb{margin:-4px 0 0 44px}
   .askpage .composer{padding:8px 12px 4px}
   .askpage .disclaimer{font-size:.68rem;margin:4px 0 0;line-height:1.3}
 }
+
+/* v1.2.0 living portrait: Chat (silent, blinks) and Talk (voice, lip movement) */
+.portrait canvas{width:100%;height:100%;object-fit:cover;object-position:50% 16%;display:block;transform-origin:50% 60%;will-change:transform}
+.modes{display:inline-flex;padding:3px;border:1.5px solid var(--line);border-radius:999px;background:#fffefb}
+.modes .seg{border:0;background:transparent;font:inherit;font-weight:600;color:inherit;padding:6px 18px;min-height:36px;border-radius:999px;cursor:pointer}
+.modes .seg.on{background:var(--gold-wash);box-shadow:inset 0 0 0 1.5px var(--gold-deep)}
+.modes .seg:focus-visible,.btn.mic:focus-visible{outline:3px solid var(--gold-deep);outline-offset:2px}
+.nv-stage.talk .portrait{box-shadow:0 0 0 4px var(--gold),0 0 40px 8px rgba(240,170,60,.4),0 22px 40px -18px rgba(70,40,26,.65)}
+.nv-stage.speaking .ring.r1,.nv-stage.hearing .ring.r1{animation:nvpulse 1.6s ease-in-out infinite}
+.nv-stage.speaking .ring.r2,.nv-stage.hearing .ring.r2{animation:nvpulse 1.6s ease-in-out .25s infinite}
+.nv-stage.speaking .ring.r3,.nv-stage.hearing .ring.r3{animation:nvpulse 1.6s ease-in-out .5s infinite}
+.askbox.pill .btn.mic{width:46px;min-width:46px;height:46px;min-height:46px;padding:0;border-radius:50%;border:1.5px solid var(--line);background:#fffefb;display:inline-flex;align-items:center;justify-content:center}
+.askbox.pill .btn.mic.on{background:var(--gold-wash);border-color:var(--gold-deep);animation:nvpulse 1.2s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.nv-stage.speaking .ring,.nv-stage.hearing .ring,.askbox.pill .btn.mic.on{animation:none!important}}
+@media(max-width:860px){.modes .seg{padding:4px 12px;min-height:32px}.nv-stage .ai-note{display:none}}
