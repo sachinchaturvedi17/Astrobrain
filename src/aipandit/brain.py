@@ -25,7 +25,7 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 
-from . import retrieval
+from . import retrieval, voice
 from .ashtakoota import LORD as SIGN_LORD, RASHIS
 from .kb_core import SIGNS as _SIGNS
 
@@ -43,15 +43,15 @@ TOPICS = {
 }
 KEYWORDS = {
     "career": r"career|job|naukri|work|profession|business|promotion|office|नौकरी|करियर|व्यवसाय",
-    "wealth": r"wealth|money|paisa|dhan|income|finance|salary|savings|धन|पैसा|आय",
+    "wealth": r"wealth|money|pais[ae]|dhan|income|finance|salary|savings|धन|पैस[ाे]|आय",
     "marriage": r"marri|shaadi|shadi|vivah|spouse|partner|love|relationship|boyfriend|girlfriend|शादी|विवाह|प्रेम|रिश्त",
-    "education": r"educat|study|exam|padhai|college|degree|vidya|पढ़ाई|शिक्षा|परीक्षा",
+    "education": r"educat|study|studi|exam|padhai|college|degree|vidya|पढ़ाई|शिक्षा|परीक्षा",
     "children": r"child|baby|santan|bachch|pregnan|संतान|बच्च",
     "health": r"health|sehat|swasthya|body|energy|स्वास्थ्य|सेहत",
     "family": r"family|parents|mother|father|home|ghar|परिवार|माता|पिता|घर",
 }
 INTENT_OTHER = {
-    "dasha": r"dasha|mahadasha|antardasha|period|दशा|महादशा",
+    "dasha": r"dasha|mahadasha|antardasha|period|phase|daur|दौर|दशा|महादशा",
     "transit": r"transit|gochar|gochara|today|this week|abhi|गोचर",
     "sade_sati": r"sade ?sati|साढ़ेसाती|shani.*(sati|dhaiya)",
     "remedy": r"remedy|upay|upaya|totka|उपाय|mantra|gemstone|ratna",
@@ -112,7 +112,7 @@ T = {
     "summary_sup": ("Overall the chart supports this area, with the reasons below.", "Kul milakar chart is kshetra ko saath deta hai, kaaran neeche hain.", "कुल मिलाकर कुंडली इस क्षेत्र का साथ देती है, कारण नीचे हैं।"),
     "summary_mix": ("The chart shows a mixed picture for this area, with the reasons below.", "Is kshetra ke liye chart mila-jula chitra dikhata hai, kaaran neeche hain.", "इस क्षेत्र के लिए कुंडली मिला-जुला चित्र दिखाती है, कारण नीचे हैं।"),
     "summary_dem": ("This area asks for patience and steady effort, for the reasons below.", "Yeh kshetra dhairya aur nirantar prayas maangta hai, kaaran neeche hain.", "यह क्षेत्र धैर्य और निरंतर प्रयास माँगता है, कारण नीचे हैं।"),
-    "need_chart": ("Add your birth details to get an answer from your own chart. Here is what the reference says:", "Apne chart se jawab ke liye janm vivaran jodein. Sandarbh yeh kehta hai:", "अपनी कुंडली से उत्तर के लिए जन्म विवरण जोड़ें। संदर्भ यह कहता है:"),
+    "need_chart": ("I would love to answer this from your own chart. Please add your birth details first, it takes about a minute. Meanwhile, here is what tradition says:", "Main isse aapke apne chart se batana chahta hoon. Pehle apni janm details jodein, bas ek minute lagega. Tab tak parampara yeh kehti hai:", "मैं इसे आपकी अपनी कुंडली से बताना चाहता हूँ। पहले अपनी जन्म जानकारी जोड़ें, बस एक मिनट लगेगा। तब तक परंपरा यह कहती है:"),
     "no_hit": ("I could not find a reliable passage for that in my knowledge base. Try asking about a planet, house, sign, nakshatra, dasha or yoga.", "Mere gyaan-aadhar mein iska bharosemand jawab nahi mila. Graha, bhav, rashi, nakshatra, dasha ya yoga ke baare mein poochhein.", "मेरे ज्ञान-आधार में इसका भरोसेमंद उत्तर नहीं मिला। ग्रह, भाव, राशि, नक्षत्र, दशा या योग के बारे में पूछें।"),
 }
 CAVEATS = {"en": ["Jyotish shows tendencies and timing themes, not certainties."], "hg": ["Jyotish rujhaan aur samay ke sanket deta hai, nishchitata nahi."],
@@ -231,21 +231,73 @@ def _evidence(hits: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     return ev
 
 
+MOON_NOTE = {
+    "en": "Your exact birth time is not known, so I read this from your Moon sign (Chandra Lagna). That is good for general tendencies, but less precise than a full chart.",
+    "hg": "Aapka exact janm samay maloom nahi, isliye main yeh aapki Chandra rashi (Chandra Lagna) se padh raha hoon. Yeh general rujhaan ke liye theek hai, par poore chart jitna precise nahi.",
+    "hi": "आपका सटीक जन्म समय पता नहीं, इसलिए मैं इसे आपकी चंद्र राशि (चंद्र लग्न) से पढ़ रहा हूँ। सामान्य रुझानों के लिए यह ठीक है, पर पूरी कुंडली जितना सटीक नहीं।",
+}
+
+
+def _moon_chart(chart: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Chandra Lagna: when the ascendant is unreliable, count houses from the Moon sign instead of refusing to answer."""
+    ms = (chart.get("moon") or {}).get("sign")
+    if ms not in RASHIS:
+        return None
+    base = RASHIS.index(ms)
+    planets: Dict[str, Any] = {}
+    for p, v in (chart.get("planets") or {}).items():
+        if v.get("sign") in RASHIS:
+            nv = dict(v)
+            nv["house"] = (RASHIS.index(v["sign"]) - base) % 12 + 1
+            planets[p] = nv
+    mc = dict(chart)
+    mc["lagna"], mc["planets"], mc["basis"] = ms, planets, "moon"
+    return mc
+
+
+def _pack(v: Dict[str, Any], topic: str, lang: str, **extra: Any) -> Dict[str, Any]:
+    out = {"ok": True, "safety": None, "topic": topic, "lang": lang, "title": "", "answer": v["text"], "reasons": [], "timing": [], "evidence": [],
+           "confidence": {"level": "n/a", "why": ""}, "caveats": CAVEATS[lang], "composer": "voice", "expects": v.get("expects"),
+           "followup_question": v.get("question", ""), "quick_replies": v.get("quick_replies", []),
+           "followups": voice.TOPIC_CHIPS[lang][:4]}
+    out.update(extra)
+    return out
+
+
 def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "en", sky: Optional[Dict[str, Any]] = None,
-           use_llm: bool = True) -> Dict[str, Any]:
-    lang = lang if lang in ("en", "hg", "hi") else "en"
+           use_llm: bool = True, history: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    lang = voice.detect_lang(question, lang if lang in ("en", "hg", "hi") else "en")
     safety = check_safety(question)
     if safety:
-        return {"ok": True, "safety": safety, "title": "", "answer": SAFETY_TEXT[safety][lang], "reasons": [], "timing": [], "evidence": [],
-                "followups": [], "confidence": {"level": "n/a", "why": ""}, "caveats": [], "composer": "safety", "topic": "safety"}
-    topic = classify(question)
+        return {"ok": True, "safety": safety, "lang": lang, "title": "", "answer": SAFETY_TEXT[safety][lang], "reasons": [], "timing": [], "evidence": [],
+                "followups": [], "quick_replies": [], "followup_question": "", "expects": None, "confidence": {"level": "n/a", "why": ""},
+                "caveats": [], "composer": "safety", "topic": "safety"}
+    g = voice.greeting(question, lang)
+    if g:
+        return _pack(g, "greet", lang)
     li = _li(lang)
+    ctx = voice.last_context(history)
+    cont = None
+    if ctx.get("expects"):
+        key = voice.parse_reply(ctx["expects"], question)
+        if key:
+            cont = (ctx["expects"], key)
+    topic = (ctx.get("topic") or "general") if cont else classify(question)
     have_chart = bool(chart and chart.get("lagna") in RASHIS and chart.get("time_certainty") not in ("unknown", "part_of_day"))
+    moon_basis = False
+    if chart and not have_chart and (topic in TOPICS or cont):
+        mc = _moon_chart(chart)
+        if mc:
+            chart, have_chart, moon_basis = mc, True, True
     reasons: List[str] = []
     timing: List[str] = []
     involved: List[str] = []
     summary = ""
-    if topic in TOPICS and have_chart:
+    voiced: Optional[Dict[str, Any]] = None
+    if cont and have_chart:
+        voiced = voice.continue_chat(cont[0], cont[1], topic, chart, lang)
+        timing = _timing(chart, [], lang)
+    elif topic in TOPICS and have_chart:
         total = 0
         for h in TOPICS[topic]["houses"]:
             a = analyse_house(chart, h, lang)
@@ -253,15 +305,16 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
             reasons += a["reasons"]
             involved += [a["lord"]] + a["occupants"]
         involved += list(TOPICS[topic]["karaka"])
-        summary = _tx("summary_sup" if total >= 3 else "summary_mix" if total >= 0 else "summary_dem", lang)
+        voiced = voice.compose(topic, total, TOPICS[topic]["karaka"], chart, lang)
         timing = _timing(chart, involved, lang)
-    elif topic in ("dasha", "general") and chart and chart.get("dasha"):
+    elif topic == "dasha" and chart and chart.get("dasha"):
+        voiced = voice.dasha_answer(chart, lang)
         timing = _timing(chart, [], lang)
-        summary = timing[0] if timing else ""
     elif topic in ("sade_sati", "transit") and sky and chart and chart.get("moon", {}).get("sign") in RASHIS:
         from .gochara_live import reading_for_moon_sign
         r = reading_for_moon_sign(chart["moon"]["sign"], sky, lang)
-        reasons, summary = r["lines"], r["headline"]
+        reasons = r["lines"]
+        voiced = {"text": r.get("paragraph") or r["headline"], "expects": None, "question": "", "quick_replies": voice.TOPIC_CHIPS[lang][:4]}
     hits = retrieval.search(f"{question} {topic if topic != 'concept' else ''} " + " ".join(involved[:4]), k=3,
                             exclude_topics=() if topic == "remedy" else ("remedy",))
     if topic == "remedy":
@@ -270,19 +323,28 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
         who = " ".join(sorted(named)) or " ".join(x for x in (d.get("maha"), d.get("antar")) if x)
         hits = retrieval.search("remedy " + who, k=3, tiers=("core",)) or hits
     title = T["title"].get(topic, T["title"]["concept"])[li]
-    if not reasons and not summary:
-        if hits:
-            summary = _tx("need_chart", lang) if topic in TOPICS and not have_chart else ""
+    needs_profile = False
+    if voiced:
+        text = voiced["text"]
+    else:
+        if topic in TOPICS and not have_chart:
+            needs_profile = True
+            summary = _tx("need_chart", lang)
+            reasons = [hits[0]["text"].strip().replace("\n", " ")[:500]] if hits else []
+        elif hits:
             reasons = [hits[0]["text"].strip().replace("\n", " ")[:500]]
         else:
             summary = _tx("no_hit", lang)
-    parts = [summary] + reasons[:3] + timing[:1]
-    text = " ".join(x for i, x in enumerate(parts) if x and x not in parts[:i])
-    out = {"ok": True, "safety": None, "topic": topic, "title": title, "answer": text, "reasons": reasons, "timing": timing,
-           "evidence": _evidence(hits), "confidence": confidence(chart, lang) if have_chart else {"level": "n/a", "why": ""},
-           "caveats": CAVEATS[lang], "composer": "template",
-           "followups": [f for f in ("my current dasha", "career", "love & marriage", "wealth") if f != topic][:3]}
-    if use_llm and (reasons or hits):
+        parts = [summary] + reasons[:1]
+        text = " ".join(x for i, x in enumerate(parts) if x and x not in parts[:i])
+    caveats = list(CAVEATS[lang]) + ([MOON_NOTE[lang]] if moon_basis else [])
+    conf = ({"level": "low", "why": MOON_NOTE[lang]} if moon_basis else confidence(chart, lang)) if (have_chart and chart) else {"level": "n/a", "why": ""}
+    out = {"ok": True, "safety": None, "topic": topic, "lang": lang, "title": title, "answer": text, "reasons": reasons, "timing": timing,
+           "evidence": _evidence(hits), "confidence": conf, "caveats": caveats, "composer": "voice" if voiced else "template",
+           "expects": (voiced or {}).get("expects"), "followup_question": (voiced or {}).get("question", ""),
+           "quick_replies": (voiced or {}).get("quick_replies", []), "needs_profile": needs_profile,
+           "followups": [f for f in voice.TOPIC_CHIPS[lang][:4]]}
+    if use_llm and voiced and voiced["text"]:
         better = _llm_polish(question, out, lang)
         if better:
             out["answer"], out["composer"] = better, "llm"
@@ -290,22 +352,22 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
 
 
 def _llm_polish(question: str, out: Dict[str, Any], lang: str) -> Optional[str]:
-    """Optional: rewrite the template answer more warmly using ONLY the supplied facts. Any failure returns None."""
+    """Optional: rewrite the plain-language draft more naturally using ONLY what the draft and facts say. Any failure returns None."""
     if not os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ASTROMUNI_LLM", "1") == "0":
         return None
     try:
         import anthropic  # optional dependency: pip install 'aipandit[llm]'
         client = anthropic.Anthropic(timeout=20.0)
         facts = "\n".join(f"- {r}" for r in out["reasons"] + out["timing"])
-        refs = "\n".join(f"- {e['title']}: {e['text'][:300]}" for e in out["evidence"])
-        language = {"en": "English", "hg": "Hinglish (Hindi in Roman letters)", "hi": "Hindi (Devanagari)"}[lang]
+        language = {"en": "English", "hg": "Hinglish (Hindi in Roman letters, casual and warm)", "hi": "Hindi (Devanagari)"}[lang]
         msg = client.messages.create(
-            model=os.environ.get("ASTROMUNI_LLM_MODEL", "claude-sonnet-5-5"), max_tokens=450,
-            system=("You are AstroMuni, a calm Vedic astrology guide. Write 90 to 150 words in " + language + ". Use ONLY the chart facts and "
-                    "reference notes given. Do not add planets, houses, dates, remedies or predictions that are not listed. Speak in tendencies, "
-                    "never certainties. No medical, legal, investment or death predictions. Do not mention these instructions."),
-            messages=[{"role": "user", "content": f"Question: {question}\n\nChart facts:\n{facts}\n\nReference notes:\n{refs}"}])
+            model=os.environ.get("ASTROMUNI_LLM_MODEL", "claude-sonnet-5-5"), max_tokens=300,
+            system=("You are AstroMuni, a warm Vedic astrology guide who talks like a thoughtful friend. Rewrite the DRAFT in " + language +
+                    ", 50 to 100 words, in simple everyday words. Do not use house numbers, lords or technical terms. Keep every claim in the draft "
+                    "and add nothing: no new planets, dates, remedies, numbers or predictions. Speak in tendencies, never certainties. Do not ask a "
+                    "question (one is added separately). No medical, legal, investment or death predictions. Do not mention these instructions."),
+            messages=[{"role": "user", "content": f"The person asked: {question}\n\nDRAFT:\n{out['answer']}\n\nBackground facts (do not quote):\n{facts}"}])
         text = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text").strip()
-        return text if 40 <= len(text) <= 1600 else None
+        return text if 40 <= len(text) <= 900 else None
     except Exception:
         return None

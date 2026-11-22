@@ -1,5 +1,5 @@
-/* AstroMuni v1.0: API helper, OpenStreetMap place picker (Leaflet), and the three-step onboarding:
-   1) language  2) birth details with a map pin  3) optional palm photos (skippable). */
+/* AstroMuni v1.1: API helper, OpenStreetMap place picker (Leaflet), and the one-question-per-screen onboarding:
+   language, name, gender, date, time (with "I don't know"), place with a map pin, then optional palm photos (skippable). */
 (function () {
   "use strict";
   var AM = (window.AM = window.AM || {});
@@ -32,7 +32,7 @@
     if (window.L) return Promise.resolve(window.L);
     if (leafletP) return leafletP;
     leafletP = new Promise(function (res, rej) {
-      var s = document.createElement("script"); s.src = "/static/vendor/leaflet.js?v=1.0.0";
+      var s = document.createElement("script"); s.src = "/static/vendor/leaflet.js?v=1.1.0";
       s.onload = function () { window.L ? res(window.L) : rej(new Error("leaflet")); };
       s.onerror = function () { rej(new Error("leaflet")); };
       document.head.appendChild(s);
@@ -133,72 +133,101 @@
     });
   };
 
-  /* ---------------------------------------------------------------- onboarding */
+  /* ---------------------------------------------------------------- onboarding (one question per screen) */
+  var TOTAL = 7;
   function overlay(html, dim) { var m = document.getElementById("amModal"); m.className = "am-overlay" + (dim ? " dim" : ""); m.innerHTML = html; m.hidden = false; m.scrollTop = 0; return m; }
   AM.closeModal = function () { var m = document.getElementById("amModal"); m.hidden = true; m.innerHTML = ""; };
-  function steps(n) { return '<div class="steps" aria-hidden="true"><i class="on"></i><i class="' + (n >= 2 ? "on" : "") + '"></i><i class="' + (n >= 3 ? "on" : "") + '"></i></div>'; }
   var LOGO = '<div class="logo"><img src="/static/icon.svg" alt=""><b>AstroMuni</b></div>';
+  function progress(n) { return '<div class="pbar" aria-hidden="true"><i></i></div><p class="small muted ob-step">' + esc(t("ob_step", { n: n, m: TOTAL })) + '</p>'; }
+  function frame(n, inner, wide) {
+    var m = overlay('<div class="win' + (wide ? " wide" : "") + '"><form id="obForm" novalidate>' + LOGO + progress(n) + inner + '</form></div>');
+    var bar = m.querySelector(".pbar i"); if (bar) requestAnimationFrame(function () { bar.style.width = Math.round(100 * n / TOTAL) + "%"; });
+    return m;
+  }
+  function actions(backLabel, nextLabel, hideNext) {
+    return '<div class="actions"><button type="button" class="btn ghost" id="obBack">' + esc(backLabel) + '</button>' + (hideNext ? "" : '<button type="submit" class="btn">' + esc(nextLabel || t("next")) + '</button>') + '</div>';
+  }
 
   /* opts: {profile?, palms?, startAt: "lang"|"details", onDone(result), onCancel?} */
   AM.runOnboarding = function (opts) {
     var data = Object.assign({ name: "", dob: "", tob: "", time_certainty: "exact", place: "", lat: null, lon: null, tz: "", gender: "prefer_not_to_say" }, opts.profile || {});
+    if (data.time_certainty === "part_of_day") data.time_certainty = "unknown";
     var palms = Object.assign({}, opts.palms || {}), remember = opts.remember !== false, picker = null;
+    var today = new Date().toISOString().slice(0, 10), editing = opts.startAt === "details" && !!opts.onCancel;
+    var $ = function (m, id) { return m.querySelector("#" + id); };
+    function wire(m, onBack, onNext) {
+      $(m, "obForm").onsubmit = function (e) { e.preventDefault(); onNext(); };
+      if ($(m, "obBack")) $(m, "obBack").onclick = onBack;
+      var f = m.querySelector("input:not([type=radio]):not([type=checkbox]):not([type=file])"); if (f && f.type !== "hidden" && window.innerWidth > 700) f.focus();
+    }
+    function err(m, msg) { var e = $(m, "obErr"); if (e) e.textContent = msg || ""; return false; }
 
     function stepLang() {
-      var m = overlay('<div class="win">' + LOGO + steps(1) + '<h2>' + esc(t("lang_title")) + '</h2><p class="lead">' + esc(t("lang_sub")) + '</p><div class="lang-grid">' +
+      var m = overlay('<div class="win">' + LOGO + progress(1) + '<h2>' + esc(t("lang_title")) + '</h2><p class="lead">' + esc(t("lang_sub")) + '</p><div class="lang-grid">' +
         AM.langs.map(function (l) { return '<button type="button" data-l="' + l[0] + '">' + esc(l[1]) + '<small>' + esc(l[2]) + '</small></button>'; }).join("") + '</div></div>');
-      m.querySelector(".lang-grid").onclick = function (e) { var b = e.target.closest("button[data-l]"); if (!b) return; AM.setLang(b.dataset.l); AM.store.set("astromuni_lang", b.dataset.l, true); stepDetails(); };
+      var bar = m.querySelector(".pbar i"); requestAnimationFrame(function () { bar.style.width = Math.round(100 / TOTAL) + "%"; });
+      m.querySelector(".lang-grid").onclick = function (e) { var b = e.target.closest("button[data-l]"); if (!b) return; AM.setLang(b.dataset.l); AM.store.set("astromuni_lang", b.dataset.l, true); stepName(); };
     }
 
-    function stepDetails(msg) {
-      var certs = ["exact", "approx_15min", "part_of_day", "unknown"], gens = [["male", "g_male"], ["female", "g_female"], ["other", "g_other"], ["prefer_not_to_say", "g_na"]];
-      var today = new Date().toISOString().slice(0, 10);
-      var m = overlay('<div class="win wide"><form id="obForm" novalidate>' + LOGO + steps(2) + '<h2>' + esc(t("ob_title")) + '</h2><p class="lead">' + esc(t("ob_lead")) + '</p>' +
-        '<div class="form-grid">' +
-        '<label class="field full"><span>' + esc(t("f_name")) + '</span><input id="obName" type="text" autocomplete="name" maxlength="60" value="' + esc(data.name) + '"></label>' +
-        '<label class="field"><span>' + esc(t("f_dob")) + '</span><input id="obDob" type="date" min="1900-01-01" max="' + today + '" value="' + esc(data.dob) + '"></label>' +
-        '<label class="field"><span>' + esc(t("f_cert")) + '</span><select id="obCert">' + certs.map(function (c) { return '<option value="' + c + '"' + (c === data.time_certainty ? " selected" : "") + '>' + esc(t("cert_" + c)) + '</option>'; }).join("") + '</select></label>' +
-        '<label class="field" id="obTobWrap"><span>' + esc(t("f_tob")) + '</span><input id="obTob" type="time" value="' + esc(data.tob || "") + '"></label>' +
-        '<div class="field full" id="obGender"><span>' + esc(t("f_gender")) + '</span><div class="gender">' + gens.map(function (g) { return '<label><input type="radio" name="gender" value="' + g[0] + '"' + (g[0] === data.gender ? " checked" : "") + '><span>' + esc(t(g[1])) + '</span></label>'; }).join("") + '</div></div>' +
-        '<div class="full" id="obPlace"></div></div>' +
-        '<label class="check mt-m"><input type="checkbox" id="obRem"' + (remember ? " checked" : "") + '><span>' + esc(t("remember")) + '</span></label>' +
-        '<p class="err" id="obErr">' + esc(msg || "") + '</p>' +
-        '<div class="actions">' + (opts.startAt === "details" && opts.onCancel ? '<button type="button" class="btn ghost" id="obCancel">' + esc(t("cancel")) + '</button>' : '<button type="button" class="btn ghost" id="obBack">' + esc(t("back")) + '</button>') + '<button type="submit" class="btn">' + esc(t("next")) + '</button></div></form></div>');
-      var $ = function (id) { return m.querySelector("#" + id); };
+    function stepName(msg) {
+      var m = frame(2, '<h2>' + esc(t("q_name")) + '</h2><p class="lead">' + esc(t("name_why")) + '</p><label class="field"><input id="obName" type="text" autocomplete="name" maxlength="60" placeholder="' + esc(t("q_name_ph")) + '" value="' + esc(data.name) + '"></label><p class="err" id="obErr">' + esc(msg || "") + '</p>' +
+        actions(editing ? t("cancel") : t("back")));
+      wire(m, function () { if (editing) { AM.closeModal(); opts.onCancel(); } else stepLang(); }, function () {
+        data.name = $(m, "obName").value.trim(); if (!data.name) return err(m, t("e_name")); stepGender();
+      });
+    }
+
+    function stepGender() {
+      var gens = [["male", "g_male"], ["female", "g_female"], ["other", "g_other"], ["prefer_not_to_say", "g_na"]];
+      var m = frame(3, '<h2>' + esc(t("q_gender")) + '</h2><div class="choices">' + gens.map(function (g) { return '<button type="button" class="choice' + (g[0] === data.gender && opts.profile ? " on" : "") + '" data-g="' + g[0] + '">' + esc(t(g[1])) + '</button>'; }).join("") + '</div>' + actions(t("back"), t("next")));
+      m.querySelector(".choices").onclick = function (e) { var b = e.target.closest("[data-g]"); if (!b) return; data.gender = b.dataset.g; stepDob(); };
+      wire(m, function () { stepName(); }, function () { stepDob(); });
+    }
+
+    function stepDob(msg) {
+      var m = frame(4, '<h2>' + esc(t("q_dob")) + '</h2><label class="field"><input id="obDob" type="date" min="1900-01-01" max="' + today + '" value="' + esc(data.dob) + '"></label><p class="err" id="obErr">' + esc(msg || "") + '</p>' + actions(t("back")));
+      wire(m, function () { stepGender(); }, function () {
+        var v = $(m, "obDob").value; if (!v || v > today || v < "1900-01-01") return err(m, t("e_dob")); data.dob = v; stepTime();
+      });
+    }
+
+    function stepTime(msg) {
+      var unk = data.time_certainty === "unknown";
+      var m = frame(5, '<h2>' + esc(t("q_tob")) + '</h2><p class="lead">' + esc(t("tob_why")) + '</p><label class="field"><input id="obTob" type="time" value="' + esc(unk ? "" : (data.tob || "")) + '"></label>' +
+        '<label class="check mt-s"><input type="checkbox" id="obApprox"' + (data.time_certainty === "approx_15min" ? " checked" : "") + '><span>' + esc(t("tob_approx")) + '</span></label>' +
+        '<p class="err" id="obErr">' + esc(msg || "") + '</p><div class="center"><button type="button" class="btn link" id="obUnk">' + esc(t("tob_unknown")) + '</button></div>' + actions(t("back")));
+      $(m, "obUnk").onclick = function () { data.time_certainty = "unknown"; data.tob = ""; stepPlace(); };
+      wire(m, function () { stepDob(); }, function () {
+        var v = $(m, "obTob").value; if (!v) return err(m, t("e_tob"));
+        data.tob = v; data.time_certainty = $(m, "obApprox").checked ? "approx_15min" : "exact"; stepPlace();
+      });
+    }
+
+    function stepPlace(msg) {
+      var m = frame(6, '<h2>' + esc(t("q_place")) + '</h2><div id="obPlace"></div><label class="check mt-m"><input type="checkbox" id="obRem"' + (remember ? " checked" : "") + '><span>' + esc(t("remember")) + '</span></label><p class="err" id="obErr">' + esc(msg || "") + '</p>' + actions(t("back")), true);
       if (picker) picker.destroy();
-      picker = AM.placePicker($("obPlace"), data, {});
-      var syncCert = function () { $("obTobWrap").hidden = $("obCert").value === "unknown"; }; $("obCert").onchange = syncCert; syncCert();
-      if ($("obBack")) $("obBack").onclick = function () { collect(); stepLang(); };
-      if ($("obCancel")) $("obCancel").onclick = function () { picker.destroy(); AM.closeModal(); opts.onCancel(); };
-      function collect() {
-        data.name = $("obName").value.trim(); data.dob = $("obDob").value; data.time_certainty = $("obCert").value; data.tob = $("obTob").value;
-        var g = m.querySelector('input[name="gender"]:checked'); data.gender = g ? g.value : "prefer_not_to_say"; remember = $("obRem").checked;
-        var p = picker.get(); data.place = p.place; data.lat = p.lat; data.lon = p.lon; data.tz = p.tz;
-      }
-      $("obForm").onsubmit = function (e) {
-        e.preventDefault(); collect(); var err = $("obErr");
-        if (!data.name) return err.textContent = t("e_name");
-        if (!data.dob || data.dob > today) return err.textContent = t("e_dob");
-        if (data.time_certainty !== "unknown" && !data.tob) return err.textContent = t("e_tob");
-        if (data.lat == null) return err.textContent = t("e_place");
-        if (!data.tz) return err.textContent = t("e_tz");
+      picker = AM.placePicker($(m, "obPlace"), data, {});
+      function collect() { var p = picker.get(); data.place = p.place; data.lat = p.lat; data.lon = p.lon; data.tz = p.tz; remember = $(m, "obRem").checked; }
+      wire(m, function () { collect(); picker.destroy(); picker = null; stepTime(); }, function () {
+        collect(); if (data.lat == null) return err(m, t("e_place")); if (!data.tz) return err(m, t("e_tz"));
         picker.destroy(); picker = null; stepPalms();
-      };
+      });
     }
 
     function stepPalms() {
-      var m = overlay('<div class="win wide">' + LOGO + steps(3) + '<h2>' + esc(t("palm_title")) + '</h2><p class="lead">' + esc(t("palm_lead")) + '</p><div class="palms">' +
+      var m = overlay('<div class="win wide">' + LOGO + progress(7) + '<h2>' + esc(t("palm_title")) + '</h2><p class="lead">' + esc(t("palm_lead")) + '</p><div class="palms">' +
         ["left", "right"].map(function (s) { return '<label class="drop" data-s="' + s + '"><input type="file" accept="image/*" capture="environment" data-s="' + s + '"><span class="emoji-l">🖐️</span><b>' + esc(t(s + "_hand")) + '</b><span class="muted small">' + esc(t("tap_upload")) + '</span></label>'; }).join("") +
         '</div><p class="small muted mt-s">' + esc(t("palm_note")) + '</p><p class="err" id="pmErr"></p>' +
         '<div class="actions"><button type="button" class="btn ghost" id="pmBack">' + esc(t("back")) + '</button><button type="button" class="btn" id="pmGo">' + esc(t("palm_continue")) + '</button></div>' +
         '<div class="center mt-m"><button type="button" class="btn link" id="pmSkip">' + esc(t("skip_continue")) + '</button></div></div>');
+      var bar = m.querySelector(".pbar i"); requestAnimationFrame(function () { bar.style.width = "100%"; });
       function show(side) { var d = m.querySelector('.drop[data-s="' + side + '"]'); if (!d || !palms[side]) return; var old = d.querySelector("img"); if (old) old.remove(); var i = document.createElement("img"); i.alt = ""; i.src = palms[side]; d.appendChild(i); var tg = document.createElement("span"); tg.className = "tag"; tg.textContent = t(side + "_hand"); d.appendChild(tg); }
       show("left"); show("right");
       m.querySelector(".palms").onchange = async function (e) {
         var inp = e.target.closest("input[type=file]"); if (!inp || !inp.files[0]) return;
         try { palms[inp.dataset.s] = await AM.resizeToJpeg(inp.files[0]); show(inp.dataset.s); m.querySelector("#pmErr").textContent = ""; } catch (er) { m.querySelector("#pmErr").textContent = er.message; }
       };
-      m.querySelector("#pmBack").onclick = function () { stepDetails(); };
+      m.querySelector("#pmBack").onclick = function () { stepPlace(); };
       m.querySelector("#pmSkip").onclick = function () { palms = {}; finish(); };
       m.querySelector("#pmGo").onclick = finish;
     }
@@ -211,9 +240,9 @@
         AM.closeModal(); opts.onDone({ profile: profile, palms: palms, chart: chart, remember: remember });
       } catch (e) {
         var alt = (e.alternatives && e.alternatives.length) ? " " + e.alternatives.join(" ") : "";
-        stepDetails(t("chart_err") + " " + e.message + alt);
+        stepPlace(t("chart_err") + " " + e.message + alt);
       }
     }
-    (opts.startAt === "details" ? stepDetails : stepLang)();
+    (editing ? stepName : stepLang)();
   };
 })();

@@ -1,3 +1,18 @@
+# AstroMuni 1.1.0
+
+Plain-language release: answers now sound like a person, and the app is simpler to use.
+
+- New conversation layer (`voice.py`): short, personal answers in English, Hinglish or Hindi (language follows how you write). House numbers and lords moved behind "Why this answer?".
+- AstroMuni asks one follow-up question and continues from your reply (field of study/work, work status, relationship status, money goal, timing). The chat now remembers the last few messages.
+- Dasha explained in plain words ("Right now you are in your Jupiter phase, running till Mar 2027").
+- Unknown birth time no longer blocks answers: houses are counted from the Moon sign (Chandra Lagna), shown with low confidence and a note.
+- Horoscope: a plain paragraph plus Love, Career, Health and Money meters (transit support, not a prediction). Planet detail is behind "Why this reading?". No lucky numbers or colours: nothing in the engine supports them.
+- Onboarding is one question per screen: language, name, gender, date, time (with "I don't know my time of birth"), place with map pin, optional palms.
+- Cleaner home (today's reading, ask box, four tools) and a chat-style Ask page with tap-to-reply buttons.
+- Fixes carried from v1.0.x: OpenStreetMap tile CSP and Referrer-Policy, vendored Leaflet, noscript CSP class.
+
+Restart the server after upgrading: `python3 -m aipandit.web --port 8001`. Set ANTHROPIC_API_KEY for more natural wording (it only rewrites what the engine found).
+
 # AstroMuni 1.0.0
 
 - New onboarding: language -> birth details (OpenStreetMap/Leaflet pin, Nominatim search) -> optional palm photos (skippable).

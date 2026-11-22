@@ -99,9 +99,71 @@ def reading_for_moon_sign(moon_sign: str, sky: Dict[str, Dict[str, Any]], lang: 
     sade = sat_h in (12, 1, 2)
     if sade:
         lines.append(ph["sade"].format(h=sat_h, ho=_ord(sat_h)))
+    areas = _areas(facts, lang)
     return {"moon_sign": moon_sign, "support": support, "band": band, "headline": ph[band], "lines": lines,
-            "sade_sati": bool(sade), "facts": facts}
+            "sade_sati": bool(sade), "facts": facts, "areas": areas, "paragraph": _paragraph(band, moon_h, areas, bool(sade), lang)}
 
 
 def all_signs(sky: Dict[str, Dict[str, Any]], lang: str = "en") -> List[Dict[str, Any]]:
     return [reading_for_moon_sign(r, sky, lang) for r in RASHIS]
+
+
+# ---- v1.1: life-area meters and a plain-language paragraph -------------------------------------------------------
+# Each area looks only at the planets traditionally linked with it and reuses the same classical favourable-house table.
+# The score is the weighted share of those planets that are favourable today: a transparent "transit support" index,
+# not a probability and not a prediction of events.
+AREA_PLANETS = {"love": {"Venus": 2.0, "Jupiter": 2.0, "Moon": 1.0, "Mars": 1.0},
+                "career": {"Sun": 1.0, "Saturn": 2.0, "Jupiter": 1.5, "Mercury": 1.0, "Mars": 1.0},
+                "health": {"Sun": 1.0, "Mars": 1.5, "Saturn": 1.5, "Moon": 1.0},
+                "money": {"Jupiter": 2.0, "Mercury": 1.0, "Venus": 1.0, "Moon": 1.0, "Saturn": 1.0}}
+AREA_LABEL = {"love": ("Love", "Pyaar", "प्रेम"), "career": ("Career", "Career", "करियर"), "health": ("Health", "Sehat", "सेहत"), "money": ("Money", "Paisa", "धन")}
+AREA_TEXT = {
+    "love": {"high": ("Warm and easy with the people you care about. A good day to talk openly.", "Apno ke saath mahaul halka aur garm rahega. Khul kar baat karne ka achha din.", "अपनों के साथ माहौल गर्म और सहज रहेगा। खुलकर बात करने का अच्छा दिन।"),
+             "mid": ("Steady. Small kind gestures matter more than big talks.", "Stable. Badi baaton se zyada chhoti pyaari baatein maayne rakhti hain.", "स्थिर। बड़ी बातों से ज़्यादा छोटे स्नेह भरे भाव मायने रखते हैं।"),
+             "low": ("Feelings may run a little sensitive. Listen more, argue less.", "Feelings thodi nazuk reh sakti hain. Zyada suniye, kam bahas kijiye.", "भावनाएँ थोड़ी संवेदनशील रह सकती हैं। ज़्यादा सुनिए, कम बहस कीजिए।")},
+    "career": {"high": ("Good for taking initiative and showing your work.", "Pehal karne aur apna kaam dikhane ke liye achha din.", "पहल करने और अपना काम दिखाने के लिए अच्छा दिन।"),
+               "mid": ("A routine work day. Finish pending tasks rather than starting big new ones.", "Routine kaam ka din. Bade naye kaam shuru karne se behtar hai pending kaam nipta lein.", "रोज़मर्रा के काम का दिन। बड़े नए काम शुरू करने से बेहतर है लंबित काम निपटा लें।"),
+               "low": ("Work may feel slow or heavy. Do not take big decisions today.", "Kaam dheema ya bhaari lag sakta hai. Aaj bade faisle mat lein.", "काम धीमा या भारी लग सकता है। आज बड़े फ़ैसले न लें।")},
+    "health": {"high": ("Energy looks good. A nice day for exercise or a walk.", "Energy achhi rahegi. Exercise ya walk ke liye achha din.", "ऊर्जा अच्छी रहेगी। व्यायाम या सैर के लिए अच्छा दिन।"),
+               "mid": ("Normal energy. Keep sleep and meals regular.", "Energy normal rahegi. Neend aur khaana time par rakhein.", "ऊर्जा सामान्य रहेगी। नींद और खाना समय पर रखें।"),
+               "low": ("You may tire easily. Rest a little and avoid pushing too hard.", "Jaldi thakaan ho sakti hai. Thoda aaram karein, zyada na khinchein.", "जल्दी थकान हो सकती है। थोड़ा आराम करें, ज़्यादा न खींचें।")},
+    "money": {"high": ("A good day for sensible money matters, such as planning or collecting what is due.", "Samajhdaari ke paise ke kaam, jaise planning ya baaki paisa maangna, ke liye achha din.", "समझदारी के पैसे के कामों, जैसे योजना या बकाया माँगने, के लिए अच्छा दिन।"),
+              "mid": ("Neutral. Stick to your budget.", "Neutral. Apne budget par tike rahein.", "सामान्य। अपने बजट पर टिके रहें।"),
+              "low": ("Avoid impulse spending or lending money today.", "Aaj impulse kharch ya udhaar dene se bachein.", "आज बिना सोचे खर्च या उधार देने से बचें।")}}
+PARA = {"en": {"today": "Today {theme}.", "best": "{a} looks best today.", "care": "Go gently with {a}.",
+               "sade": "You are also in the long Sade Sati phase, which rewards patience and routine."},
+        "hg": {"today": "Aaj {theme}.", "best": "Aaj {a} sabse achha dikh raha hai.", "care": "{a} mein dheere chalein.",
+               "sade": "Aap Sade Sati ke lambe daur mein bhi hain, jo sabr aur routine ko phal deta hai."},
+        "hi": {"today": "आज {theme}।", "best": "आज {a} सबसे अच्छा दिख रहा है।", "care": "{a} में धीरे चलें।",
+               "sade": "आप साढ़ेसाती के लंबे दौर में भी हैं, जो धैर्य और दिनचर्या को फल देता है।"}}
+
+
+def _areas(facts: List[Dict[str, Any]], lang: str) -> List[Dict[str, Any]]:
+    by = {f["planet"]: f for f in facts}
+    li = {"en": 0, "hg": 1, "hi": 2}[lang]
+    out = []
+    for key, planets in AREA_PLANETS.items():
+        total = got = 0.0
+        for p, w in planets.items():
+            if p in by:
+                total += w
+                got += w if by[p]["favourable"] else 0.0
+        score = round(100 * got / total) if total else 50
+        level = "high" if score >= 65 else "mid" if score >= 40 else "low"
+        out.append({"key": key, "label": AREA_LABEL[key][li], "score": score, "level": level, "text": AREA_TEXT[key][level][li]})
+    return out
+
+
+def _paragraph(band: str, moon_h: Optional[int], areas: List[Dict[str, Any]], sade: bool, lang: str) -> str:
+    ph, pa = PHRASES[lang], PARA[lang]
+    theme = ({"en": MOON_THEME, "hg": MOON_THEME_HG, "hi": MOON_THEME_HI}[lang]).get(moon_h or 0, "")
+    best = max(areas, key=lambda a: a["score"])
+    worst = min(areas, key=lambda a: a["score"])
+    parts = [ph[band], pa["today"].format(theme=theme) if theme else ""]
+    if best["score"] >= 60:
+        parts.append(pa["best"].format(a=best["label"]))
+    if worst["score"] < 45 and worst["key"] != best["key"]:
+        parts.append(pa["care"].format(a=worst["label"]))
+    if sade:
+        parts.append(pa["sade"])
+    return " ".join(p for p in parts if p)

@@ -1,0 +1,54 @@
+/* AstroMuni v1.1: simpler screens. Loaded after app.css, so it only overrides what changed. */
+
+/* ---- onboarding: one question per screen ---- */
+.pbar{height:6px;border-radius:99px;background:rgba(120,84,40,.14);overflow:hidden;margin:2px 0 6px}
+.pbar>i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--gold-deep),var(--gold));transition:width .35s ease}
+.ob-step{margin:0 0 10px}
+.win h2{font-size:clamp(1.5rem,4vw,2rem);line-height:1.2}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.choice{min-height:60px;border-radius:var(--r-md);border:1.5px solid rgba(120,84,40,.28);background:#fffefb;font-weight:600;font-size:1rem;color:var(--choc);padding:0 12px}
+.choice:hover,.choice.on{background:var(--gold-wash);border-color:var(--gold-deep)}
+.win .field input[type=text],.win .field input[type=date],.win .field input[type=time]{font-size:1.15rem;min-height:56px}
+.win .center .btn.link{white-space:normal;text-align:center}
+@media(max-width:520px){.win{border-radius:22px}.choices{grid-template-columns:1fr}}
+
+/* ---- home: one clear column ---- */
+.hub-head h1{font-size:clamp(2rem,5vw,3rem);margin:2px 0 4px}
+.page>section{margin-bottom:clamp(22px,3.4vw,36px)}
+.page h2{font-size:clamp(1.3rem,2.6vw,1.7rem);margin:0 0 6px}
+.horo .reading{display:flex;gap:14px;align-items:flex-start}
+.horo .para{font-size:clamp(1.02rem,1.9vw,1.18rem);line-height:1.55;color:var(--ink);margin:4px 0 0}
+.meters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0 10px}
+.meter .m-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.meter .m-head b{font-size:.95rem}.meter .m-head span{font-size:.82rem;color:var(--soft)}
+.meter .bar{height:10px}
+.meter.low .bar>i{background:linear-gradient(90deg,#c27a3a,#e0a86c)}
+.meter.high .bar>i{background:linear-gradient(90deg,#6a9a4f,#9fc47e)}
+.meter p{margin-top:8px;line-height:1.4}
+@media(max-width:760px){.meters{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.meters{grid-template-columns:1fr}}
+.tools{grid-template-columns:repeat(4,minmax(0,1fr))}
+.tools .tool{text-align:left;display:grid;gap:6px;align-content:start}
+.tools .tool h3{font-size:1.02rem}
+@media(max-width:860px){.tools{grid-template-columns:1fr 1fr}}
+.foot{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;color:var(--soft);font-size:.82rem;border:0;padding-top:0}
+.top .search{display:none}
+
+/* ---- chat: a conversation, not a form ---- */
+.chatpage{max-width:820px;margin:0 auto}
+.chatpage .chat{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--card);box-shadow:var(--shadow);overflow:hidden}
+.chat-head{display:flex;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff6d8,#fffdf8)}
+.chat-head .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--choc);color:#fff8e8;font-weight:700;font-size:.85rem}
+.chat-head small{display:block}
+.chatpage .thread{min-height:340px;max-height:calc(100vh - 330px);padding:18px;gap:14px}
+.chatpage .bubble{border-bottom-right-radius:6px}
+.chatpage .reply{border:0;background:#fff8e4;border-radius:20px;border-bottom-left-radius:6px;padding:14px 18px;max-width:92%;justify-self:start}
+.reply .ans{line-height:1.6;font-size:1.02rem}
+.reply .fq{font-weight:600;color:var(--choc);margin-top:2px}
+.reply .qr{margin-top:2px}
+.reply .note{color:var(--warn)}
+details.why>summary{font-size:.88rem}
+.welcome{display:grid;gap:6px;justify-items:start}
+.welcome h3{font-size:1.4rem}
+.chatpage .composer{border-top:1px solid var(--line)}
+@media(max-width:860px){.chatpage .thread{max-height:calc(100vh - 360px)}.chatpage .reply{max-width:100%}}

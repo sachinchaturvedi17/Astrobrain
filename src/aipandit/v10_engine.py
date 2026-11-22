@@ -206,7 +206,10 @@ def ask(payload: Dict[str, Any]) -> Dict[str, Any]:
             sky = _sky()[1]
         except Exception:
             sky = None
-    out = brain.answer(q, chart, lang, sky)
+    hist = payload.get("history") if isinstance(payload.get("history"), list) else []
+    hist = [{k: (str(m.get(k))[:40] if k != "text" else str(m.get(k))[:600]) for k in ("role", "text", "topic", "expects") if m.get(k) is not None}
+            for m in hist[-6:] if isinstance(m, dict)]
+    out = brain.answer(q, chart, lang, sky, history=hist)
     out["mode"] = payload.get("mode", "muni")
     return out
 

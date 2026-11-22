@@ -128,6 +128,7 @@
   AM.langs = [["en", "English", "English"], ["hg", "Hinglish", "Hindi in Roman letters"], ["hi", "हिन्दी", "देवनागरी"]];
   AM.setLang = function (l) { lang = T[l] ? l : "en"; document.documentElement.lang = lang === "hi" ? "hi" : "en"; document.body.classList.toggle("hi", lang === "hi"); };
   AM.lang = function () { return lang; };
+  AM.extend = function (l, o) { T[l] = Object.assign(T[l] || {}, o); };
   AM.t = function (k, vars) {
     var s = (T[lang] && T[lang][k]) || T.en[k] || k;
     if (vars) for (var v in vars) s = s.split("{" + v + "}").join(vars[v]);

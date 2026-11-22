@@ -1,4 +1,4 @@
-/* AstroMuni v1.0 main app: shell, routing and all screens. No inline handlers or styles (strict CSP). */
+/* AstroMuni v1.1 main app: shell, routing and all screens. No inline handlers or styles (strict CSP). */
 (function () {
   "use strict";
   var AM = window.AM, t = AM.t, esc = AM.esc, api = AM.api;
@@ -10,9 +10,9 @@
     hg: { Sun: "Surya", Moon: "Chandra", Mars: "Mangal", Mercury: "Budh", Jupiter: "Guru", Venus: "Shukra", Saturn: "Shani", Rahu: "Rahu", Ketu: "Ketu" },
     hi: { Sun: "सूर्य", Moon: "चंद्र", Mars: "मंगल", Mercury: "बुध", Jupiter: "गुरु", Venus: "शुक्र", Saturn: "शनि", Rahu: "राहु", Ketu: "केतु" } };
   var ABBR = { Sun: "Su", Moon: "Mo", Mars: "Ma", Mercury: "Me", Jupiter: "Ju", Venus: "Ve", Saturn: "Sa", Rahu: "Ra", Ketu: "Ke" };
-  var CHIPS = { en: ["What does my career path look like this year?", "When is a supportive time for a new relationship?", "How is my current dasha shaping things?", "What does my wealth house say?"],
-    hg: ["Is saal mera career kaisa rahega?", "Naye rishte ke liye achha samay kab hai?", "Meri current dasha kya asar daal rahi hai?", "Mere dhan bhav ke baare mein bataiye."],
-    hi: ["इस साल मेरा करियर कैसा रहेगा?", "नए रिश्ते के लिए अच्छा समय कब है?", "मेरी वर्तमान दशा क्या असर डाल रही है?", "मेरा धन भाव क्या कहता है?"] };
+  var CHIPS = { en: ["How is my career going to be?", "Tell me about love and marriage", "How are my studies?", "What about money?", "Which phase am I in right now?"],
+    hg: ["Mera career kaisa rahega?", "Pyaar aur shaadi ke baare mein batao", "Meri padhai kaisi rahegi?", "Paise ka kya haal hai?", "Abhi main kaunse daur mein hoon?"],
+    hi: ["मेरा करियर कैसा रहेगा?", "प्रेम और विवाह के बारे में बताइए", "मेरी पढ़ाई कैसी रहेगी?", "पैसे का क्या हाल है?", "अभी मैं किस दौर में हूँ?"] };
   var TOPICS = ["career", "marriage", "wealth", "education", "family", "children", "health"];
   var LEARN = [["Nakshatra", "nakshatra"], ["Vimshottari Dasha", "dasha"], ["Gajakesari yoga", "gajakesari yoga"], ["Sade Sati", "sade sati"], ["Gochara", "gochara transit"], ["Panchang", "panchang"], ["Ashtakoota", "ashtakoota gun milan"], ["Navamsa", "navamsa"]];
   var ICON = {
@@ -51,7 +51,7 @@
     renderView();
   }
   function loadFor(route) {
-    if (route === "hub") { load("pan"); load("horo"); }
+    if (route === "hub") { load("horo"); }
     if (route === "horoscope") load("horo");
     if (route === "panchang") load("pan");
     if (route === "chart") load("chart");
@@ -71,7 +71,7 @@
     var root = $("#amRoot");
     root.innerHTML = '<div class="shell"><aside class="side"><div class="logo"><img src="/static/icon.svg" alt=""><div><b>astromuni</b><small>' + esc(t("tagline").slice(0, 0)) + 'Personal Vedic guide</small></div></div><nav class="nav" aria-label="Main">' + navHtml() + '</nav><div class="push"></div>' + moonCard() + '</aside>' +
       '<div class="main"><header class="top"><button type="button" class="icon-btn menu" data-act="drawer" aria-label="Menu">' + svg("menu") + '</button><div class="date"><h4 id="topDate">—</h4><small id="topTithi"></small></div><span class="spacer"></span>' +
-      '<form class="search" id="topSearch" role="search"><span class="icon-btn">' + svg("search") + '</span><input id="topQ" type="search" placeholder="' + esc(t("search_ph")) + '" aria-label="' + esc(t("search_ph")) + '"></form>' +
+      '' +
       '<button type="button" class="btn" data-go="ask">' + svg("ask").replace("<svg", '<svg width="18" height="18"') + esc(t("ask_muni")) + '</button></header><main class="page" id="view"></main></div></div>' +
       '<nav class="tabbar" aria-label="Tabs">' + [["hub", "n_cosmic"], ["ask", "n_ask_s"], ["horoscope", "n_horo_s"], ["chart", "n_my"]].map(function (n) { return '<button type="button" data-go="' + n[0] + '" class="' + (S.route === n[0] ? "on" : "") + '">' + svg(n[0]) + '<span>' + esc(t(n[1])) + '</span></button>'; }).join("") + '</nav>';
     paintTop();
@@ -110,33 +110,28 @@
     return '<svg class="orbit" viewBox="0 0 300 300" role="img" aria-label="' + esc(t("weather")) + '"><circle class="ring" cx="150" cy="150" r="140"/><circle class="ring d" cx="150" cy="150" r="112"/><circle class="ring" cx="150" cy="150" r="82"/><g class="spin"><circle cx="150" cy="10" r="9" fill="#8a5a37"/><circle cx="48" cy="236" r="6" fill="#d9a93a"/></g><circle cx="150" cy="150" r="58" fill="#fbe9ae" stroke="#d9a93a"/><circle cx="150" cy="150" r="44" fill="#f4d675"/>' +
       '<text x="150" y="152" text-anchor="middle" font-size="40" fill="#6b3a93">' + esc(glyph(moonSign)) + '</text><text x="150" y="182" text-anchor="middle" font-size="10" letter-spacing="3" fill="#6b4a2a">' + esc(signName(moonSign).toUpperCase()) + '</text></svg>';
   }
-  function horoCard(sg) {
+  function meters(areas) {
+    return '<div class="meters">' + (areas || []).map(function (a) {
+      return '<div class="meter ' + esc(a.level) + '"><div class="m-head"><b>' + esc(a.label) + '</b><span>' + a.score + '</span></div><div class="bar" role="img" aria-label="' + esc(t("meter_label", { a: a.label, s: a.score })) + '"><i data-w="' + a.score + '"></i></div><p class="small muted">' + esc(a.text) + '</p></div>';
+    }).join("") + '</div>';
+  }
+  function horoWhy(sg) {
+    return '<details class="why"><summary>' + esc(t("why_reading")) + '</summary><p class="muted small">' + esc(S.horo.method) + '</p><ul>' + sg.lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join("") + '</ul><div class="scroll-x"><table class="t"><thead><tr><th>' + esc(t("planet")) + '</th><th>' + esc(t("house")) + ' (' + esc(t("from_moon")) + ')</th><th>' + esc(t("sign")) + '</th><th></th></tr></thead><tbody>' +
+      sg.facts.map(function (f) { return '<tr><td>' + esc(plName(f.planet)) + (f.retrograde ? " ℞" : "") + '</td><td>' + f.house + '</td><td>' + esc(signName(f.sign)) + '</td><td class="' + (f.favourable ? "yes" : "no") + '">' + esc(t(f.favourable ? "fav" : "chall")) + '</td></tr>'; }).join("") + '</tbody></table></div></details>';
+  }
+  function horoCard(sg, full) {
     if (!sg) return skel;
-    return '<div class="card"><div class="reading"><div class="badge">' + esc(glyph(sg.key)) + '</div><div class="grow"><div class="eyebrow">' + esc(signName(sg.key)) + ' • ' + esc(t("daily_horo")) + '</div><h3>' + esc(sg.headline) + '</h3><div class="bar" role="img" aria-label="' + esc(t("support")) + ' ' + sg.support + '%"><i data-w="' + sg.support + '"></i></div><p class="small muted">' + esc(t("support")) + ': ' + sg.support + '%</p><ul>' + sg.lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join("") + '</ul></div></div></div>';
+    return '<div class="card tint horo"><div class="reading"><div class="badge">' + esc(glyph(sg.key)) + '</div><div class="grow"><div class="eyebrow">' + esc(signName(sg.key)) + ' • ' + esc(t("daily_horo")) + '</div><p class="para">' + esc(sg.paragraph || sg.headline) + '</p></div></div>' + meters(sg.areas) + '<p class="small muted">' + esc(t("area_note")) + '</p>' + (full ? horoWhy(sg) : "") + '</div>';
   }
   function viewHub() {
-    var mine = S.horo && S.horo.mine, moon = (S.chart && S.chart.moon && S.chart.moon.sign) || (mine && mine.key) || "Simha", p = S.pan;
-    var chips = CHIPS[lang()] || CHIPS.en;
-    var sel = S.horo && S.horo.signs ? S.horo.signs.filter(function (x) { return x.key === (S.sel || moon); })[0] : null;
-    return '<section class="hero"><div><div class="eyebrow line">' + esc(t("compass")) + '</div><h1>' + esc(greet()) + (first() ? ", " + esc(first()) + "." : ".") + '<em>' + esc(t("stars")) + '</em></h1><p class="lead">' + esc(t("hero_lead")) + '</p><div class="row"><button type="button" class="btn" data-go="ask">' + esc(t("cta_ask")) + ' →</button><button type="button" class="btn ghost" data-go="chart">' + esc(t("cta_chart")) + '</button></div></div>' +
-      '<div class="card weather tint"><div class="row between"><span class="eyebrow">' + esc(t("weather")) + '</span><span class="chip">● ' + esc(t("live")) + '</span></div>' + orbit(moon) +
-      '<div class="row between"><div><small class="muted">' + esc(t("support")) + '</small><div><b>' + (p ? esc(p.energy) + "%" : "—") + '</b></div></div><div class="grow"><div class="bar"><i data-w="' + (p ? esc(p.energy) : 0) + '"></i></div></div></div><p class="small muted">' + esc(t("support_note")) + '</p>' +
-      '<div class="stat3"><div><small>' + esc(t("guiding")) + '</small><b>' + esc(p ? plName(p.guiding_planet) : "—") + '</b></div><div><small>' + esc(t("focus")) + '</small><b>' + esc(p ? p.focus : "—") + '</b></div><div><small>' + esc(t("abhijit")) + '</small><b>' + esc(p && p.abhijit ? p.abhijit : "—") + '</b></div></div></div></section>' +
-      '<section class="card insight"><div><div class="eyebrow">' + esc(t("insight")) + '</div><h3>' + esc(mine ? mine.headline + " " + (mine.lines[0] || "") : "…") + '</h3></div><button type="button" class="btn link" data-go="horoscope">' + esc(t("read_full")) + ' →</button></section>' +
-      '<section><div class="sec-head"><div><div class="eyebrow">' + esc(t("personal")) + '</div><h2>' + esc(t("whats_mind")) + '</h2><p class="muted">' + esc(t("ask_sub")) + '</p></div><div class="seg" role="tablist"><button type="button" data-mode="muni" class="' + (S.mode === "muni" ? "on" : "") + '">' + esc(t("muni_ai")) + '</button><button type="button" data-mode="astropedia" class="' + (S.mode === "astropedia" ? "on" : "") + '">' + esc(t("astropedia")) + '</button></div></div>' +
-      '<form class="askbox" id="hubAsk"><input id="hubQ" type="text" maxlength="500" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form>' +
-      '<div class="row mt-s"><span class="eyebrow">' + esc(t("try_asking")) + '</span></div><div class="chips scroll">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></section>' +
-      '<section><div class="eyebrow center">' + esc(t("daily_horo")) + '</div><h2 class="center">' + esc(t("glimpse")) + '</h2><p class="center muted mb-s">' + esc(t("glimpse_sub")) + '</p>' + signStrip(S.sel || moon) + (S.horoErr ? "" : horoCard(sel)) + '</section>' +
-      '<section><div class="sec-head"><div><div class="eyebrow">' + esc(t("toolkit")) + '</div><h2>' + esc(t("map_of_you")) + '</h2><p class="muted">' + esc(t("toolkit_sub")) + '</p></div></div><div class="grid3">' +
-      '<button type="button" class="card tint tool" data-go="chart"><div class="ico">' + svg("chart").replace("<svg", '<svg width="24" height="24"') + '</div><div class="eyebrow">' + esc(t("your_chart")) + '</div><h3>' + esc(t("kundli_t")) + '</h3><p class="muted">' + esc(t("kundli_d")) + '</p><b>' + esc(t("open_chart")) + ' →</b></button>' +
-      '<button type="button" class="card tool" data-go="compat"><div class="ico">' + svg("heart").replace("<svg", '<svg width="24" height="24"') + '</div><div class="eyebrow">' + esc(t("relationships")) + '</div><h3>' + esc(t("compat_t")) + '</h3><p class="muted">' + esc(t("compat_d")) + '</p><b>' + esc(t("check_compat")) + ' →</b></button>' +
-      '<button type="button" class="card tool" data-go="panchang"><div class="ico">' + svg("cal").replace("<svg", '<svg width="24" height="24"') + '</div><div class="eyebrow">' + esc(t("vedic_cal")) + '</div><h3>' + esc(t("panchang_t")) + '</h3><div class="kv"><div><span>' + esc(t("tithi")) + '</span><b>' + esc(p ? p.tithi : "—") + '</b></div><div><span>' + esc(t("nakshatra")) + '</span><b>' + esc(p ? p.nakshatra : "—") + '</b></div><div><span>' + esc(t("abhijit")) + '</span><b>' + esc(p && p.abhijit ? p.abhijit : "—") + '</b></div></div><b>' + esc(t("view_panchang")) + ' →</b></button></div></section>' +
-      '<section><div class="sec-head"><div><div class="eyebrow">' + esc(t("free_calc")) + '</div><h2>' + esc(t("small_q")) + '</h2></div><button type="button" class="btn ghost" data-go="calculators">' + esc(t("view_calc")) + ' →</button></div><div class="grid4">' +
-      [["moon", "c_moon", "☾"], ["ascendant", "c_asc", "☀︎"], ["nakshatra", "c_nak", "✦"], ["sade_sati", "c_sade", "♄"]].map(function (c) { return '<button type="button" class="card flat calc" data-calc="' + c[0] + '"><span class="tool"><span class="ico">' + c[2] + '</span></span><span><h4>' + esc(t(c[1])) + '</h4><p class="small muted">' + esc(t(c[1] + "_d")) + '</p></span></button>'; }).join("") + '</div></section>' +
-      '<section class="card dark banner"><svg viewBox="0 0 300 260" aria-hidden="true"><circle cx="150" cy="130" r="100" fill="none" stroke="#c9972b" stroke-opacity=".5"/><circle cx="150" cy="130" r="64" fill="none" stroke="#c9972b" stroke-opacity=".7"/><path d="M168 76a56 56 0 100 108a44 44 0 010-108z" fill="#ecc65f"/></svg><div><div class="eyebrow">' + esc(t("pers_reports")) + '</div><h2>' + esc(t("beyond")) + '</h2><p>' + esc(t("reports_d")) + '</p><div class="chips mt-s">' + ["career", "marriage", "wealth"].map(function (r) { return '<span class="chip">' + esc(t("r_" + r)) + '</span>'; }).join("") + '</div><button type="button" class="btn gold mt-m" data-go="reports">' + esc(t("explore_reports")) + ' →</button></div></section>' +
-      '<section><div class="sec-head"><div><div class="eyebrow">' + esc(t("journal")) + '</div><h2>' + esc(t("wisdom")) + '</h2></div><button type="button" class="btn link" data-go="learn">' + esc(t("browse_j")) + ' →</button></div><div class="grid3">' +
-      [["a1", "♄", "PLANETS • 8 " + t("min"), "Saturn isn't punishing you. It's asking you to build.", "A gentler way to understand discipline, delay, and the gift of staying power.", "Saturn"], ["a2", "☾", "NAKSHATRAS • 6 " + t("min"), "What your Moon remembers", "Your nakshatra reveals the emotional home you instinctively return to.", "Nakshatra"], ["a3", "☉", "VEDIC LIVING • 5 " + t("min"), "Planning your week with the planets", "Work with each day's ruling energy instead of pushing against it.", "Graha"]].map(function (a) { return '<button type="button" class="article" data-learn="' + esc(a[5]) + '"><div class="art ' + a[0] + '">' + a[1] + '</div><div class="eyebrow">' + esc(a[2]) + '</div><h3>' + esc(a[3]) + '</h3><p class="muted small">' + esc(a[4]) + '</p></button>'; }).join("") + '</div></section>' +
-      '<footer class="foot"><div class="row between"><span><b>astromuni</b> · ' + esc(t("tagline")) + '</span><span>© 2026 AstroMuni. ' + esc(t("guidance_not_certainty")) + '</span></div></footer>';
+    var mine = S.horo && S.horo.mine, chips = CHIPS[lang()] || CHIPS.en;
+    return '<section class="hub-head"><div class="eyebrow">' + esc(greet()) + '</div><h1>' + esc(first() || "") + '</h1></section>' +
+      '<section><div class="eyebrow">' + esc(t("today_for_you")) + '</div>' + (S.err_horo && !S.horo ? errBox(S.err_horo) : horoCard(mine)) + '<div class="mt-s"><button type="button" class="btn link" data-go="horoscope">' + esc(t("read_full")) + ' →</button></div></section>' +
+      '<section><h2>' + esc(t("hub_ask")) + '</h2><p class="muted mb-s">' + esc(t("hub_ask_sub")) + '</p><form class="askbox" id="hubAsk"><input id="hubQ" type="text" maxlength="500" autocomplete="off" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form>' +
+      '<div class="chips mt-s">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></section>' +
+      '<section><h2>' + esc(t("more_tools")) + '</h2><div class="grid4 tools">' +
+      [["chart", "chart", "kundli_t", "kundli_d"], ["compat", "heart", "compat_t", "compat_d"], ["panchang", "cal", "panchang_t", "panchang_d"], ["reports", "reports", "pers_reports", "reports_d"]].map(function (x) { return '<button type="button" class="card flat tool" data-go="' + x[0] + '"><span class="ico">' + svg(x[1]).replace("<svg", '<svg width="24" height="24"') + '</span><h3>' + esc(t(x[2])) + '</h3><p class="small muted">' + esc(t(x[3])) + '</p></button>'; }).join("") + '</div></section>' +
+      '<footer class="foot"><span><b>astromuni</b> · ' + esc(t("tagline")) + '</span> <span>' + esc(t("guidance_not_certainty")) + '</span></footer>';
   }
   function signStrip(sel) {
     return '<div class="signs" role="listbox">' + SIGNS.map(function (s) { return '<button type="button" class="sign ' + (s[0] === sel ? "on" : "") + '" data-sign="' + s[0] + '" role="option" aria-selected="' + (s[0] === sel) + '"><span class="g">' + s[3] + '︎</span>' + esc(lang() === "hi" ? s[2] : s[1]) + '</button>'; }).join("") + '</div>';
@@ -145,9 +140,7 @@
   function viewHoro() {
     if (!S.horo) return S.err_horo ? errBox(S.err_horo) : skel;
     var sg = S.horo.signs.filter(function (x) { return x.key === S.sel; })[0] || S.horo.signs[0];
-    return '<div><div class="eyebrow">' + esc(t("horo_title")) + '</div><h2>' + esc(t("glimpse")) + '</h2><p class="muted">' + esc(t("glimpse_sub")) + '</p></div>' + signStrip(sg.key) + horoCard(sg) +
-      '<div class="card"><h3>' + esc(t("horo_method")) + '</h3><p class="muted small mb-s">' + esc(S.horo.method) + '</p><div class="scroll-x"><table class="t"><thead><tr><th>' + esc(t("planet")) + '</th><th>' + esc(t("house")) + ' (' + esc(t("from_moon")) + ')</th><th>' + esc(t("sign")) + '</th><th></th></tr></thead><tbody>' +
-      sg.facts.map(function (f) { return '<tr><td>' + esc(plName(f.planet)) + (f.retrograde ? " ℞" : "") + '</td><td>' + f.house + '</td><td>' + esc(signName(f.sign)) + '</td><td class="' + (f.favourable ? "yes" : "no") + '">' + esc(t(f.favourable ? "fav" : "chall")) + '</td></tr>'; }).join("") + '</tbody></table></div></div>';
+    return '<div><div class="eyebrow">' + esc(t("horo_title")) + '</div><h2>' + esc(S.horo.date) + '</h2></div>' + signStrip(sg.key) + horoCard(sg, true);
   }
 
   /* North Indian chart */
@@ -188,30 +181,33 @@
 
   function replyHtml(m) {
     var d = m.data; if (!d) return '<div class="reply"><span class="typing"><i></i><i></i><i></i></span> <span class="muted small">' + esc(t("thinking")) + '</span></div>';
-    var more = (d.reasons && d.reasons.length > 1) || (d.evidence && d.evidence.length);
-    return '<div class="reply">' + (d.title ? '<div class="row between"><h3>' + esc(d.title) + '</h3>' + (d.confidence && d.confidence.level !== "n/a" ? '<span class="badge-pill ' + esc(d.confidence.level) + '">' + esc(t("confidence")) + ': ' + esc(t(d.confidence.level)) + '</span>' : "") + '</div>' : "") + '<p class="ans">' + esc(d.answer) + '</p>' +
-      (more && !d.safety ? '<details><summary>' + esc(t("why")) + '</summary>' + (d.reasons && d.reasons.length ? '<div class="eyebrow">' + esc(t("basis")) + '</div><ul>' + d.reasons.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") + (d.timing && d.timing.length ? '<div class="eyebrow">' + esc(t("timing")) + '</div><ul>' + d.timing.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") +
-        (d.confidence && d.confidence.why ? '<p class="small muted">' + esc(d.confidence.why) + '</p>' : "") + (d.evidence && d.evidence.length ? '<div class="eyebrow">' + esc(t("sources")) + '</div><ul>' + d.evidence.map(function (e) { return '<li><b>' + esc(e.title) + '</b> <span class="src">' + (/^https?:\/\//.test(e.url) ? '<a href="' + esc(e.url) + '" target="_blank" rel="noopener noreferrer">' + esc(e.source) + '</a>' : esc(e.source)) + ' · ' + esc(e.licence) + '</span></li>'; }).join("") + '</ul>' : "") + '</details>' : "") +
-      (d.caveats && d.caveats.length && !d.safety ? '<p class="small muted">' + esc(d.caveats.join(" ")) + '</p>' : "") + '</div>';
+    var more = (d.reasons && d.reasons.length) || (d.evidence && d.evidence.length) || (d.timing && d.timing.length);
+    var qr = m.last && d.quick_replies && d.quick_replies.length && !d.safety;
+    return '<div class="reply">' + (d.showTitle && d.title ? '<h3>' + esc(d.title) + '</h3>' : "") + '<p class="ans">' + esc(d.answer) + '</p>' + (d.followup_question ? '<p class="fq">' + esc(d.followup_question) + '</p>' : "") +
+      (qr ? '<div class="chips qr">' + d.quick_replies.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div><p class="small muted">' + esc(t("reply_hint")) + '</p>' : "") +
+      (d.confidence && d.confidence.level === "low" && d.confidence.why ? '<p class="small note">' + esc(d.confidence.why) + '</p>' : "") +
+      (more && !d.safety ? '<details class="why"><summary>' + esc(t("why")) + '</summary>' + (d.reasons && d.reasons.length ? '<div class="eyebrow">' + esc(t("basis")) + '</div><ul>' + d.reasons.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") + (d.timing && d.timing.length ? '<div class="eyebrow">' + esc(t("timing")) + '</div><ul>' + d.timing.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") +
+        (d.confidence && d.confidence.level !== "n/a" && d.confidence.why && d.confidence.level !== "low" ? '<p class="small muted">' + esc(t("confidence")) + ': ' + esc(t(d.confidence.level)) + '. ' + esc(d.confidence.why) + '</p>' : "") + (d.evidence && d.evidence.length ? '<div class="eyebrow">' + esc(t("sources")) + '</div><ul>' + d.evidence.map(function (e) { return '<li><b>' + esc(e.title) + '</b> <span class="src">' + (/^https?:\/\//.test(e.url) ? '<a href="' + esc(e.url) + '" target="_blank" rel="noopener noreferrer">' + esc(e.source) + '</a>' : esc(e.source)) + ' · ' + esc(e.licence) + '</span></li>'; }).join("") + '</ul>' : "") +
+        (d.caveats && d.caveats.length ? '<p class="small muted">' + esc(d.caveats.join(" ")) + '</p>' : "") + '</details>' : "") + '</div>';
   }
   function threadHtml() {
-    if (!S.msgs.length) return '<div class="reply"><div class="eyebrow">' + esc(t("today_reading")) + '</div><h3>' + esc(t("namaste", { n: first() })) + '</h3><p class="muted">' + esc(t("namaste_sub")) + '</p></div><div class="center"><b>' + esc(t("muni_listening")) + '</b><p class="small muted">' + esc(t("muni_q")) + '</p></div>';
-    return S.msgs.map(function (m) { return m.role === "user" ? '<div class="bubble">' + esc(m.text) + '</div>' : replyHtml(m); }).join("");
-  }
-  function muniSvg() {
-    return '<svg viewBox="0 0 240 280" aria-hidden="true"><circle cx="120" cy="140" r="104" fill="none" stroke="#d9a93a" stroke-opacity=".5"/><circle cx="120" cy="140" r="76" fill="none" stroke="#d9a93a" stroke-opacity=".4"/><circle cx="120" cy="82" r="24" fill="#4b2a18"/><circle cx="120" cy="100" r="30" fill="#6a4026"/><path d="M52 262c0-62 28-96 68-96s68 34 68 96z" fill="#5b3822"/><path d="M96 190l24 40 24-40" fill="none" stroke="#c9972b" stroke-width="3"/></svg>';
+    if (!S.msgs.length) {
+      var chips = CHIPS[lang()] || CHIPS.en;
+      return '<div class="welcome"><h3>' + esc(t("astro_hello", { n: first() })) + '</h3><p class="muted">' + esc(t("astro_hello_sub")) + '</p><div class="eyebrow mt-m">' + esc(t("try_tap")) + '</div><div class="chips">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></div>';
+    }
+    var n = S.msgs.length;
+    return S.msgs.map(function (m, i) { if (m.role === "user") return '<div class="bubble">' + esc(m.text) + '</div>'; m.last = i === n - 1; return replyHtml(m); }).join("");
   }
   function viewAsk() {
-    var chips = CHIPS[lang()] || CHIPS.en;
-    return '<div class="ask"><div class="muni">' + muniSvg() + '<h3>Astromuni</h3><span class="chip">AI guide</span><p class="small muted">' + esc(t("hero_lead").slice(0, 0)) + (S.chart && S.chart.moon ? esc(t("moon_sign")) + ': ' + esc(signName(S.chart.moon.sign)) : "") + '</p></div>' +
-      '<div class="chat"><div class="row between pad-s"><div><b>' + esc(t("private")) + '</b></div><div class="seg"><button type="button" data-mode="muni" class="' + (S.mode === "muni" ? "on" : "") + '">' + esc(t("muni_ai")) + '</button><button type="button" data-mode="astropedia" class="' + (S.mode === "astropedia" ? "on" : "") + '">' + esc(t("astropedia")) + '</button></div></div><div class="thread" id="thread">' + threadHtml() + '</div>' +
-      '<div class="composer"><div class="chips scroll">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div><form class="askbox" id="askForm"><input id="askQ" type="text" maxlength="500" autocomplete="off" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form><p class="disclaimer">' + esc(t("disclaimer")) + '</p></div></div></div>';
+    return '<div class="chatpage"><div class="chat"><div class="chat-head"><span class="av">AM</span><div><b>AstroMuni</b><small class="muted">' + esc(S.chart && S.chart.moon ? t("moon_sign") + ': ' + signName(S.chart.moon.sign) : t("private")) + '</small></div></div><div class="thread" id="thread">' + threadHtml() + '</div>' +
+      '<div class="composer"><form class="askbox" id="askForm"><input id="askQ" type="text" maxlength="500" autocomplete="off" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form><p class="disclaimer">' + esc(t("disclaimer")) + '</p></div></div></div>';
   }
   async function ask(q) {
     q = (q || "").trim(); if (!q || S.busy) return;
+    var hist = S.msgs.filter(function (x) { return x.role === "user" || x.data; }).slice(-6).map(function (x) { return x.role === "user" ? { role: "user", text: x.text } : { role: "bot", text: x.data.answer || "", topic: x.data.topic || "", expects: x.data.expects || "" }; });
     S.busy = true; S.msgs.push({ role: "user", text: q }); var m = { role: "bot", data: null }; S.msgs.push(m);
     if (S.route !== "ask") go("ask"); else renderView();
-    try { m.data = await api("/api/v10/ask", Object.assign(body({ question: q, mode: S.mode }), S.mode === "astropedia" ? { profile: null } : {})); }
+    try { m.data = await api("/api/v10/ask", Object.assign(body({ question: q, mode: S.mode, history: hist }), S.mode === "astropedia" ? { profile: null } : {})); }
     catch (e) { m.data = { answer: e.message, title: "", reasons: [], evidence: [], caveats: [], safety: "error" }; }
     S.busy = false; renderView(); var i = $("#askQ"); if (i) i.focus();
   }
@@ -235,7 +231,7 @@
   function viewReports() {
     var r = S.rep;
     return '<div><div class="eyebrow">' + esc(t("pers_reports")) + '</div><h2>' + esc(t("report_title")) + '</h2><p class="muted">' + esc(t("reports_d")) + '</p></div><div class="chips">' + TOPICS.map(function (k) { return '<button type="button" class="chip ' + (S.repTopic === k ? "on" : "") + '" data-rep="' + k + '">' + esc(t("r_" + k)) + '</button>'; }).join("") + '</div>' +
-      (!r || r.loading ? skel : r.error ? errBox(r.error) : '<div class="card tint">' + replyHtml({ data: Object.assign({}, r, { title: t("r_" + S.repTopic) }) }).replace('class="reply"', 'class="reply flat"') + '</div>' + (r.houses && r.houses.length ? '<div class="card"><div class="scroll-x"><table class="t"><thead><tr><th>' + esc(t("house")) + '</th><th>' + esc(t("sign")) + '</th><th>Lord</th><th></th></tr></thead><tbody>' + r.houses.map(function (h) { return '<tr><td>' + h.house + '</td><td>' + esc(signName(h.sign)) + '</td><td>' + esc(plName(h.lord)) + '</td><td class="' + (h.points > 0 ? "yes" : h.points < 0 ? "no" : "") + '">' + (h.points > 0 ? esc(t("fav")) : h.points < 0 ? esc(t("chall")) : "") + '</td></tr>'; }).join("") + '</tbody></table></div></div>' : ""));
+      (!r || r.loading ? skel : r.error ? errBox(r.error) : '<div class="card tint">' + replyHtml({ data: Object.assign({}, r, { title: t("r_" + S.repTopic), showTitle: true, followup_question: "", quick_replies: [] }) }) + '</div>' + (r.houses && r.houses.length ? '<details class="card flat why"><summary>' + esc(t("why")) + '</summary><div class="scroll-x"><table class="t"><thead><tr><th>' + esc(t("house")) + '</th><th>' + esc(t("sign")) + '</th><th>Lord</th><th></th></tr></thead><tbody>' + r.houses.map(function (h) { return '<tr><td>' + h.house + '</td><td>' + esc(signName(h.sign)) + '</td><td>' + esc(plName(h.lord)) + '</td><td class="' + (h.points > 0 ? "yes" : h.points < 0 ? "no" : "") + '">' + (h.points > 0 ? esc(t("fav")) : h.points < 0 ? esc(t("chall")) : "") + '</td></tr>'; }).join("") + '</tbody></table></div></details>' : ""));
   }
 
   async function runLearn(q) {

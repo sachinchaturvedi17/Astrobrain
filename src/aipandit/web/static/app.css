@@ -225,3 +225,5 @@ table.t{width:100%;border-collapse:collapse;font-size:.92rem}.t th{font-size:.72
 @keyframes sk{to{background-position:-200% 0}}
 body.hi{font-family:"Hind","Figtree",system-ui,sans-serif}
 .pad-s{padding:12px 14px}.mt-s{margin-top:12px}.mt-m{margin-top:14px}.mb-s{margin-bottom:12px}.emoji-l{font-size:2rem}.my-l{margin:26px 0}
+
+.am-noscript { padding: 24px; font-family: sans-serif; }
