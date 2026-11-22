@@ -100,7 +100,7 @@
     var views = { hub: viewHub, ask: viewAsk, horoscope: viewHoro, chart: viewChart, calculators: viewCalc, reports: viewReports, learn: viewLearn, compat: viewCompat, panchang: viewPanchang };
     v.innerHTML = (views[S.route] || viewHub)();
     paintTop();
-    if (S.route === "ask") { var th = $("#thread"); if (th) th.scrollTop = th.scrollHeight; }
+    if (S.route === "ask") { var th = $("#thread"); if (th) th.scrollTop = S.msgs.length ? th.scrollHeight : 0; }
     if (S.route === "compat") mountCompatPicker();
   }
   var skel = '<div class="card"><div class="skeleton"></div><p></p><div class="skeleton"></div></div>';
@@ -199,7 +199,7 @@
   function threadHtml() {
     if (!S.msgs.length) {
       var chips = CHIPS[lang()] || CHIPS.en;
-      return '<div class="welcome card tint"><div class="eyebrow">' + esc(t("today_for_you")) + '</div><h3>' + esc(t("astro_hello", { n: first() })) + '</h3><p class="muted">' + esc(t("astro_hello_sub")) + '</p><div class="eyebrow mt-m">' + esc(t("try_tap")) + '</div><div class="chips">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></div>';
+      return '<div class="welcome card tint"><div class="eyebrow">' + esc(t("about_nv")) + '</div><h3>' + esc(t("astro_hello", { n: first() })) + '</h3><p class="muted">' + esc(t("astro_hello_sub")) + '</p><div class="eyebrow mt-m">' + esc(t("try_tap")) + '</div><div class="chips">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></div>';
     }
     var n = S.msgs.length;
     return S.msgs.map(function (m, i) { if (m.role === "user") return '<div class="bubble">' + esc(m.text) + '</div>'; m.last = i === n - 1; return replyHtml(m); }).join("");
@@ -389,7 +389,7 @@
   function startApp() {
     var r = location.hash.slice(1); S.route = /^(hub|ask|horoscope|chart|calculators|reports|learn|compat|panchang)$/.test(r) ? r : "hub";
     shell(); renderView(); loadFor(S.route);
-    if (!S.chart) load("chart").then(function () { shell(); });
+    if (!S.chart) load("chart").then(function () { shell(); renderView(); });
     else shell();
   }
   (function boot() {

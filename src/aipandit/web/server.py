@@ -382,8 +382,14 @@ def make_handler(app: App):
     return H
 
 
+class _Server(ThreadingHTTPServer):
+    """A browser opens ~10 connections at once on reload; the default backlog of 5 resets some of them."""
+    request_queue_size = 128
+    daemon_threads = True
+
+
 def make_server(pandit: Pandit, host="127.0.0.1", port=8000, log_dir: Optional[str] = None) -> ThreadingHTTPServer:
-    return ThreadingHTTPServer((host, port), make_handler(App(pandit, log_dir)))
+    return _Server((host, port), make_handler(App(pandit, log_dir)))
 
 
 def main(argv=None) -> int:

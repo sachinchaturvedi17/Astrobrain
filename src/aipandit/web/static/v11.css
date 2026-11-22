@@ -69,7 +69,7 @@ details.why>summary{font-size:.88rem}
 /* ---- v1.1.2: NaradVani stage (left) + chat (right); stacked on phones ---- */
 .askpage{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:clamp(16px,2.4vw,32px);height:calc(100dvh - 170px);min-height:540px;max-width:1200px;margin:0 auto;width:100%}
 .nv-stage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px 20px;border-radius:var(--r-lg);border:1px solid var(--line);background:radial-gradient(120% 90% at 50% 20%,#fff3c9 0%,#fdf3d3 45%,#f6e2a6 100%);box-shadow:var(--shadow);overflow:hidden;text-align:center}
-.rings{position:relative;width:min(300px,72%);aspect-ratio:1;display:grid;place-items:center}
+.rings{position:relative;flex:none;width:min(300px,72%,34dvh);aspect-ratio:1;display:grid;place-items:center}
 .ring{position:absolute;border-radius:50%;border:1.5px solid rgba(176,132,42,.35);inset:0}
 .ring.r1{inset:-14%}.ring.r2{inset:-30%;border-color:rgba(176,132,42,.22)}.ring.r3{inset:-48%;border-color:rgba(176,132,42,.12)}
 .portrait{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;box-shadow:0 0 0 4px var(--gold),0 22px 40px -18px rgba(70,40,26,.65);background:#0f5c63}
