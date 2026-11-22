@@ -233,4 +233,7 @@ def core_passages() -> List[Dict[str, object]]:
         add("yoga_" + title.lower().split()[0].strip("()"), title, tags + ["yoga"], text, "yoga")
     for title, tags, text in CONCEPTS:
         add("concept_" + title.lower().split()[0].strip("()"), title, tags, text, "concept")
+    from .kb_faq import FAQ
+    for i, (title, tags, text) in enumerate(FAQ):
+        add(f"faq_{i:02d}", title, tags, text, "faq")
     return out

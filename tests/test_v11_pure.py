@@ -111,3 +111,50 @@ class HoroscopeTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class V111Tests(unittest.TestCase):
+    """New in 1.1.1: computed dosha checks, FAQ knowledge, no-upsell remedies, new topics."""
+
+    def test_manglik_is_computed_from_the_chart_and_not_scary(self):
+        o = ask("is there manglik dosha in my kundli")
+        self.assertEqual(o["topic"], "manglik")
+        self.assertIn("does not stop marriage", o["answer"])
+
+    def test_conceptual_manglik_question_gets_reference_then_offers_to_check(self):
+        o = ask("what is manglik dosha")
+        self.assertEqual(o["expects"], "dosha_check")
+        o2 = ask("yes", hist(o))
+        self.assertIn("In your chart", o2["answer"])
+
+    def test_kaal_sarp_is_honest_about_sign_level_data(self):
+        from aipandit import doshas
+        ch = {"planets": {p: {"sign": s} for p, s in zip(("Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu"),
+                                                         ("Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya", "Tula", "Mesha"))}}
+        self.assertEqual(doshas.kaal_sarp(ch), "borderline")  # Sun shares Rahu's sign: degrees would decide
+        ch["planets"]["Sun"]["sign"] = "Vrishabha"
+        ch["planets"]["Saturn"]["sign"] = "Kanya"
+        self.assertEqual(doshas.kaal_sarp(ch), "formed")
+        self.assertEqual(doshas.kaal_sarp(CHART), "absent")
+
+    def test_remedies_never_sell(self):
+        for q in ("remedy for saturn", "should I wear a gemstone", "do pujas really work"):
+            a = ask(q)["answer"].lower()
+            self.assertTrue("never" in a or "not" in a, q)
+            for bad in ("buy now", "rs.", "price", "₹", "book a puja"):
+                self.assertNotIn(bad, a)
+
+    def test_new_topics_foreign_property_and_faq(self):
+        self.assertEqual(ask("will I settle abroad")["expects"], "abroad_goal")
+        self.assertEqual(ask("when will I buy a house")["topic"], "property")
+        o = ask("What is sade sati?", None, None)
+        self.assertIn("seven and a half", o["answer"])
+        self.assertEqual(ask("kundli milan kaise hota hai")["action"], "compat")
+
+    def test_every_faq_entry_is_original_and_searchable(self):
+        from aipandit import kb_faq, retrieval
+        self.assertGreaterEqual(len(kb_faq.FAQ), 28)
+        for title, tags, text in kb_faq.FAQ:
+            self.assertGreater(len(text), 120)
+            hit = retrieval.search(title + " " + " ".join(tags[:4]), k=8, tiers=("core",))
+            self.assertTrue(hit and any(h["title"] == title for h in hit), title)

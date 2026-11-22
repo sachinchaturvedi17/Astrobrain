@@ -1,4 +1,4 @@
-"""AstroMuni v1.1 voice: turns chart findings into a short, personal, plain-language conversation.
+"""NaradVani (AstroNaradMuni) voice: turns chart findings into a short, personal, plain-language conversation.
 
 The engine (brain.py) still decides WHAT is true from the chart. This module only decides HOW it is said:
   - no house numbers or lords in the main answer (those stay in "Why this answer?"),
@@ -297,9 +297,9 @@ FIELD_FIT = {
 FIELD_DASHA = ("Also, your current phase involves {pl}, so it is a good time to start moving in this direction.",
                "Saath hi, aapke abhi ke daur mein {pl} shamil hai, isliye is disha mein badhna shuru karne ka achha samay hai.",
                "साथ ही, आपके अभी के दौर में {pl} शामिल है, इसलिए इस दिशा में बढ़ना शुरू करने का अच्छा समय है।")
-GREET = ("Namaste! I am AstroMuni. I read your chart and explain it in plain words. Ask me about your career, love, studies, money, or what phase of life you are in.",
-         "Namaste! Main AstroMuni hoon. Main aapka chart padhkar saaf shabdon mein samjhata hoon. Career, pyaar, padhai, paisa, ya abhi aap kaunse daur mein ho, kuch bhi poochhiye.",
-         "नमस्ते! मैं AstroMuni हूँ। मैं आपकी कुंडली पढ़कर सरल शब्दों में समझाता हूँ। करियर, प्रेम, पढ़ाई, पैसा, या अभी आप किस दौर में हैं, कुछ भी पूछिए।")
+GREET = ("Namaste! I am NaradVani. I read your chart and explain it in plain words. Ask me about your career, love, studies, money, or what phase of life you are in.",
+         "Namaste! Main NaradVani hoon. Main aapka chart padhkar saaf shabdon mein samjhata hoon. Career, pyaar, padhai, paisa, ya abhi aap kaunse daur mein ho, kuch bhi poochhiye.",
+         "नमस्ते! मैं नारदवाणी हूँ। मैं आपकी कुंडली पढ़कर सरल शब्दों में समझाता हूँ। करियर, प्रेम, पढ़ाई, पैसा, या अभी आप किस दौर में हैं, कुछ भी पूछिए।")
 THANKS = ("You are welcome! Ask me anything else whenever you like.", "Aapka swagat hai! Jab chahein kuch aur poochhiye.", "आपका स्वागत है! जब चाहें कुछ और पूछिए।")
 TOPIC_CHIPS = {"en": ["My career", "Love & marriage", "Studies", "Money", "My current phase"],
                "hg": ["Mera career", "Pyaar aur shaadi", "Padhai", "Paisa", "Meri abhi ki dasha"],
@@ -397,3 +397,70 @@ def continue_chat(expects: str, key: str, topic: str, chart: Dict[str, Any], lan
         nxt = "field" if expects == "career_status" and key != "business" else "timing"
     q, quick = ask_block(nxt, lang)
     return {"text": text, "expects": nxt, "question": q, "quick_replies": quick}
+
+
+# ------------------------------------------------------------------------------------------ v1.1.1 additions
+OPEN["foreign"] = {
+    "sup": ("Your chart shows a real link with distant places. Travel, study or work connected to another city or country can come naturally to you.",
+            "Aapke chart mein door ki jagahon se asli judaav dikhta hai. Doosre shehar ya desh se jude travel, padhai ya kaam aapke liye swabhavik ho sakte hain.",
+            "आपकी कुंडली में दूर की जगहों से असली जुड़ाव दिखता है। दूसरे शहर या देश से जुड़ी यात्रा, पढ़ाई या काम आपके लिए स्वाभाविक हो सकते हैं।"),
+    "mix": ("Going abroad shows a mixed picture: the interest is there, but it needs planning, paperwork and good timing.",
+            "Videsh jaane ka chitra mila-jula hai: ichha hai, par planning, paperwork aur sahi samay chahiye.",
+            "विदेश जाने का चित्र मिला-जुला है: इच्छा है, पर योजना, काग़ज़ी काम और सही समय चाहिए।"),
+    "dem": ("Going abroad may ask more effort and patience from you than from others. That does not rule it out; a clear plan and a good phase make a big difference.",
+            "Videsh jaane mein aapko auron se zyada mehnat aur sabr lag sakta hai. Iska matlab yeh nahi ki nahi hoga; saaf plan aur achha daur bahut farq daalte hain.",
+            "विदेश जाने में आपको औरों से ज़्यादा मेहनत और धैर्य लग सकता है। इसका मतलब यह नहीं कि नहीं होगा; साफ़ योजना और अच्छा दौर बहुत फ़र्क डालते हैं।")}
+OPEN["property"] = {
+    "sup": ("Property and home look supportive in your chart. You tend to do well when you buy with a clear plan and some savings behind you.",
+            "Property aur ghar aapke chart mein saath dete dikhte hain. Saaf plan aur thodi saving ke saath kharidne par aap achha karte hain.",
+            "संपत्ति और घर आपकी कुंडली में साथ देते दिखते हैं। साफ़ योजना और कुछ बचत के साथ ख़रीदने पर आप अच्छा करते हैं।"),
+    "mix": ("Property is a mixed picture: the wish is there, but choose carefully and check the money and paperwork twice.",
+            "Property ka chitra mila-jula hai: ichha hai, par soch-samajhkar chunein aur paise aur paperwork do baar check karein.",
+            "संपत्ति का चित्र मिला-जुला है: इच्छा है, पर सोच-समझकर चुनें और पैसे व काग़ज़ दो बार जाँचें।"),
+    "dem": ("Property may ask more patience from you. Slow, well-checked decisions suit you better than quick ones.",
+            "Property mein aapko zyada sabr chahiye ho sakta hai. Tez faislon se zyada dheere, achhe se jaanche hue faisle aapko suit karte hain.",
+            "संपत्ति में आपको ज़्यादा धैर्य चाहिए हो सकता है। तेज़ फ़ैसलों से ज़्यादा धीमे, अच्छी तरह जाँचे फ़ैसले आपको सूट करते हैं।")}
+TOPIC_ASK.update({"foreign": "abroad_goal"})
+ASK["abroad_goal"] = {
+    "q": ("What is the plan: studying abroad, working abroad, or settling there for good?", "Plan kya hai: videsh mein padhai, kaam, ya hamesha ke liye basna?", "योजना क्या है: विदेश में पढ़ाई, काम, या हमेशा के लिए बसना?"),
+    "opts": [("study", r"study|studies|padhai|college|masters|mba|पढ़", ("Study abroad", "Padhai ke liye", "पढ़ाई के लिए")),
+             ("work", r"work|job|naukri|kaam|career|काम|नौकरी", ("Work abroad", "Kaam ke liye", "काम के लिए")),
+             ("settle", r"settle|permanent|immigrat|citizen|basna|baas|hamesha|बस|हमेशा", ("Settle there", "Hamesha ke liye", "हमेशा के लिए"))]}
+REPLY["abroad_goal"] = {
+    "study": ("For study abroad, what helps most is a phase where learning energy is active, plus early planning for applications and funds.",
+              "Videsh mein padhai ke liye sabse zyada madad woh daur karta hai jisme seekhne ki urja sakriya ho, aur applications aur funds ki jaldi planning.",
+              "विदेश में पढ़ाई के लिए सबसे ज़्यादा मदद वह दौर करता है जिसमें सीखने की ऊर्जा सक्रिय हो, और आवेदन व धन की जल्दी योजना।"),
+    "work": ("For work abroad, it is usually a phase of effort and skill-building that opens doors, so keep your skills and profile sharp.",
+             "Videsh mein kaam ke liye aksar mehnat aur skill-building ka daur darwaze kholta hai, isliye apni skills aur profile tez rakhein.",
+             "विदेश में काम के लिए अक्सर मेहनत और कौशल-निर्माण का दौर दरवाज़े खोलता है, इसलिए अपने कौशल और प्रोफ़ाइल को धारदार रखें।"),
+    "settle": ("Settling abroad is really three questions: will you go, will you earn there, and will you stay? A chart can show leanings for each, but visas and offers come from effort, so plan for all three.",
+               "Videsh mein basna asal mein teen sawaal hain: kya jaoge, kya wahan kamaoge, aur kya wahan rukoge? Chart har ek ka jhukaav dikha sakta hai, par visa aur offers mehnat se aate hain, isliye teeno ki planning karein.",
+               "विदेश में बसना असल में तीन सवाल हैं: क्या जाएँगे, क्या वहाँ कमाएँगे, और क्या वहाँ रुकेंगे? कुंडली हर एक का झुकाव दिखा सकती है, पर वीज़ा और ऑफ़र मेहनत से आते हैं, इसलिए तीनों की योजना बनाएँ।")}
+ASK["dosha_check"] = {
+    "q": ("Shall I check this in your own chart?", "Kya main ise aapke apne chart mein check karun?", "क्या मैं इसे आपकी अपनी कुंडली में जाँचूँ?"),
+    "opts": ASK["timing"]["opts"]}
+REMEDY_LEAD = ("Here is a simple, free practice from the tradition. You never need to buy a gemstone, ring or puja for this, and I will never ask you to.",
+               "Parampara ka ek saral, muft abhyas yeh hai. Iske liye aapko koi ratna, anguthi ya puja kharidne ki zarurat nahi, aur main kabhi nahi kahunga.",
+               "परंपरा का एक सरल, मुफ़्त अभ्यास यह है। इसके लिए आपको कोई रत्न, अँगूठी या पूजा ख़रीदने की ज़रूरत नहीं, और मैं कभी नहीं कहूँगा।")
+MATCH_TXT = ("Kundli matching compares two Moon positions across eight factors for a score out of 36. Open the Match tool, add your partner's details, and you will get the score with what each factor means in plain words. About 18 is the traditional minimum, but the score is a conversation starter, not a pass or fail.",
+             "Kundli milan do Chandra sthitiyon ko aath factors par jaanchkar 36 mein se score deta hai. Match tool kholein, saathi ki details jodein, aur score ke saath har factor ka matlab saaf shabdon mein milega. Lagbhag 18 parampara se nyoontam hai, par score baat shuru karne ka zariya hai, pass ya fail nahi.",
+             "कुंडली मिलान दो चंद्र स्थितियों को आठ कारकों पर जाँचकर 36 में से स्कोर देता है। मैच टूल खोलें, साथी की जानकारी जोड़ें, और स्कोर के साथ हर कारक का मतलब सरल शब्दों में मिलेगा। लगभग 18 परंपरा से न्यूनतम है, पर स्कोर बातचीत शुरू करने का ज़रिया है, पास या फ़ेल नहीं।")
+MATCH_CHIPS = ("Open Match tool", "Match tool kholein", "मैच टूल खोलें")
+
+
+def remedy(text: str, lang: str) -> Dict[str, Any]:
+    li = LI[lang]
+    return {"text": REMEDY_LEAD[li] + " " + text, "expects": None, "question": _p(lang, "Which area is bothering you most?", "Kaun sa kshetra aapko sabse zyada pareshan kar raha hai?", "कौन सा क्षेत्र आपको सबसे ज़्यादा परेशान कर रहा है?"),
+            "quick_replies": TOPIC_CHIPS[lang][:4]}
+
+
+def match_answer(lang: str) -> Dict[str, Any]:
+    return {"text": MATCH_TXT[LI[lang]], "expects": None, "question": "", "quick_replies": [MATCH_CHIPS[LI[lang]]], "action": "compat"}
+
+
+def reference_answer(text: str, lang: str, ask_check: Optional[str] = None) -> Dict[str, Any]:
+    """A plain reference answer (FAQ). When it is about a personal check (Manglik, Kaal Sarp) offer to run it on the chart."""
+    if ask_check:
+        q, quick = ask_block("dosha_check", lang)
+        return {"text": text, "expects": "dosha_check", "question": q, "quick_replies": quick}
+    return {"text": text, "expects": None, "question": "", "quick_replies": TOPIC_CHIPS[lang][:4]}

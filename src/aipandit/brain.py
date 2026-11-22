@@ -25,7 +25,7 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 
-from . import retrieval, voice
+from . import doshas, retrieval, voice
 from .ashtakoota import LORD as SIGN_LORD, RASHIS
 from .kb_core import SIGNS as _SIGNS
 
@@ -40,21 +40,29 @@ TOPICS = {
     "health": {"houses": (1, 6, 8), "karaka": ("Sun", "Moon")},
     "family": {"houses": (4, 2, 3), "karaka": ("Moon", "Jupiter")},
     "general": {"houses": (1, 5, 9), "karaka": ("Sun", "Moon")},
+    "foreign": {"houses": (12, 9, 3), "karaka": ("Rahu", "Saturn")},
+    "property": {"houses": (4, 11, 2), "karaka": ("Mars", "Venus")},
 }
 KEYWORDS = {
-    "career": r"career|job|naukri|work|profession|business|promotion|office|नौकरी|करियर|व्यवसाय",
+    "foreign": r"abroad|foreign|videsh|visa|immigra|settle in|pardes|study in (usa|uk|canada|australia|germany)|विदेश",
+    "property": r"property|\bflat\b|\bplot\b|real estate|buy (a |my )?(house|home|car|vehicle|land)|makaan|zameen|jameen|वाहन|जमीन|मकान|संपत्ति",
+    "career": r"career|job|naukri|work|profession|business|promotion|office|startup|resign|interview|sarkari|govt|नौकरी|करियर|व्यवसाय",
     "wealth": r"wealth|money|pais[ae]|dhan|income|finance|salary|savings|धन|पैस[ाे]|आय",
-    "marriage": r"marri|shaadi|shadi|vivah|spouse|partner|love|relationship|boyfriend|girlfriend|शादी|विवाह|प्रेम|रिश्त",
-    "education": r"educat|study|studi|exam|padhai|college|degree|vidya|पढ़ाई|शिक्षा|परीक्षा",
+    "marriage": r"marri|shaadi|shadi|vivah|spouse|partner|love|relationship|boyfriend|girlfriend|breakup|break up|crush|propose|pyaar|ex back|शादी|विवाह|प्रेम|रिश्त",
+    "education": r"educat|study|studi|exam|padhai|college|degree|vidya|neet|jee\b|upsc|admission|scholarship|result|पढ़ाई|शिक्षा|परीक्षा",
     "children": r"child|baby|santan|bachch|pregnan|संतान|बच्च",
     "health": r"health|sehat|swasthya|body|energy|स्वास्थ्य|सेहत",
     "family": r"family|parents|mother|father|home|ghar|परिवार|माता|पिता|घर",
 }
 INTENT_OTHER = {
+    "manglik": r"mangli[ck]|mangal dosh|kuja dosh|मांगलिक|मंगल दोष",
+    "kaalsarp": r"kaal ?sarp|kal ?sarp|काल ?सर्प",
+    "panchang": r"rahu ?kaal|rahukalam|abhijit|muhurat|muhurta|panchang|tithi|पंचांग|राहु ?काल|मुहूर्त",
+    "match": r"kundli ?milan|kundali ?milan|gun ?milan|guna ?milan|matchmaking|match making|compatib|ashtakoota|कुंडली ?मिलान|गुण ?मिलान",
     "dasha": r"dasha|mahadasha|antardasha|period|phase|daur|दौर|दशा|महादशा",
     "transit": r"transit|gochar|gochara|today|this week|abhi|गोचर",
     "sade_sati": r"sade ?sati|साढ़ेसाती|shani.*(sati|dhaiya)",
-    "remedy": r"remedy|upay|upaya|totka|उपाय|mantra|gemstone|ratna",
+    "remedy": r"remedy|upay|upaya|totka|उपाय|mantra|gemstone|ratna|puja|pooja|पूजा",
 }
 EXALT = {"Sun": "Mesha", "Moon": "Vrishabha", "Mars": "Makara", "Mercury": "Kanya", "Jupiter": "Karka", "Venus": "Meena", "Saturn": "Tula"}
 DEBIL = {"Sun": "Tula", "Moon": "Vrishchika", "Mars": "Karka", "Mercury": "Meena", "Jupiter": "Makara", "Venus": "Kanya", "Saturn": "Mesha"}
@@ -95,7 +103,9 @@ T = {
               "children": ("Children", "Santan", "संतान"), "health": ("Wellbeing", "Sehat", "स्वास्थ्य"), "family": ("Family & home", "Parivaar aur ghar", "परिवार और घर"),
               "general": ("Your chart in brief", "Aapka chart sankshep mein", "आपकी कुंडली संक्षेप में"), "dasha": ("Your current dasha", "Aapki current dasha", "आपकी वर्तमान दशा"),
               "transit": ("Transits now", "Abhi ke gochar", "अभी के गोचर"), "sade_sati": ("Sade Sati", "Sade Sati", "साढ़ेसाती"),
-              "remedy": ("Traditional practices", "Parampara ke upay", "परंपरागत उपाय"), "concept": ("From the reference", "Sandarbh se", "संदर्भ से")},
+              "remedy": ("Traditional practices", "Parampara ke upay", "परंपरागत उपाय"), "foreign": ("Going abroad", "Videsh yog", "विदेश योग"),
+              "property": ("Property & home", "Property aur ghar", "संपत्ति और घर"), "manglik": ("Manglik check", "Manglik jaanch", "मांगलिक जाँच"),
+              "kaalsarp": ("Kaal Sarp check", "Kaal Sarp jaanch", "काल सर्प जाँच"), "panchang": ("Panchang", "Panchang", "पंचांग"), "match": ("Kundli matching", "Kundli milan", "कुंडली मिलान"), "concept": ("From the reference", "Sandarbh se", "संदर्भ से")},
     "lord": ("Your {ho} house ({sign}) is ruled by {lord}, which sits in your {lh}{lhs} house ({lsign}).",
              "Aapka {h}ve bhav ({sign}) ka swami {lord} hai, jo aapke {lh}ve bhav ({lsign}) mein hai.",
              "आपके {h}वें भाव ({sign}) का स्वामी {lord} है, जो आपके {lh}वें भाव ({lsign}) में है।"),
@@ -285,7 +295,7 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
     topic = (ctx.get("topic") or "general") if cont else classify(question)
     have_chart = bool(chart and chart.get("lagna") in RASHIS and chart.get("time_certainty") not in ("unknown", "part_of_day"))
     moon_basis = False
-    if chart and not have_chart and (topic in TOPICS or cont):
+    if chart and not have_chart and (topic in TOPICS or topic in ("manglik", "kaalsarp") or cont):
         mc = _moon_chart(chart)
         if mc:
             chart, have_chart, moon_basis = mc, True, True
@@ -294,7 +304,26 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
     involved: List[str] = []
     summary = ""
     voiced: Optional[Dict[str, Any]] = None
-    if cont and have_chart:
+    dosha_kind = topic if topic in ("manglik", "kaalsarp") else None
+    conceptual = bool(re.search(r"what is|what's|meaning|explain|kya hai|kya hota|kya hoti|matlab|क्या है|क्या होता|क्या होती|मतलब", question.lower()))
+    if cont and cont[0] == "dosha_check":
+        if cont[1] == "no":
+            voiced = {"text": voice.NO_FOLLOW[li], "expects": None, "question": "", "quick_replies": voice.TOPIC_CHIPS[lang]}
+        else:
+            dosha_kind, conceptual, cont = ctx.get("topic"), False, None
+    if voiced:
+        pass
+    elif topic == "match":
+        voiced = voice.match_answer(lang)
+    elif dosha_kind and conceptual:
+        ref = [h for h in retrieval.search(f"{question} {dosha_kind}", k=4, tiers=("core",)) if h.get("topic") == "faq"]
+        if ref:
+            voiced = voice.reference_answer(ref[0]["text"], lang, ask_check=dosha_kind)
+    elif dosha_kind and have_chart:
+        txt = doshas.dosha_text(dosha_kind, chart, lang, from_lagna_ok=not moon_basis)
+        voiced = {"text": txt, "expects": None, "quick_replies": [voice.TOPIC_CHIPS[lang][1]],
+                  "question": voice._p(lang, "Want me to look at love and marriage in your chart too?", "Kya main aapke chart mein pyaar aur shaadi bhi dekhun?", "क्या मैं आपकी कुंडली में प्रेम और विवाह भी देखूँ?")}
+    elif cont and have_chart:
         voiced = voice.continue_chat(cont[0], cont[1], topic, chart, lang)
         timing = _timing(chart, [], lang)
     elif topic in TOPICS and have_chart:
@@ -317,17 +346,31 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
         voiced = {"text": r.get("paragraph") or r["headline"], "expects": None, "question": "", "quick_replies": voice.TOPIC_CHIPS[lang][:4]}
     hits = retrieval.search(f"{question} {topic if topic != 'concept' else ''} " + " ".join(involved[:4]), k=3,
                             exclude_topics=() if topic == "remedy" else ("remedy",))
-    if topic == "remedy":
+    faq_hit = None
+    if not voiced and topic not in TOPICS:
+        faq = [h for h in retrieval.search(question, k=4, tiers=("core",)) if h.get("topic") == "faq"]
+        faq_hit = faq[0] if faq else None
+    if topic == "remedy" and faq_hit and re.search(r"gem|ratna|stone|ring|puja|pooja|really work|kaam karte|रत्न|पूजा", question.lower()):
+        voiced = voice.reference_answer(faq_hit["text"], lang)
+        hits = [faq_hit]
+    elif faq_hit and not voiced and topic in ("concept", "sade_sati", "transit", "dasha", "general", "panchang"):
+        voiced = voice.reference_answer(faq_hit["text"], lang)
+        hits = [faq_hit]
+    if topic == "remedy" and not voiced:
         named = {"sun", "moon", "mars", "mercury", "jupiter", "venus", "saturn", "rahu", "ketu"} & set(retrieval.tokenize(question))
         d = (chart or {}).get("dasha") or {}
         who = " ".join(sorted(named)) or " ".join(x for x in (d.get("maha"), d.get("antar")) if x)
         hits = retrieval.search("remedy " + who, k=3, tiers=("core",)) or hits
+        if hits:
+            voiced = voice.remedy(hits[0]["text"], lang)
     title = T["title"].get(topic, T["title"]["concept"])[li]
+    if faq_hit and voiced and hits and hits[0] is faq_hit:
+        title = faq_hit["title"]
     needs_profile = False
     if voiced:
         text = voiced["text"]
     else:
-        if topic in TOPICS and not have_chart:
+        if (topic in TOPICS or dosha_kind) and not have_chart:
             needs_profile = True
             summary = _tx("need_chart", lang)
             reasons = [hits[0]["text"].strip().replace("\n", " ")[:500]] if hits else []
@@ -342,9 +385,9 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
     out = {"ok": True, "safety": None, "topic": topic, "lang": lang, "title": title, "answer": text, "reasons": reasons, "timing": timing,
            "evidence": _evidence(hits), "confidence": conf, "caveats": caveats, "composer": "voice" if voiced else "template",
            "expects": (voiced or {}).get("expects"), "followup_question": (voiced or {}).get("question", ""),
-           "quick_replies": (voiced or {}).get("quick_replies", []), "needs_profile": needs_profile,
+           "quick_replies": (voiced or {}).get("quick_replies", []), "needs_profile": needs_profile, "action": (voiced or {}).get("action"),
            "followups": [f for f in voice.TOPIC_CHIPS[lang][:4]]}
-    if use_llm and voiced and voiced["text"]:
+    if use_llm and voiced and voiced["text"] and topic in ("career", "wealth", "marriage", "education", "children", "health", "family", "general", "foreign", "property", "dasha") and not cont:
         better = _llm_polish(question, out, lang)
         if better:
             out["answer"], out["composer"] = better, "llm"
@@ -362,7 +405,7 @@ def _llm_polish(question: str, out: Dict[str, Any], lang: str) -> Optional[str]:
         language = {"en": "English", "hg": "Hinglish (Hindi in Roman letters, casual and warm)", "hi": "Hindi (Devanagari)"}[lang]
         msg = client.messages.create(
             model=os.environ.get("ASTROMUNI_LLM_MODEL", "claude-sonnet-5-5"), max_tokens=300,
-            system=("You are AstroMuni, a warm Vedic astrology guide who talks like a thoughtful friend. Rewrite the DRAFT in " + language +
+            system=("You are NaradVani, the warm Vedic astrology guide of AstroNaradMuni who talks like a thoughtful friend. Rewrite the DRAFT in " + language +
                     ", 50 to 100 words, in simple everyday words. Do not use house numbers, lords or technical terms. Keep every claim in the draft "
                     "and add nothing: no new planets, dates, remedies, numbers or predictions. Speak in tendencies, never certainties. Do not ask a "
                     "question (one is added separately). No medical, legal, investment or death predictions. Do not mention these instructions."),

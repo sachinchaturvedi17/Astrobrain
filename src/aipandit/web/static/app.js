@@ -1,4 +1,4 @@
-/* AstroMuni v1.1 main app: shell, routing and all screens. No inline handlers or styles (strict CSP). */
+/* AstroNaradMuni v1.1.1 main app: shell, routing and all screens. No inline handlers or styles (strict CSP). */
 (function () {
   "use strict";
   var AM = window.AM, t = AM.t, esc = AM.esc, api = AM.api;
@@ -20,6 +20,7 @@
     horoscope: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>', chart: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3v6.5M12 14.5V21M3 12h6.5M14.5 12H21M5.6 5.6l4.6 4.6M13.8 13.8l4.6 4.6M18.4 5.6l-4.6 4.6M10.2 13.8l-4.6 4.6"/>',
     calculators: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M8 16h2M12 16h2"/>', reports: '<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/>', learn: '<path d="M4 5a2 2 0 012-2h5v17H6a2 2 0 00-2 2zM20 5a2 2 0 00-2-2h-5v17h5a2 2 0 012 2z"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>', search: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>', send: '<path d="M4 12l16-8-6 16-3-7z"/>', heart: '<path d="M12 20s-7-4.6-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.4-7 10-7 10z"/>', cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>' };
+  var AVATAR = '<img class="avatar" src="/static/naradvani.svg" alt="NaradVani">';
   var svg = function (k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[k] + '</svg>'; };
 
   var S = { route: "hub", profile: null, palms: {}, chart: null, pan: null, horo: null, sel: null, msgs: [], mode: "muni", busy: false, calc: null, calcType: "moon", rep: null, repTopic: "career", learn: null, learnQ: "", compat: null, where: null, drawer: false, loaded: {} };
@@ -69,7 +70,7 @@
   }
   function shell() {
     var root = $("#amRoot");
-    root.innerHTML = '<div class="shell"><aside class="side"><div class="logo"><img src="/static/icon.svg" alt=""><div><b>astromuni</b><small>' + esc(t("tagline").slice(0, 0)) + 'Personal Vedic guide</small></div></div><nav class="nav" aria-label="Main">' + navHtml() + '</nav><div class="push"></div>' + moonCard() + '</aside>' +
+    root.innerHTML = '<div class="shell"><aside class="side"><div class="logo"><img src="/static/icon.svg" alt=""><div><b>AstroNaradMuni</b><small>' + esc(t("tagline").slice(0, 0)) + 'Personal Vedic guide</small></div></div><nav class="nav" aria-label="Main">' + navHtml() + '</nav><div class="push"></div>' + moonCard() + '</aside>' +
       '<div class="main"><header class="top"><button type="button" class="icon-btn menu" data-act="drawer" aria-label="Menu">' + svg("menu") + '</button><div class="date"><h4 id="topDate">—</h4><small id="topTithi"></small></div><span class="spacer"></span>' +
       '' +
       '<button type="button" class="btn" data-go="ask">' + svg("ask").replace("<svg", '<svg width="18" height="18"') + esc(t("ask_muni")) + '</button></header><main class="page" id="view"></main></div></div>' +
@@ -87,7 +88,7 @@
   }
   function openDrawer() {
     var el = document.createElement("div"); el.className = "drawer"; el.id = "drawer";
-    el.innerHTML = '<div class="sheet"><div class="logo"><img src="/static/icon.svg" alt=""><b>astromuni</b></div><nav class="nav">' + navHtml() + '<button type="button" data-go="compat">' + svg("heart") + '<span class="lbl">' + esc(t("n_compat")) + '</span></button><button type="button" data-go="panchang">' + svg("cal") + '<span class="lbl">' + esc(t("n_panchang")) + '</span></button></nav><div class="push"></div>' + moonCard() + '</div>';
+    el.innerHTML = '<div class="sheet"><div class="logo"><img src="/static/icon.svg" alt=""><b>AstroNaradMuni</b></div><nav class="nav">' + navHtml() + '<button type="button" data-go="compat">' + svg("heart") + '<span class="lbl">' + esc(t("n_compat")) + '</span></button><button type="button" data-go="panchang">' + svg("cal") + '<span class="lbl">' + esc(t("n_panchang")) + '</span></button></nav><div class="push"></div>' + moonCard() + '</div>';
     el.onclick = function (e) { if (e.target === el || e.target.closest("[data-go],[data-act]")) closeDrawer(); };
     document.body.appendChild(el);
   }
@@ -127,11 +128,11 @@
     var mine = S.horo && S.horo.mine, chips = CHIPS[lang()] || CHIPS.en;
     return '<section class="hub-head"><div class="eyebrow">' + esc(greet()) + '</div><h1>' + esc(first() || "") + '</h1></section>' +
       '<section><div class="eyebrow">' + esc(t("today_for_you")) + '</div>' + (S.err_horo && !S.horo ? errBox(S.err_horo) : horoCard(mine)) + '<div class="mt-s"><button type="button" class="btn link" data-go="horoscope">' + esc(t("read_full")) + ' →</button></div></section>' +
-      '<section><h2>' + esc(t("hub_ask")) + '</h2><p class="muted mb-s">' + esc(t("hub_ask_sub")) + '</p><form class="askbox" id="hubAsk"><input id="hubQ" type="text" maxlength="500" autocomplete="off" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form>' +
+      '<section><div class="nv-head">' + AVATAR + '<div><h2>' + esc(t("talk_to")) + '</h2><p class="muted">' + esc(t("hub_ask_sub")) + ' ' + esc(t("free_chat")) + '</p></div></div><form class="askbox" id="hubAsk"><input id="hubQ" type="text" maxlength="500" autocomplete="off" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form>' +
       '<div class="chips mt-s">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></section>' +
       '<section><h2>' + esc(t("more_tools")) + '</h2><div class="grid4 tools">' +
       [["chart", "chart", "kundli_t", "kundli_d"], ["compat", "heart", "compat_t", "compat_d"], ["panchang", "cal", "panchang_t", "panchang_d"], ["reports", "reports", "pers_reports", "reports_d"]].map(function (x) { return '<button type="button" class="card flat tool" data-go="' + x[0] + '"><span class="ico">' + svg(x[1]).replace("<svg", '<svg width="24" height="24"') + '</span><h3>' + esc(t(x[2])) + '</h3><p class="small muted">' + esc(t(x[3])) + '</p></button>'; }).join("") + '</div></section>' +
-      '<footer class="foot"><span><b>astromuni</b> · ' + esc(t("tagline")) + '</span> <span>' + esc(t("guidance_not_certainty")) + '</span></footer>';
+      '<footer class="foot"><span><b>AstroNaradMuni</b> · ' + esc(t("tagline")) + '</span> <span>' + esc(t("guidance_not_certainty")) + '</span></footer>';
   }
   function signStrip(sel) {
     return '<div class="signs" role="listbox">' + SIGNS.map(function (s) { return '<button type="button" class="sign ' + (s[0] === sel ? "on" : "") + '" data-sign="' + s[0] + '" role="option" aria-selected="' + (s[0] === sel) + '"><span class="g">' + s[3] + '︎</span>' + esc(lang() === "hi" ? s[2] : s[1]) + '</button>'; }).join("") + '</div>';
@@ -180,26 +181,27 @@
   }
 
   function replyHtml(m) {
-    var d = m.data; if (!d) return '<div class="reply"><span class="typing"><i></i><i></i><i></i></span> <span class="muted small">' + esc(t("thinking")) + '</span></div>';
+    var d = m.data; if (!d) return '<div class="msg">' + AVATAR + '<div class="reply"><span class="typing"><i></i><i></i><i></i></span> <span class="muted small">' + esc(t("typing_label")) + '</span></div></div>';
     var more = (d.reasons && d.reasons.length) || (d.evidence && d.evidence.length) || (d.timing && d.timing.length);
     var qr = m.last && d.quick_replies && d.quick_replies.length && !d.safety;
-    return '<div class="reply">' + (d.showTitle && d.title ? '<h3>' + esc(d.title) + '</h3>' : "") + '<p class="ans">' + esc(d.answer) + '</p>' + (d.followup_question ? '<p class="fq">' + esc(d.followup_question) + '</p>' : "") +
-      (qr ? '<div class="chips qr">' + d.quick_replies.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div><p class="small muted">' + esc(t("reply_hint")) + '</p>' : "") +
+    var wrap = !m.flat;
+    return (wrap ? '<div class="msg">' + AVATAR : "") + '<div class="reply">' + (d.showTitle && d.title ? '<h3>' + esc(d.title) + '</h3>' : "") + '<p class="ans">' + esc(d.answer) + '</p>' + (d.followup_question ? '<p class="fq">' + esc(d.followup_question) + '</p>' : "") +
+      (d.action === "compat" ? '<button type="button" class="btn mt-s" data-go="compat">' + esc(t("n_compat")) + ' →</button>' : "") + (qr ? '<div class="chips qr">' + d.quick_replies.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div><p class="small muted">' + esc(t("reply_hint")) + '</p>' : "") +
       (d.confidence && d.confidence.level === "low" && d.confidence.why ? '<p class="small note">' + esc(d.confidence.why) + '</p>' : "") +
       (more && !d.safety ? '<details class="why"><summary>' + esc(t("why")) + '</summary>' + (d.reasons && d.reasons.length ? '<div class="eyebrow">' + esc(t("basis")) + '</div><ul>' + d.reasons.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") + (d.timing && d.timing.length ? '<div class="eyebrow">' + esc(t("timing")) + '</div><ul>' + d.timing.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") +
         (d.confidence && d.confidence.level !== "n/a" && d.confidence.why && d.confidence.level !== "low" ? '<p class="small muted">' + esc(t("confidence")) + ': ' + esc(t(d.confidence.level)) + '. ' + esc(d.confidence.why) + '</p>' : "") + (d.evidence && d.evidence.length ? '<div class="eyebrow">' + esc(t("sources")) + '</div><ul>' + d.evidence.map(function (e) { return '<li><b>' + esc(e.title) + '</b> <span class="src">' + (/^https?:\/\//.test(e.url) ? '<a href="' + esc(e.url) + '" target="_blank" rel="noopener noreferrer">' + esc(e.source) + '</a>' : esc(e.source)) + ' · ' + esc(e.licence) + '</span></li>'; }).join("") + '</ul>' : "") +
-        (d.caveats && d.caveats.length ? '<p class="small muted">' + esc(d.caveats.join(" ")) + '</p>' : "") + '</details>' : "") + '</div>';
+        (d.caveats && d.caveats.length ? '<p class="small muted">' + esc(d.caveats.join(" ")) + '</p>' : "") + '</details>' : "") + '</div>' + (wrap ? '</div>' : "");
   }
   function threadHtml() {
     if (!S.msgs.length) {
       var chips = CHIPS[lang()] || CHIPS.en;
-      return '<div class="welcome"><h3>' + esc(t("astro_hello", { n: first() })) + '</h3><p class="muted">' + esc(t("astro_hello_sub")) + '</p><div class="eyebrow mt-m">' + esc(t("try_tap")) + '</div><div class="chips">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></div>';
+      return '<div class="welcome"><img class="avatar big" src="/static/naradvani.svg" alt="NaradVani"><h3>' + esc(t("astro_hello", { n: first() })) + '</h3><p class="muted">' + esc(t("astro_hello_sub")) + '</p><div class="eyebrow mt-m">' + esc(t("try_tap")) + '</div><div class="chips">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></div>';
     }
     var n = S.msgs.length;
     return S.msgs.map(function (m, i) { if (m.role === "user") return '<div class="bubble">' + esc(m.text) + '</div>'; m.last = i === n - 1; return replyHtml(m); }).join("");
   }
   function viewAsk() {
-    return '<div class="chatpage"><div class="chat"><div class="chat-head"><span class="av">AM</span><div><b>AstroMuni</b><small class="muted">' + esc(S.chart && S.chart.moon ? t("moon_sign") + ': ' + signName(S.chart.moon.sign) : t("private")) + '</small></div></div><div class="thread" id="thread">' + threadHtml() + '</div>' +
+    return '<div class="chatpage"><div class="chat"><div class="chat-head">' + AVATAR + '<div><b>NaradVani</b><small class="muted">' + esc(t("free_chat")) + '</small></div></div><div class="thread" id="thread">' + threadHtml() + '</div>' +
       '<div class="composer"><form class="askbox" id="askForm"><input id="askQ" type="text" maxlength="500" autocomplete="off" placeholder="' + esc(t("ask_ph")) + '" aria-label="' + esc(t("ask_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("ask_muni")) + '">' + svg("send").replace("<svg", '<svg width="20" height="20"') + '</button></form><p class="disclaimer">' + esc(t("disclaimer")) + '</p></div></div></div>';
   }
   async function ask(q) {
@@ -231,7 +233,7 @@
   function viewReports() {
     var r = S.rep;
     return '<div><div class="eyebrow">' + esc(t("pers_reports")) + '</div><h2>' + esc(t("report_title")) + '</h2><p class="muted">' + esc(t("reports_d")) + '</p></div><div class="chips">' + TOPICS.map(function (k) { return '<button type="button" class="chip ' + (S.repTopic === k ? "on" : "") + '" data-rep="' + k + '">' + esc(t("r_" + k)) + '</button>'; }).join("") + '</div>' +
-      (!r || r.loading ? skel : r.error ? errBox(r.error) : '<div class="card tint">' + replyHtml({ data: Object.assign({}, r, { title: t("r_" + S.repTopic), showTitle: true, followup_question: "", quick_replies: [] }) }) + '</div>' + (r.houses && r.houses.length ? '<details class="card flat why"><summary>' + esc(t("why")) + '</summary><div class="scroll-x"><table class="t"><thead><tr><th>' + esc(t("house")) + '</th><th>' + esc(t("sign")) + '</th><th>Lord</th><th></th></tr></thead><tbody>' + r.houses.map(function (h) { return '<tr><td>' + h.house + '</td><td>' + esc(signName(h.sign)) + '</td><td>' + esc(plName(h.lord)) + '</td><td class="' + (h.points > 0 ? "yes" : h.points < 0 ? "no" : "") + '">' + (h.points > 0 ? esc(t("fav")) : h.points < 0 ? esc(t("chall")) : "") + '</td></tr>'; }).join("") + '</tbody></table></div></details>' : ""));
+      (!r || r.loading ? skel : r.error ? errBox(r.error) : '<div class="card tint">' + replyHtml({ data: Object.assign({}, r, { title: t("r_" + S.repTopic), showTitle: true, followup_question: "", quick_replies: [] }), flat: true }) + '</div>' + (r.houses && r.houses.length ? '<details class="card flat why"><summary>' + esc(t("why")) + '</summary><div class="scroll-x"><table class="t"><thead><tr><th>' + esc(t("house")) + '</th><th>' + esc(t("sign")) + '</th><th>Lord</th><th></th></tr></thead><tbody>' + r.houses.map(function (h) { return '<tr><td>' + h.house + '</td><td>' + esc(signName(h.sign)) + '</td><td>' + esc(plName(h.lord)) + '</td><td class="' + (h.points > 0 ? "yes" : h.points < 0 ? "no" : "") + '">' + (h.points > 0 ? esc(t("fav")) : h.points < 0 ? esc(t("chall")) : "") + '</td></tr>'; }).join("") + '</tbody></table></div></details>' : ""));
   }
 
   async function runLearn(q) {
@@ -243,7 +245,7 @@
     var r = S.learn;
     return '<div><div class="eyebrow">' + esc(t("n_learn")) + '</div><h2>' + esc(t("learn_title")) + '</h2><p class="muted">' + esc(t("learn_sub")) + '</p></div><form class="askbox" id="learnForm"><input id="learnQ" type="text" maxlength="200" value="' + esc(S.learnQ) + '" placeholder="' + esc(t("learn_ph")) + '" aria-label="' + esc(t("learn_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("search")) + '">' + svg("search").replace("<svg", '<svg width="20" height="20"') + '</button></form>' +
       '<div class="chips">' + LEARN.map(function (x) { return '<button type="button" class="chip" data-learn="' + esc(x[1]) + '">' + esc(x[0]) + '</button>'; }).join("") + '</div>' +
-      (!r ? "" : r.loading ? skel : r.error ? errBox(r.error) : '<div class="card tint">' + replyHtml({ data: Object.assign({}, r, { confidence: null }) }) + '</div>');
+      (!r ? "" : r.loading ? skel : r.error ? errBox(r.error) : '<div class="card tint">' + replyHtml({ data: Object.assign({}, r, { confidence: null }), flat: true }) + '</div>');
   }
 
   /* compatibility */

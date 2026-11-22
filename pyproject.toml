@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aipandit"
-version = "1.1.0"
+version = "1.1.1"
 description = "AstroMuni - Vedic astrology (kundli), numerology and an AI guide in English / Hinglish / Hindi"
 requires-python = ">=3.10"
 dependencies = [

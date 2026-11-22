@@ -1,4 +1,4 @@
-/* AstroMuni v1.1: API helper, OpenStreetMap place picker (Leaflet), and the one-question-per-screen onboarding:
+/* AstroNaradMuni v1.1.1: API helper, OpenStreetMap place picker (Leaflet), and the one-question-per-screen onboarding:
    language, name, gender, date, time (with "I don't know"), place with a map pin, then optional palm photos (skippable). */
 (function () {
   "use strict";
@@ -137,7 +137,7 @@
   var TOTAL = 7;
   function overlay(html, dim) { var m = document.getElementById("amModal"); m.className = "am-overlay" + (dim ? " dim" : ""); m.innerHTML = html; m.hidden = false; m.scrollTop = 0; return m; }
   AM.closeModal = function () { var m = document.getElementById("amModal"); m.hidden = true; m.innerHTML = ""; };
-  var LOGO = '<div class="logo"><img src="/static/icon.svg" alt=""><b>AstroMuni</b></div>';
+  var LOGO = '<div class="logo"><img src="/static/icon.svg" alt=""><b>AstroNaradMuni</b></div>';
   function progress(n) { return '<div class="pbar" aria-hidden="true"><i></i></div><p class="small muted ob-step">' + esc(t("ob_step", { n: n, m: TOTAL })) + '</p>'; }
   function frame(n, inner, wide) {
     var m = overlay('<div class="win' + (wide ? " wide" : "") + '"><form id="obForm" novalidate>' + LOGO + progress(n) + inner + '</form></div>');

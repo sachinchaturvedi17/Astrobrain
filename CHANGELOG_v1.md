@@ -1,3 +1,16 @@
+# AstroNaradMuni 1.1.1
+
+The portal is now **AstroNaradMuni** and the assistant is **NaradVani**. Chatting is free: no timer, no wallet.
+
+- New original NaradVani character (`naradvani.svg`, our own design) shown as an avatar beside every reply, with a "typing" indicator and a friendlier welcome.
+- More of what people actually ask: going abroad (study / work / settle), property, Manglik, Kaal Sarp, kundli matching, Panchang and Rahu Kaal.
+- Manglik and Kaal Sarp are computed from your chart (`doshas.py`). Manglik is explained as a mild idea, never a bar to marriage. Kaal Sarp is sign-level only, so a planet sharing a sign with Rahu/Ketu is reported as "borderline" instead of a confident yes.
+- 30 plain-language reference answers (`kb_faq.py`), written in our own words: doshas, Sade Sati, dashas, nakshatra, retrograde, Navamsa, Panchang, remedies, gemstones, accuracy without birth time and more.
+- Remedies never sell: no gemstone, ring or puja is ever suggested for purchase; free traditional practices only.
+- Quick suggestion chips and intent patterns widened (breakup, startup, promotion, NEET/JEE/UPSC, visa, flat/plot, Hinglish and Hindi phrasing).
+
+Restart the server after upgrading: `python3 -m aipandit.web --port 8001`.
+
 # AstroMuni 1.1.0
 
 Plain-language release: answers now sound like a person, and the app is simpler to use.

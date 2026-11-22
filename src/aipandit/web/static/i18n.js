@@ -1,4 +1,4 @@
-/* AstroMuni v1.0 interface strings: English, Hinglish (Hindi in Roman letters), Hindi. Missing keys fall back to English. */
+/* AstroNaradMuni v1.0 interface strings: English, Hinglish (Hindi in Roman letters), Hindi. Missing keys fall back to English. */
 (function () {
   "use strict";
   var T = {
@@ -13,10 +13,10 @@
       next: "Next", back: "Back", finish: "Finish", enter_coords: "Enter coordinates instead", map_off: "The map could not load. Search for your place, or enter the latitude and longitude below.",
       e_name: "Enter your name.", e_dob: "Enter a valid date of birth.", e_tob: "Enter the time of birth, or choose \"I don't know\".", e_place: "Pick your birthplace on the map or from the search results.", e_tz: "Choose the time zone.",
       palm_title: "Upload your palm photos", palm_lead: "Optional. Take or upload a clear photo of each palm in good light.", left_hand: "Left hand", right_hand: "Right hand", tap_upload: "Tap to take or upload a photo",
-      skip_continue: "Skip and move to the app", palm_continue: "Continue to the app", palm_note: "Photos stay in this browser session. AstroMuni does not read palms from photos yet; they are only sent if you ask a real pandit to review your chart.", palm_bad: "Please choose a photo (JPEG or PNG).",
+      skip_continue: "Skip and move to the app", palm_continue: "Continue to the app", palm_note: "Photos stay in this browser session. AstroNaradMuni does not read palms from photos yet; they are only sent if you ask a real pandit to review your chart.", palm_bad: "Please choose a photo (JPEG or PNG).",
       building: "Calculating your chart…", ready: "Your chart is ready", chart_err: "We could not calculate your chart.",
-      n_hub: "Cosmic hub", n_ask: "Ask AstroMuni", n_horo: "Horoscope", n_chart: "My birth chart", n_calc: "Calculators", n_reports: "Reports", n_learn: "Learn astrology", n_compat: "Compatibility", n_panchang: "Panchang", n_my: "My", n_cosmic: "Cosmic", n_ask_s: "Ask", n_horo_s: "Horoscope",
-      universe: "Your universe", moon_sign: "Your moon sign", member: "Cosmic member", ask_muni: "Ask Muni", search_ph: "Search wisdom, tools…",
+      n_hub: "Cosmic hub", n_ask: "Talk to NaradVani", n_horo: "Horoscope", n_chart: "My birth chart", n_calc: "Calculators", n_reports: "Reports", n_learn: "Learn astrology", n_compat: "Compatibility", n_panchang: "Panchang", n_my: "My", n_cosmic: "Cosmic", n_ask_s: "Ask", n_horo_s: "Horoscope",
+      universe: "Your universe", moon_sign: "Your moon sign", member: "Cosmic member", ask_muni: "Ask NaradVani", search_ph: "Search wisdom, tools…",
       gm: "Good morning", ga: "Good afternoon", ge: "Good evening", compass: "Your personal cosmic compass", stars: "Your stars are in motion.",
       hero_lead: "Understand today's energies, ask what's on your mind, and move forward with timeless Vedic wisdom made personal to you.", cta_ask: "Ask the universe", cta_chart: "Explore my chart",
       weather: "Your celestial weather", live: "Live", support: "Transit support", support_note: "Share of today's planetary transits that are traditionally favourable for your Moon sign. Not a prediction.", guiding: "Guiding planet", focus: "Focus", abhijit: "Abhijit window",
@@ -27,7 +27,7 @@
       vedic_cal: "Vedic calendar", panchang_t: "Today's Panchang", panchang_d: "Tithi, nakshatra, yoga, karana and weekday for today.", view_panchang: "View full Panchang", tithi: "Tithi", nakshatra: "Nakshatra", yoga: "Yoga", karana: "Karana", vara: "Weekday",
       free_calc: "Free calculators", small_q: "Small questions, precise answers", view_calc: "View all calculators", c_moon: "Moon sign", c_moon_d: "Find your Rashi from exact birth details.", c_asc: "Ascendant", c_asc_d: "Discover your rising sign and first house.", c_nak: "Nakshatra", c_nak_d: "Meet your birth star and its deeper nature.", c_sade: "Sade Sati", c_sade_d: "Understand Saturn's seven-and-a-half-year cycle.",
       pers_reports: "Personalised reports", beyond: "Go beyond the daily forecast", reports_d: "Readings built from your own chart: house by house, with the reasons shown.", explore_reports: "Explore reports",
-      journal: "AstroMuni journal", wisdom: "Wisdom to carry with you", browse_j: "Browse the journal", min: "MIN",
+      journal: "AstroNaradMuni journal", wisdom: "Wisdom to carry with you", browse_j: "Browse the journal", min: "MIN",
       about: "About", privacy: "Privacy", support_l: "Support", tagline: "Ancient intelligence for modern lives.", guidance_not_certainty: "Guidance, not certainty.",
       r_career: "Career & purpose", r_marriage: "Love & marriage", r_wealth: "Wealth path", r_education: "Education", r_family: "Family & home", r_children: "Children", r_health: "Wellbeing",
       chart_title: "Your birth chart", lagna: "Lagna (Ascendant)", moon: "Moon", planet: "Planet", sign: "Sign", house: "House", retro: "Retrograde", dasha_now: "Current dasha", until: "until", withheld_t: "Withheld for accuracy", yes: "Yes", no: "No",
@@ -35,12 +35,12 @@
       horo_title: "Your horoscope today", horo_method: "How this is calculated", fav: "Favourable", chall: "Needs patience", from_moon: "from your Moon",
       compat_title: "Check compatibility", partner: "Partner's details", p_name: "Partner's name", calc_btn: "Calculate", you: "You", total: "Total", out_of: "out of 36", approx: "simplified table",
       calc_title: "Calculators", report_title: "Personalised reports", learn_title: "Astropedia", learn_ph: "Search any term: nakshatra, dasha, yoga, Sade Sati…", learn_sub: "Plain explanations from the reference library, with sources.",
-      thinking: "AstroMuni is reading your chart…", why: "Why this answer?", basis: "From your chart", timing: "Timing", sources: "Sources", confidence: "Confidence", high: "High", medium: "Medium", low: "Low",
+      thinking: "NaradVani is typing…", why: "Why this answer?", basis: "From your chart", timing: "Timing", sources: "Sources", confidence: "Confidence", high: "High", medium: "Medium", low: "Low",
       muni_listening: "I'm listening.", muni_q: "What would you like clarity on today?", namaste: "Namaste, {n}. I'm here with your chart in front of me.", namaste_sub: "Ask what you would like to understand, and we'll explore it together.", today_reading: "Today's reading", private: "Private consultation",
-      disclaimer: "AstroMuni offers reflection from traditional Vedic rules, not certainty or professional advice.",
+      disclaimer: "NaradVani offers reflection from traditional Vedic rules, not certainty or professional advice.",
       settings: "Your details", edit: "Edit details", change_lang: "Language", reset: "Remove my data from this device", reset_ok: "Your data was removed.", save: "Save", cancel: "Cancel", close: "Close",
       pandit: "Talk to a real pandit", pandit_d: "Leave your number. Our team will contact you to set up a session. This is a test version, so requests are read by hand.", phone: "Mobile / WhatsApp number", slot: "Good time to talk", s_morning: "Morning", s_afternoon: "Afternoon", s_evening: "Evening", s_anytime: "Anytime", about_what: "About what?", note_opt: "Anything else? (optional)", share_birth: "Show the pandit my birth details", share_palms: "Also share my palm photos", send: "Send request", sent: "Request sent. Reference: {ref}",
-      offline: "Could not reach the server. Check that AstroMuni is running.", retry: "Try again", loading: "Loading…"
+      offline: "Could not reach the server. Check that AstroNaradMuni is running.", retry: "Try again", loading: "Loading…"
     },
     hg: {
       lang_title: "Apni bhasha chunein", lang_sub: "Aap ise kabhi bhi badal sakte hain.",
@@ -53,10 +53,10 @@
       next: "Aage", back: "Peeche", finish: "Poora karein", enter_coords: "Coordinates khud daalein", map_off: "Map load nahi hua. Apna sthan khojein, ya latitude aur longitude neeche daalein.",
       e_name: "Apna naam likhein.", e_dob: "Sahi janm tithi daalein.", e_tob: "Janm ka samay daalein, ya \"Pata nahi\" chunein.", e_place: "Map par ya search result se janm sthan chunein.", e_tz: "Time zone chunein.",
       palm_title: "Apni hatheli ki photo daalein", palm_lead: "Zaroori nahi. Achhi roshni mein har hatheli ki saaf photo lein ya upload karein.", left_hand: "Baayan haath", right_hand: "Daayan haath", tap_upload: "Photo lene ya upload karne ke liye tap karein",
-      skip_continue: "Skip karke app par jaayein", palm_continue: "App par jaayein", palm_note: "Photos sirf is browser session mein rehti hain. AstroMuni abhi photo se hatheli nahi padhta; photos tabhi bheji jaati hain jab aap asli pandit se review maangte hain.", palm_bad: "Kripya JPEG ya PNG photo chunein.",
+      skip_continue: "Skip karke app par jaayein", palm_continue: "App par jaayein", palm_note: "Photos sirf is browser session mein rehti hain. AstroNaradMuni abhi photo se hatheli nahi padhta; photos tabhi bheji jaati hain jab aap asli pandit se review maangte hain.", palm_bad: "Kripya JPEG ya PNG photo chunein.",
       building: "Aapki kundli ban rahi hai…", ready: "Aapki kundli taiyaar hai", chart_err: "Kundli nahi ban saki.",
-      n_hub: "Cosmic hub", n_ask: "AstroMuni se poochhein", n_horo: "Rashifal", n_chart: "Meri kundli", n_calc: "Calculators", n_reports: "Reports", n_learn: "Jyotish seekhein", n_compat: "Gun Milan", n_panchang: "Panchang", n_my: "Mera", n_cosmic: "Cosmic", n_ask_s: "Poochhein", n_horo_s: "Rashifal",
-      universe: "Aapka brahmaand", moon_sign: "Aapki chandra rashi", member: "Cosmic member", ask_muni: "Muni se poochhein", search_ph: "Gyaan, tools khojein…",
+      n_hub: "Cosmic hub", n_ask: "NaradVani se baat karein", n_horo: "Rashifal", n_chart: "Meri kundli", n_calc: "Calculators", n_reports: "Reports", n_learn: "Jyotish seekhein", n_compat: "Gun Milan", n_panchang: "Panchang", n_my: "Mera", n_cosmic: "Cosmic", n_ask_s: "Poochhein", n_horo_s: "Rashifal",
+      universe: "Aapka brahmaand", moon_sign: "Aapki chandra rashi", member: "Cosmic member", ask_muni: "NaradVani se poochhein", search_ph: "Gyaan, tools khojein…",
       gm: "Suprabhat", ga: "Namaskar", ge: "Shubh sandhya", compass: "Aapka vyaktigat cosmic compass", stars: "Aapke sitare gatimaan hain.",
       hero_lead: "Aaj ki urja samjhein, apne mann ki baat poochhein, aur sadiyon purane Vedic gyaan ke saath aage badhein.", cta_ask: "Brahmaand se poochhein", cta_chart: "Meri kundli dekhein",
       weather: "Aapka aakashiya mausam", live: "Live", support: "Gochar sahayata", support_note: "Aaj ke graha gochar ka woh hissa jo aapki chandra rashi ke liye parampara se shubh hai. Yeh bhavishyavani nahi hai.", guiding: "Margdarshak graha", focus: "Dhyaan", abhijit: "Abhijit samay",
@@ -67,7 +67,7 @@
       vedic_cal: "Vedic calendar", panchang_t: "Aaj ka Panchang", panchang_d: "Aaj ki tithi, nakshatra, yoga, karana aur vaar.", view_panchang: "Poora Panchang dekhein", tithi: "Tithi", nakshatra: "Nakshatra", yoga: "Yoga", karana: "Karana", vara: "Vaar",
       free_calc: "Muft calculators", small_q: "Chhote sawal, sateek jawab", view_calc: "Sabhi calculators", c_moon: "Chandra rashi", c_moon_d: "Exact janm vivaran se apni rashi jaanein.", c_asc: "Lagna", c_asc_d: "Apna udit lagna aur pehla bhav jaanein.", c_nak: "Nakshatra", c_nak_d: "Apne janm nakshatra ko jaanein.", c_sade: "Sade Sati", c_sade_d: "Shani ka saade saat varsh ka chakra samjhein.",
       pers_reports: "Vyaktigat reports", beyond: "Dainik forecast se aage", reports_d: "Aapki apni kundli se bani reading: bhav dar bhav, kaaran ke saath.", explore_reports: "Reports dekhein",
-      journal: "AstroMuni journal", wisdom: "Saath le jaane layak gyaan", browse_j: "Journal dekhein", min: "MIN",
+      journal: "AstroNaradMuni journal", wisdom: "Saath le jaane layak gyaan", browse_j: "Journal dekhein", min: "MIN",
       about: "Parichay", privacy: "Gopaniyata", support_l: "Sahayata", tagline: "Aadhunik jeevan ke liye praachin buddhi.", guidance_not_certainty: "Margdarshan, nishchitata nahi.",
       r_career: "Career aur uddeshya", r_marriage: "Pyaar aur vivah", r_wealth: "Dhan ka marg", r_education: "Shiksha", r_family: "Parivaar aur ghar", r_children: "Santan", r_health: "Sehat",
       chart_title: "Aapki janam kundli", lagna: "Lagna", moon: "Chandra", planet: "Graha", sign: "Rashi", house: "Bhav", retro: "Vakri", dasha_now: "Abhi ki dasha", until: "tak", withheld_t: "Sahi hone ke liye roka gaya", yes: "Haan", no: "Nahi",
@@ -75,12 +75,12 @@
       horo_title: "Aaj ka aapka rashifal", horo_method: "Yeh kaise nikala gaya", fav: "Shubh", chall: "Dhairya chahiye", from_moon: "chandra se",
       compat_title: "Gun Milan dekhein", partner: "Saathi ki jaankari", p_name: "Saathi ka naam", calc_btn: "Nikaalein", you: "Aap", total: "Kul", out_of: "36 mein se", approx: "saral talika",
       calc_title: "Calculators", report_title: "Vyaktigat reports", learn_title: "Astropedia", learn_ph: "Koi bhi shabd khojein: nakshatra, dasha, yoga, Sade Sati…", learn_sub: "Sandarbh library se saral vyakhya, source ke saath.",
-      thinking: "AstroMuni aapki kundli padh raha hai…", why: "Yeh jawab kyon?", basis: "Aapki kundli se", timing: "Samay", sources: "Sources", confidence: "Bharosa", high: "Zyada", medium: "Madhyam", low: "Kam",
+      thinking: "NaradVani likh raha hai…", why: "Yeh jawab kyon?", basis: "Aapki kundli se", timing: "Samay", sources: "Sources", confidence: "Bharosa", high: "Zyada", medium: "Madhyam", low: "Kam",
       muni_listening: "Main sun raha hoon.", muni_q: "Aaj aap kis baat par spashtata chahte hain?", namaste: "Namaste, {n}. Main aapki kundli saamne rakhkar baitha hoon.", namaste_sub: "Jo samajhna chahte hain poochhein, hum saath mein dekhenge.", today_reading: "Aaj ki reading", private: "Niji paramarsh",
-      disclaimer: "AstroMuni parampragat Vedic niyamon se vichaar deta hai, nishchitata ya professional salah nahi.",
+      disclaimer: "AstroNaradMuni parampragat Vedic niyamon se vichaar deta hai, nishchitata ya professional salah nahi.",
       settings: "Aapki jaankari", edit: "Jaankari badlein", change_lang: "Bhasha", reset: "Is device se meri jaankari hataayein", reset_ok: "Aapki jaankari hata di gayi.", save: "Save", cancel: "Radd karein", close: "Band karein",
       pandit: "Asli pandit se baat karein", pandit_d: "Apna number chhodein. Hamari team session tay karne ke liye sampark karegi. Yeh test version hai, isliye requests haath se padhi jaati hain.", phone: "Mobile / WhatsApp number", slot: "Baat karne ka achha samay", s_morning: "Subah", s_afternoon: "Dopahar", s_evening: "Shaam", s_anytime: "Kabhi bhi", about_what: "Kis vishay par?", note_opt: "Aur kuch? (zaroori nahi)", share_birth: "Pandit ko meri janm jaankari dikhayein", share_palms: "Meri hatheli ki photo bhi bhejein", send: "Request bhejein", sent: "Request bhej di gayi. Reference: {ref}",
-      offline: "Server se sampark nahi hua. Dekhein ki AstroMuni chal raha hai.", retry: "Dobara koshish karein", loading: "Load ho raha hai…"
+      offline: "Server se sampark nahi hua. Dekhein ki AstroNaradMuni chal raha hai.", retry: "Dobara koshish karein", loading: "Load ho raha hai…"
     },
     hi: {
       lang_title: "अपनी भाषा चुनें", lang_sub: "आप इसे कभी भी बदल सकते हैं।",
@@ -93,9 +93,9 @@
       next: "आगे", back: "पीछे", finish: "पूरा करें", enter_coords: "निर्देशांक खुद भरें", map_off: "नक्शा लोड नहीं हुआ। अपना स्थान खोजें, या अक्षांश और देशांतर नीचे भरें।",
       e_name: "अपना नाम लिखें।", e_dob: "सही जन्म तिथि भरें।", e_tob: "जन्म का समय भरें, या \"पता नहीं\" चुनें।", e_place: "नक्शे पर या खोज परिणाम से जन्म स्थान चुनें।", e_tz: "समय-क्षेत्र चुनें।",
       palm_title: "अपनी हथेली की फोटो डालें", palm_lead: "वैकल्पिक। अच्छी रोशनी में हर हथेली की साफ़ फोटो लें या अपलोड करें।", left_hand: "बायाँ हाथ", right_hand: "दायाँ हाथ", tap_upload: "फोटो लेने या अपलोड करने के लिए टैप करें",
-      skip_continue: "छोड़ें और ऐप पर जाएँ", palm_continue: "ऐप पर जाएँ", palm_note: "फोटो केवल इस ब्राउज़र सत्र में रहती हैं। AstroMuni अभी फोटो से हथेली नहीं पढ़ता; फोटो तभी भेजी जाती हैं जब आप असली पंडित से समीक्षा माँगते हैं।", palm_bad: "कृपया JPEG या PNG फोटो चुनें।",
+      skip_continue: "छोड़ें और ऐप पर जाएँ", palm_continue: "ऐप पर जाएँ", palm_note: "फोटो केवल इस ब्राउज़र सत्र में रहती हैं। AstroNaradMuni अभी फोटो से हथेली नहीं पढ़ता; फोटो तभी भेजी जाती हैं जब आप असली पंडित से समीक्षा माँगते हैं।", palm_bad: "कृपया JPEG या PNG फोटो चुनें।",
       building: "आपकी कुंडली बन रही है…", ready: "आपकी कुंडली तैयार है", chart_err: "कुंडली नहीं बन सकी।",
-      n_hub: "कॉस्मिक हब", n_ask: "AstroMuni से पूछें", n_horo: "राशिफल", n_chart: "मेरी कुंडली", n_calc: "कैलकुलेटर", n_reports: "रिपोर्ट", n_learn: "ज्योतिष सीखें", n_compat: "गुण मिलान", n_panchang: "पंचांग", n_my: "मेरा", n_cosmic: "कॉस्मिक", n_ask_s: "पूछें", n_horo_s: "राशिफल",
+      n_hub: "कॉस्मिक हब", n_ask: "NaradVani से बात करें", n_horo: "राशिफल", n_chart: "मेरी कुंडली", n_calc: "कैलकुलेटर", n_reports: "रिपोर्ट", n_learn: "ज्योतिष सीखें", n_compat: "गुण मिलान", n_panchang: "पंचांग", n_my: "मेरा", n_cosmic: "कॉस्मिक", n_ask_s: "पूछें", n_horo_s: "राशिफल",
       universe: "आपका ब्रह्मांड", moon_sign: "आपकी चंद्र राशि", member: "कॉस्मिक सदस्य", ask_muni: "मुनि से पूछें", search_ph: "ज्ञान, टूल खोजें…",
       gm: "सुप्रभात", ga: "नमस्कार", ge: "शुभ संध्या", compass: "आपका व्यक्तिगत कॉस्मिक कम्पास", stars: "आपके सितारे गतिमान हैं।",
       hero_lead: "आज की ऊर्जा समझें, अपने मन की बात पूछें, और सदियों पुराने वैदिक ज्ञान के साथ आगे बढ़ें।", cta_ask: "ब्रह्मांड से पूछें", cta_chart: "मेरी कुंडली देखें",
@@ -107,7 +107,7 @@
       vedic_cal: "वैदिक कैलेंडर", panchang_t: "आज का पंचांग", panchang_d: "आज की तिथि, नक्षत्र, योग, करण और वार।", view_panchang: "पूरा पंचांग देखें", tithi: "तिथि", nakshatra: "नक्षत्र", yoga: "योग", karana: "करण", vara: "वार",
       free_calc: "मुफ़्त कैलकुलेटर", small_q: "छोटे सवाल, सटीक जवाब", view_calc: "सभी कैलकुलेटर", c_moon: "चंद्र राशि", c_moon_d: "सटीक जन्म विवरण से अपनी राशि जानें।", c_asc: "लग्न", c_asc_d: "अपना उदित लग्न और पहला भाव जानें।", c_nak: "नक्षत्र", c_nak_d: "अपने जन्म नक्षत्र को जानें।", c_sade: "साढ़ेसाती", c_sade_d: "शनि का साढ़े सात वर्ष का चक्र समझें।",
       pers_reports: "व्यक्तिगत रिपोर्ट", beyond: "दैनिक पूर्वानुमान से आगे", reports_d: "आपकी अपनी कुंडली से बनी रीडिंग: भाव दर भाव, कारण सहित।", explore_reports: "रिपोर्ट देखें",
-      journal: "AstroMuni जर्नल", wisdom: "साथ ले जाने लायक ज्ञान", browse_j: "जर्नल देखें", min: "मिनट",
+      journal: "AstroNaradMuni जर्नल", wisdom: "साथ ले जाने लायक ज्ञान", browse_j: "जर्नल देखें", min: "मिनट",
       about: "परिचय", privacy: "गोपनीयता", support_l: "सहायता", tagline: "आधुनिक जीवन के लिए प्राचीन बुद्धि।", guidance_not_certainty: "मार्गदर्शन, निश्चितता नहीं।",
       r_career: "करियर और उद्देश्य", r_marriage: "प्रेम और विवाह", r_wealth: "धन का मार्ग", r_education: "शिक्षा", r_family: "परिवार और घर", r_children: "संतान", r_health: "स्वास्थ्य",
       chart_title: "आपकी जन्म कुंडली", lagna: "लग्न", moon: "चंद्र", planet: "ग्रह", sign: "राशि", house: "भाव", retro: "वक्री", dasha_now: "वर्तमान दशा", until: "तक", withheld_t: "सटीकता के लिए रोका गया", yes: "हाँ", no: "नहीं",
@@ -115,12 +115,12 @@
       horo_title: "आज का आपका राशिफल", horo_method: "यह कैसे निकाला गया", fav: "शुभ", chall: "धैर्य चाहिए", from_moon: "चंद्र से",
       compat_title: "गुण मिलान देखें", partner: "साथी की जानकारी", p_name: "साथी का नाम", calc_btn: "निकालें", you: "आप", total: "कुल", out_of: "36 में से", approx: "सरल तालिका",
       calc_title: "कैलकुलेटर", report_title: "व्यक्तिगत रिपोर्ट", learn_title: "एस्ट्रोपीडिया", learn_ph: "कोई भी शब्द खोजें: नक्षत्र, दशा, योग, साढ़ेसाती…", learn_sub: "संदर्भ पुस्तकालय से सरल व्याख्या, स्रोत सहित।",
-      thinking: "AstroMuni आपकी कुंडली पढ़ रहा है…", why: "यह उत्तर क्यों?", basis: "आपकी कुंडली से", timing: "समय", sources: "स्रोत", confidence: "भरोसा", high: "अधिक", medium: "मध्यम", low: "कम",
+      thinking: "NaradVani लिख रहा है…", why: "यह उत्तर क्यों?", basis: "आपकी कुंडली से", timing: "समय", sources: "स्रोत", confidence: "भरोसा", high: "अधिक", medium: "मध्यम", low: "कम",
       muni_listening: "मैं सुन रहा हूँ।", muni_q: "आज आप किस बात पर स्पष्टता चाहते हैं?", namaste: "नमस्ते, {n}। मैं आपकी कुंडली सामने रखकर बैठा हूँ।", namaste_sub: "जो समझना चाहते हैं पूछें, हम साथ में देखेंगे।", today_reading: "आज की रीडिंग", private: "निजी परामर्श",
-      disclaimer: "AstroMuni पारंपरिक वैदिक नियमों से विचार देता है, निश्चितता या पेशेवर सलाह नहीं।",
+      disclaimer: "NaradVani पारंपरिक वैदिक नियमों से विचार देता है, निश्चितता या पेशेवर सलाह नहीं।",
       settings: "आपकी जानकारी", edit: "जानकारी बदलें", change_lang: "भाषा", reset: "इस डिवाइस से मेरी जानकारी हटाएँ", reset_ok: "आपकी जानकारी हटा दी गई।", save: "सहेजें", cancel: "रद्द करें", close: "बंद करें",
       pandit: "असली पंडित से बात करें", pandit_d: "अपना नंबर छोड़ें। हमारी टीम सत्र तय करने के लिए संपर्क करेगी। यह परीक्षण संस्करण है, इसलिए अनुरोध हाथ से पढ़े जाते हैं।", phone: "मोबाइल / व्हाट्सऐप नंबर", slot: "बात करने का अच्छा समय", s_morning: "सुबह", s_afternoon: "दोपहर", s_evening: "शाम", s_anytime: "कभी भी", about_what: "किस विषय पर?", note_opt: "और कुछ? (वैकल्पिक)", share_birth: "पंडित को मेरी जन्म जानकारी दिखाएँ", share_palms: "मेरी हथेली की फोटो भी भेजें", send: "अनुरोध भेजें", sent: "अनुरोध भेज दिया गया। संदर्भ: {ref}",
-      offline: "सर्वर से संपर्क नहीं हुआ। देखें कि AstroMuni चल रहा है।", retry: "फिर कोशिश करें", loading: "लोड हो रहा है…"
+      offline: "सर्वर से संपर्क नहीं हुआ। देखें कि AstroNaradMuni चल रहा है।", retry: "फिर कोशिश करें", loading: "लोड हो रहा है…"
     }
   };
   var lang = "en";
