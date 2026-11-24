@@ -25,7 +25,7 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 
-from . import doshas, retrieval, voice
+from . import doshas, expert, retrieval, timeline, voice, yogas
 from .ashtakoota import LORD as SIGN_LORD, RASHIS
 from .kb_core import SIGNS as _SIGNS
 
@@ -57,6 +57,7 @@ KEYWORDS = {
 INTENT_OTHER = {
     "manglik": r"mangli[ck]|mangal dosh|kuja dosh|मांगलिक|मंगल दोष",
     "kaalsarp": r"kaal ?sarp|kal ?sarp|काल ?सर्प",
+    "yoga": r"\b(my|which|any) yogas?\b|mere yog|raja? ?yog|neech(a)? ?bhang|gaja ?kesari|mahapurush|budhaditya|chandra ?mangal|guru ?chandal|मेरे योग|राज ?योग|गजकेसरी|बुधादित्य",
     "panchang": r"rahu ?kaal|rahukalam|abhijit|muhurat|muhurta|panchang|tithi|पंचांग|राहु ?काल|मुहूर्त",
     "match": r"kundli ?milan|kundali ?milan|gun ?milan|guna ?milan|matchmaking|match making|compatib|ashtakoota|कुंडली ?मिलान|गुण ?मिलान",
     "dasha": r"dasha|mahadasha|antardasha|period|phase|daur|दौर|दशा|महादशा",
@@ -105,7 +106,7 @@ T = {
               "transit": ("Transits now", "Abhi ke gochar", "अभी के गोचर"), "sade_sati": ("Sade Sati", "Sade Sati", "साढ़ेसाती"),
               "remedy": ("Traditional practices", "Parampara ke upay", "परंपरागत उपाय"), "foreign": ("Going abroad", "Videsh yog", "विदेश योग"),
               "property": ("Property & home", "Property aur ghar", "संपत्ति और घर"), "manglik": ("Manglik check", "Manglik jaanch", "मांगलिक जाँच"),
-              "kaalsarp": ("Kaal Sarp check", "Kaal Sarp jaanch", "काल सर्प जाँच"), "panchang": ("Panchang", "Panchang", "पंचांग"), "match": ("Kundli matching", "Kundli milan", "कुंडली मिलान"), "concept": ("From the reference", "Sandarbh se", "संदर्भ से")},
+              "yoga": ("Your yogas", "Aapke yog", "आपके योग"), "kaalsarp": ("Kaal Sarp check", "Kaal Sarp jaanch", "काल सर्प जाँच"), "panchang": ("Panchang", "Panchang", "पंचांग"), "match": ("Kundli matching", "Kundli milan", "कुंडली मिलान"), "concept": ("From the reference", "Sandarbh se", "संदर्भ से")},
     "lord": ("Your {ho} house ({sign}) is ruled by {lord}, which sits in your {lh}{lhs} house ({lsign}).",
              "Aapka {h}ve bhav ({sign}) ka swami {lord} hai, jo aapke {lh}ve bhav ({lsign}) mein hai.",
              "आपके {h}वें भाव ({sign}) का स्वामी {lord} है, जो आपके {lh}वें भाव ({lsign}) में है।"),
@@ -152,6 +153,35 @@ def check_safety(question: str) -> Optional[str]:
     for kind, pat in SAFETY:
         if re.search(pat, q):
             return kind
+    return None
+
+
+WHEN_RE = r"\bwhen\b|\bkab\b|how soon|kitne (din|saal|mahine)|timing|कब|कितने (दिन|साल|महीने)"
+EXPERT_MIN = 3.2
+
+
+GENERIC = frozenset(set(TOPICS) | {"kundli", "dasha", "career", "marriage", "wealth", "health", "family", "astrology", "astrologer", "life", "future"})
+
+
+def _expert_case(question: str, topic: str, lang: str):
+    """Best matching expert case for this question, or None.
+
+    A case must (1) rank in BM25, (2) share real content words with the question, not just the topic word, so a vague
+    "how is my career?" never pulls a very specific case, (3) agree on topic and language."""
+    qt = {t for t in retrieval.tokenize(question) if t not in GENERIC and len(t) > 2}
+    if len(qt) < 2:
+        return None
+    for h in retrieval.search(question, k=4, tiers=("expert",), min_score=EXPERT_MIN):
+        c = expert.get(h["id"])
+        if not c:
+            continue
+        ct = set(retrieval.tokenize(" ".join(str(c.get(k, "")) for k in ("problem", "situation")) + " " + " ".join(map(str, c.get("tags") or []))))
+        common = qt & ct
+        if len(common) < 2 or len(common) / len(qt) < 0.34:
+            continue
+        same = c["lang"] == lang or (c["lang"] in ("en", "hg") and lang in ("en", "hg"))
+        if same and (c["topic"] == topic or topic in ("concept", "general", "dasha")):
+            return c, h
     return None
 
 
@@ -295,7 +325,7 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
     topic = (ctx.get("topic") or "general") if cont else classify(question)
     have_chart = bool(chart and chart.get("lagna") in RASHIS and chart.get("time_certainty") not in ("unknown", "part_of_day"))
     moon_basis = False
-    if chart and not have_chart and (topic in TOPICS or topic in ("manglik", "kaalsarp") or cont):
+    if chart and not have_chart and (topic in TOPICS or topic in ("manglik", "kaalsarp", "yoga") or cont):
         mc = _moon_chart(chart)
         if mc:
             chart, have_chart, moon_basis = mc, True, True
@@ -304,6 +334,7 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
     involved: List[str] = []
     summary = ""
     voiced: Optional[Dict[str, Any]] = None
+    augmented = False
     dosha_kind = topic if topic in ("manglik", "kaalsarp") else None
     conceptual = bool(re.search(r"what is|what's|meaning|explain|kya hai|kya hota|kya hoti|matlab|क्या है|क्या होता|क्या होती|मतलब", question.lower()))
     if cont and cont[0] == "dosha_check":
@@ -319,6 +350,9 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
         ref = [h for h in retrieval.search(f"{question} {dosha_kind}", k=4, tiers=("core",)) if h.get("topic") == "faq"]
         if ref:
             voiced = voice.reference_answer(ref[0]["text"], lang, ask_check=dosha_kind)
+    elif topic == "yoga" and have_chart and (not conceptual or re.search(r"\bmy\b|\bmere\b|\bmeri\b|\bmujhe\b|\bdo i\b|मेरे|मेरी|मुझे", question.lower())):
+        voiced = {"text": yogas.yoga_text(chart, lang, lagna_ok=not moon_basis), "expects": None,
+                  "quick_replies": [voice.TOPIC_CHIPS[lang][0]], "question": ""}
     elif dosha_kind and have_chart:
         txt = doshas.dosha_text(dosha_kind, chart, lang, from_lagna_ok=not moon_basis)
         voiced = {"text": txt, "expects": None, "quick_replies": [voice.TOPIC_CHIPS[lang][1]],
@@ -336,6 +370,12 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
         involved += list(TOPICS[topic]["karaka"])
         voiced = voice.compose(topic, total, TOPICS[topic]["karaka"], chart, lang)
         timing = _timing(chart, involved, lang)
+        timing += timeline.window_lines(chart, involved, lang)
+        if re.search(WHEN_RE, question.lower()):
+            win = timeline.window_text(chart, involved, lang)
+            if win:
+                voiced = dict(voiced, text=voiced["text"] + " " + win)
+                augmented = True
     elif topic == "dasha" and chart and chart.get("dasha"):
         voiced = voice.dasha_answer(chart, lang)
         timing = _timing(chart, [], lang)
@@ -353,7 +393,7 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
     if topic == "remedy" and faq_hit and re.search(r"gem|ratna|stone|ring|puja|pooja|really work|kaam karte|रत्न|पूजा", question.lower()):
         voiced = voice.reference_answer(faq_hit["text"], lang)
         hits = [faq_hit]
-    elif faq_hit and not voiced and topic in ("concept", "sade_sati", "transit", "dasha", "general", "panchang"):
+    elif faq_hit and not voiced and topic in ("concept", "sade_sati", "transit", "dasha", "general", "panchang", "yoga"):
         voiced = voice.reference_answer(faq_hit["text"], lang)
         hits = [faq_hit]
     if topic == "remedy" and not voiced:
@@ -363,6 +403,12 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
         hits = retrieval.search("remedy " + who, k=3, tiers=("core",)) or hits
         if hits:
             voiced = voice.remedy(hits[0]["text"], lang)
+    ex = None if (cont or topic in ("sade_sati", "transit", "panchang", "match")) else _expert_case(question, topic, lang)
+    if ex:
+        note = voice.expert_note(ex[0], lang)
+        voiced = dict(voiced, text=voiced["text"] + " " + note) if voiced else {"text": note, "expects": None, "question": "", "quick_replies": voice.TOPIC_CHIPS[lang][:4]}
+        hits = [ex[1]] + [h for h in hits if h.get("id") != ex[1]["id"]][:2]
+        augmented = True
     title = T["title"].get(topic, T["title"]["concept"])[li]
     if faq_hit and voiced and hits and hits[0] is faq_hit:
         title = faq_hit["title"]
@@ -370,7 +416,7 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
     if voiced:
         text = voiced["text"]
     else:
-        if (topic in TOPICS or dosha_kind) and not have_chart:
+        if (topic in TOPICS or dosha_kind or topic == "yoga") and not have_chart:
             needs_profile = True
             summary = _tx("need_chart", lang)
             reasons = [hits[0]["text"].strip().replace("\n", " ")[:500]] if hits else []
@@ -387,7 +433,7 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
            "expects": (voiced or {}).get("expects"), "followup_question": (voiced or {}).get("question", ""),
            "quick_replies": (voiced or {}).get("quick_replies", []), "needs_profile": needs_profile, "action": (voiced or {}).get("action"),
            "followups": [f for f in voice.TOPIC_CHIPS[lang][:4]]}
-    if use_llm and voiced and voiced["text"] and topic in ("career", "wealth", "marriage", "education", "children", "health", "family", "general", "foreign", "property", "dasha") and not cont:
+    if use_llm and voiced and voiced["text"] and topic in ("career", "wealth", "marriage", "education", "children", "health", "family", "general", "foreign", "property", "dasha") and not cont and not augmented:
         better = _llm_polish(question, out, lang)
         if better:
             out["answer"], out["composer"] = better, "llm"

@@ -25,7 +25,7 @@ import time
 import urllib.parse
 import urllib.request
 from collections import OrderedDict
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Any, Dict, Optional
 
 from . import __version__, ashtakoota, brain, gochara_live
@@ -89,6 +89,17 @@ def _birth(v: Dict[str, Any]):
                       subject_is_minor=v["minor"], guardian_consent=bool(v["guardian_consent"] and v["minor"]))
 
 
+def _running_dasha(kundli) -> Optional[Dict[str, Any]]:
+    """Running Maha/Antar dasha now. The fact store built for the web app is not given an as-of date, so its dasha facts are
+    empty; read the dasha straight from the Kundli instead. None when withheld (birth time not exact) or on any failure."""
+    try:
+        from .kundli import dasha_at
+        d = dasha_at(kundli, datetime.now(timezone.utc))
+        return d if d and d.get("maha") else None
+    except Exception:
+        return None
+
+
 def build_chart(profile: Dict[str, Any]) -> Dict[str, Any]:
     v = validate_profile(profile)
     key = (v["name"], v["dob"], v["tob"], v["time_certainty"], v["lat"], v["lon"], v["tz"], v["gender"], date.today().isoformat())
@@ -106,6 +117,9 @@ def build_chart(profile: Dict[str, Any]) -> Dict[str, Any]:
                           "nakshatra": f(g, "nakshatra", P), "pada": f(g, "pada", P)}
     lagna = f("lagna", "sign", P)
     d = {k: f("dasha", k, P) for k in ("maha_lord", "maha_end", "antar_lord", "antar_end")}
+    running = None if d["maha_lord"] else _running_dasha(kundli)
+    if running:
+        d = {"maha_lord": running["maha"], "maha_end": running.get("maha_end"), "antar_lord": running.get("antar"), "antar_end": running.get("antar_end")}
     chart = {"lagna": lagna, "moon": {"sign": f("Moon", "sign", P), "nakshatra": f("Moon", "nakshatra", P), "pada": f("Moon", "pada", P)},
              "planets": planets,
              "dasha": {"maha": d["maha_lord"], "antar": d["antar_lord"], "maha_end": str(d["maha_end"] or "")[:10],

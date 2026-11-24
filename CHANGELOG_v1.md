@@ -1,3 +1,51 @@
+# AstroNaradMuni 1.3.0
+
+NaradVani in 3D (page side). The Ask screen can now show a real-time 3D NaradVani instead of the 2D portrait, with the portrait as the automatic fallback.
+
+- **How:** `static/avatar3d.js` (classic script, lazy-loads three.js, GLTFLoader and the meshopt decoder from `static/vendor/` by absolute path, strict-CSP safe). `live.js` stays the speech brain (text position, word-boundary re-sync, mic) and hands the stage over once the model is ready; its public `AMLive` API is unchanged (`is3d()` added).
+- **Motion:** text to the 15 Oculus mouth shapes (Latin and Devanagari, digraphs sh/ch/th/ph, labials close the lips), eased in about 40 ms and out in about 70 ms; natural blinks (double blinks 18%); brows lift on questions and new sentences; small eye saccades; breathing, head sway, a nod while speaking, a tilt while listening; a light resting smile. Bones are rotated about world axes, so the export's bone roll does not matter. Reduced-motion users get calmer movement.
+- **Fallback chain:** 3D, then the 2D portrait, then the still image. No WebGL, a missing or failed GLB, a lost context, or a device that stays slow (drops to 1x pixels once, then gives up) all keep or restore the portrait. `?avatar=2d` forces the portrait.
+- **Server:** `.glb` is served as `model/gltf-binary`. The CSP gains `'wasm-unsafe-eval'` in `script-src` only, which the meshopt decoder needs to compile WebAssembly. No `'unsafe-inline'`, no `'unsafe-eval'`.
+- **Avatar:** `static/vendor/naradvani.glb` (our own MPFB build, 5 MB, licences in `docs/ASSETS.md`). `?model=mp` loads `vendor/naradvani_mp.glb` for private local testing only; that file is git-ignored because its licence is unresolved.
+- **Verified in a real browser (Chrome on macOS, 2026-11-23, `docs/AVATAR_PAGE_VERIFY.md`):** `AM3D.report()` active with no missing shapes, bones head/neck/chest/eyeL/eyeR, 120 fps on a 120 Hz display (also 120 fps in phone emulation with 6x CPU throttling); faces the camera; framed in the circle with the eyes about 40% from the top and the cut edge hidden; nod, turn, roll and eye directions correct; lip-sync on English, Hindi (Devanagari) and a 560-character reply (lips close on 89-94% of m/b/p samples, mouth rests on 92-93% of spaces and punctuation, word-boundary re-sync seen, position never jumps back); Chat silent with blinks only; no leaked WebGL contexts or extra canvases after mode switches, leaving and returning to Ask, and resizes; `?avatar=2d`, no WebGL, a missing GLB and a forced "too slow" device all fall back to the 2D portrait with the page still working.
+- **Fixed during verification:**
+  - three r186 ships no minified builds and GLTFLoader now imports `SkeletonUtils`: `tools/vendor_three.py` vendors `three.module.js`/`three.core.js` and `SkeletonUtils.js`, rewrites every `../utils/*.js` import, and its leftover-import check ignores example code in doc comments.
+  - The CSP blocked every GLB texture (GLTFLoader fetches embedded images from `blob:` URLs): `connect-src` is now `'self' blob:` (still no remote or `data:` connections).
+  - The skin rendered far too dark and the eyes pale: neutral tone mapping, exposure 1.2 and 1.8x lights by default (`CFG.tone`, `CFG.light`); the transmission cornea is replaced at runtime by a thin gloss layer (`CFG.cornea`) and the eyeball is warmed slightly (`CFG.eyeTint`); framing margin 0.92.
+  - `AMLive.is3d()` stayed true after leaving Ask; it now follows `AM3D.isActive()`.
+  - A stale web test still looked for the old "AstroMuni" brand.
+- **Debug helpers:** `AM3D.materials()`, `AM3D.morphValues()` and `AM3D.CFG.pose` (forced head/eye angles, off by default) for checks like these.
+- 24 tests in `tests/test_v130_pure.py` (node harnesses for the driver and the hand-over); full suite: 319 pytest passed.
+
+# AstroNaradMuni 1.2.0
+
+NaradVani comes alive. The Ask screen now has two modes.
+
+- **Chat (default): silent.** NaradVani only blinks naturally and breathes.
+- **Talk:** he greets you, reads his replies in a male Indian-English / Hindi voice (the browser's own speech engine), his lips follow the words, eyebrows lift on questions, and his head nods slightly. A mic button lets you ask by speaking (browser speech recognition, Hindi or English). Tap the mic while he speaks to stop him. Leaving the Ask page silences him.
+- **How:** `static/live.js`, no dependencies, CSP-safe. The portrait is drawn on a canvas: eyelids are built from the skin above each eye, and the mouth opens by stretching the mouth interior and moving the lower lip and chin, feathered into the photo. Lip movement comes from the text (vowel openness, lips closed on m/b/p) and is re-synced on every word boundary the browser reports. It is an approximation, not audio-exact.
+- **Honest limits:** this is a 2D living portrait, not 3D or Unreal. Voice quality and Hindi voice availability depend on the browser and OS. `docs/AVATAR_ROADMAP.md` lays out the real 3D / TTS / Unreal path with costs and licence cautions.
+- The old "read replies aloud" chip is replaced by the Chat | Talk switch. Voice and lip-sync are never on in Chat mode. The "AI-generated character" note stays.
+- 12 new tests (`tests/test_v120_pure.py`, including a node harness for the lip-sync logic); 60 pass in total.
+
+# AstroNaradMuni 1.1.3
+
+- **Raja yogas, computed** (`yogas.py`): kendra-trikona links (same sign, facing, or exchanging signs), yogakaraka planet, Dharma-Karmadhipati, and Neecha Bhanga cancellation. Sign-level only; skipped when the Lagna is unreliable.
+- **Dasha timing windows** (`timeline.py`): the running dasha is projected forward in Vimshottari order, and sub-periods tied to the topic are shown as activation windows for the next five years ("Apr 2028 to Jun 2031: Venus inside Saturn"). Never an event date. If our timeline disagrees with the engine's own Maha end date, no windows are shown. Appears under "Why this answer?" for every topic, and in the reply when the user asks "when...?" / "kab...?".
+- **Expert case library** (`expert.py`, `expert_data/`, `tools/expert_check.py`): a place for real advice from experienced astrologers. Cases are validated (consent required; phone/email, death predictions, guarantees, fear, fees, medical claims and investment instructions are rejected), indexed as a new `expert` retrieval tier, and shown as "An experienced astrologer on our panel often advises..." only when the question shares real content words with a case. Private by default: `expert_data/cases/` is git-ignored. This is retrieval, not model training.
+- 15 new tests; 48 pass in total.
+
+# AstroNaradMuni 1.1.2
+
+NaradVani now has a face, and the Ask page is a conversation with someone rather than a form.
+
+- **Split Ask screen.** Desktop: NaradVani's portrait on the left (concentric rings, name, "AI guide" chip, live status "Listening to you" / "NaradVani is typing…" with pulsing rings), chat on the right. Phone: character on top, chat below.
+- **Real-image character.** `naradvani.jpg` / `naradvani-avatar.jpg` replace the vector sage. The image was generated with an AI tool; the visible corner sparkle was cropped out. The file still carries the generator's invisible provenance watermark (SynthID), which is not removed, and the UI says plainly that NaradVani is an AI-generated character.
+- **Chat details.** Context chips (Lagna, Moon nakshatra, current Maha dasha), a "Did this feel useful? Yes / Not quite" row (kept on-device, not sent anywhere), pill composer, optional "read replies aloud" using the browser's own voice (hi-IN / en-IN).
+- **Yogas.** New computed check, `yogas.py`: Gajakesari, Budhaditya, Chandra-Mangal, the five Mahapurusha yogas, and Guru-Chandal (worded gently). Sign-level rules only; Mahapurusha is skipped when only the Moon chart is available. Ask "which yogas do I have?", "mere yog kya hain", "मेरे योग क्या हैं".
+- Server now serves `.jpg`; package data includes `static/*.jpg`.
+- 12 new tests (`tests/test_v112_pure.py`); 33 pass with the earlier suites.
+
 # AstroNaradMuni 1.1.1
 
 The portal is now **AstroNaradMuni** and the assistant is **NaradVani**. Chatting is free: no timer, no wallet.

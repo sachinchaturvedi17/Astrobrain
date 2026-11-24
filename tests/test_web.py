@@ -35,7 +35,7 @@ def post(url, path, body, raw=None):
 
 def test_page_and_security_headers(url):
     with urllib.request.urlopen(url + "/") as r:
-        assert r.status == 200 and b"AstroMuni" in r.read()
+        assert r.status == 200 and b"AstroNaradMuni" in r.read()   # brand renamed in v1.1.1
         assert "default-src 'self'" in r.headers["Content-Security-Policy"]
         assert r.headers["Cache-Control"] == "no-store"
 

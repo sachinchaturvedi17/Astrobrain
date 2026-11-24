@@ -11,3 +11,22 @@ venv/
 .ruff_cache/
 aipandit-feedback/
 knowledge_base/
+
+# private expert advice (see expert_data/README.md)
+expert_data/cases/*
+!expert_data/cases/.gitkeep
+
+# Blender working files (large)
+assets_src/*.blend
+assets_src/*.blend1
+
+# Private assets with unresolved licences (never commit or push)
+assets_src/private/
+
+# Large Blender intermediates (back these up outside git)
+assets_src/review/
+assets_src/textures/
+assets_src/*_raw.glb
+
+# Private MetaPerson avatar copied in only for local ?model=mp testing (unresolved licence; also remove before building a wheel)
+src/aipandit/web/static/vendor/naradvani_mp.glb

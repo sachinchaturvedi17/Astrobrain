@@ -1,4 +1,4 @@
-/* AstroNaradMuni v1.1.1 extra interface strings (en / hg / hi). Loaded after i18n.js. */
+/* AstroNaradMuni v1.1.2 extra interface strings (en / hg / hi). Loaded after i18n.js. */
 (function () {
   "use strict";
   var AM = window.AM;
@@ -11,7 +11,8 @@
     today_for_you: "Your day, in plain words", hub_ask: "Ask anything", hub_ask_sub: "Talk to NaradVani like you would to a wise friend.",
     more_tools: "More tools", why_reading: "Why this reading?", area_note: "Based on where the planets are today, counted from your Moon sign. A guide to the mood of the day, not a prediction.",
     meter_label: "{a}: {s} out of 100", reply_hint: "Tap a reply or type your own", astro_hello: "Namaste, {n}", astro_hello_sub: "I read your chart and explain it in plain words, and chatting is always free. What is on your mind?",
-    low_time_note: "Reading from your Moon sign, because your birth time is not known.", edit_birth: "Add birth time", try_tap: "Try one of these"
+    low_time_note: "Reading from your Moon sign, because your birth time is not known.", edit_birth: "Add birth time", try_tap: "Try one of these",
+    listening: "Listening to you", ai_guide: "AI guide", stage_cap: "Your kundli, dashas and current transits are present in this conversation.", ai_char: "NaradVani is an AI-generated character, not a real person.", voice_on: "Voice on", voice_off: "Read replies aloud", useful_q: "Did this feel useful?", not_quite: "Not quite", fb_yes: "Glad it helped. Ask me anything else.", fb_no: "Sorry about that. Tell me a bit more, or rephrase, and I will try again."
   });
   AM.extend("hg", {
     free_chat: "Baat karna muft hai. Na timer, na wallet.", typing_label: "NaradVani likh raha hai…", talk_to: "NaradVani se baat karein", about_nv: "Aapka Vedic guide",
@@ -22,7 +23,8 @@
     today_for_you: "Aapka din, seedhe shabdon mein", hub_ask: "Kuch bhi poochhiye", hub_ask_sub: "NaradVani se aise baat karein jaise kisi samajhdaar dost se.",
     more_tools: "Aur tools", why_reading: "Yeh reading kyon?", area_note: "Aaj grah kahan hain, aapki Chandra rashi se ginkar. Din ke mood ka ishaara hai, bhavishyavani nahi.",
     meter_label: "{a}: {s} / 100", reply_hint: "Reply par tap karein ya apna likhein", astro_hello: "Namaste, {n}", astro_hello_sub: "Main aapki kundli padhkar saaf shabdon mein samjhata hoon, aur chat hamesha muft hai. Aapke mann mein kya hai?",
-    low_time_note: "Janm samay maloom nahi, isliye Chandra rashi se padh raha hoon.", edit_birth: "Janm samay jodein", try_tap: "Inme se koi try karein"
+    low_time_note: "Janm samay maloom nahi, isliye Chandra rashi se padh raha hoon.", edit_birth: "Janm samay jodein", try_tap: "Inme se koi try karein",
+    listening: "Aapki baat sun raha hoon", ai_guide: "AI guide", stage_cap: "Aapki kundli, dashas aur abhi ke gochar is baatcheet mein saath hain.", ai_char: "NaradVani ek AI-generated character hai, asli insaan nahi.", voice_on: "Awaaz on", voice_off: "Jawab bolkar sunao", useful_q: "Kya yeh kaam ka laga?", not_quite: "Poora nahi", fb_yes: "Accha laga ki kaam aaya. Aur kuch poochhna ho to poochhiye.", fb_no: "Maaf kijiye. Thoda aur bataiye ya dusre tareeke se poochhiye, main phir koshish karunga."
   });
   AM.extend("hi", {
     free_chat: "बात करना मुफ़्त है। न टाइमर, न वॉलेट।", typing_label: "NaradVani लिख रहा है…", talk_to: "NaradVani से बात करें", about_nv: "आपका वैदिक मार्गदर्शक",
@@ -33,6 +35,22 @@
     today_for_you: "आपका दिन, सरल शब्दों में", hub_ask: "कुछ भी पूछिए", hub_ask_sub: "NaradVani से ऐसे बात करें जैसे किसी समझदार मित्र से।",
     more_tools: "और टूल", why_reading: "यह पठन क्यों?", area_note: "आज ग्रह कहाँ हैं, आपकी चंद्र राशि से गिनकर। दिन के मिज़ाज का संकेत है, भविष्यवाणी नहीं।",
     meter_label: "{a}: 100 में से {s}", reply_hint: "उत्तर पर टैप करें या अपना लिखें", astro_hello: "नमस्ते, {n}", astro_hello_sub: "मैं आपकी कुंडली पढ़कर सरल शब्दों में समझाता हूँ, और चैट हमेशा मुफ़्त है। आपके मन में क्या है?",
-    low_time_note: "जन्म समय पता नहीं, इसलिए चंद्र राशि से पढ़ रहा हूँ।", edit_birth: "जन्म समय जोड़ें", try_tap: "इनमें से कोई आज़माएँ"
+    low_time_note: "जन्म समय पता नहीं, इसलिए चंद्र राशि से पढ़ रहा हूँ।", edit_birth: "जन्म समय जोड़ें", try_tap: "इनमें से कोई आज़माएँ",
+    listening: "आपकी बात सुन रहा हूँ", ai_guide: "AI गाइड", stage_cap: "आपकी कुंडली, दशाएँ और मौजूदा गोचर इस बातचीत में साथ हैं।", ai_char: "NaradVani एक AI-निर्मित पात्र है, असली व्यक्ति नहीं।", voice_on: "आवाज़ चालू", voice_off: "उत्तर बोलकर सुनाएँ", useful_q: "क्या यह काम का लगा?", not_quite: "पूरा नहीं", fb_yes: "अच्छा लगा कि काम आया। और कुछ पूछना हो तो पूछिए।", fb_no: "क्षमा कीजिए। थोड़ा और बताइए या दूसरे तरीके से पूछिए, मैं फिर कोशिश करूँगा।"
+  });
+  AM.extend("en", {
+    mode_chat: "Chat", mode_talk: "Talk", mode_aria: "How do you want to talk to NaradVani?", tap_to_talk: "Tap the mic and speak", mic_listening: "Listening… speak now", speaking: "NaradVani is speaking…",
+    mic_unsupported: "Voice input is not available in this browser. You can still type.", mic_denied: "Microphone access is blocked. Allow it in your browser to talk.", mic_btn: "Speak to NaradVani",
+    talk_hello: "Namaste. I am NaradVani. Ask me anything about your chart.", voice_note: "The voice comes from your browser and the lip movement is an approximation."
+  });
+  AM.extend("hg", {
+    mode_chat: "Chat", mode_talk: "Baat karein", mode_aria: "NaradVani se kaise baat karni hai?", tap_to_talk: "Mic dabaiye aur boliye", mic_listening: "Sun raha hoon… boliye", speaking: "NaradVani bol rahe hain…",
+    mic_unsupported: "Is browser mein voice input nahi hai. Aap type kar sakte hain.", mic_denied: "Microphone ki ijazat band hai. Baat karne ke liye browser mein allow kijiye.", mic_btn: "NaradVani se boliye",
+    talk_hello: "Namaste. Main NaradVani hoon. Apni kundli ke baare mein kuch bhi poochhiye.", voice_note: "Awaaz aapke browser se aati hai aur honth ki harkat andaazi hai."
+  });
+  AM.extend("hi", {
+    mode_chat: "चैट", mode_talk: "बात करें", mode_aria: "नारदवाणी से कैसे बात करनी है?", tap_to_talk: "माइक दबाइए और बोलिए", mic_listening: "सुन रहा हूँ… बोलिए", speaking: "नारदवाणी बोल रहे हैं…",
+    mic_unsupported: "इस ब्राउज़र में आवाज़ से पूछना उपलब्ध नहीं है। आप टाइप कर सकते हैं।", mic_denied: "माइक्रोफ़ोन की अनुमति बंद है। बात करने के लिए ब्राउज़र में अनुमति दीजिए।", mic_btn: "नारदवाणी से बोलिए",
+    talk_hello: "नमस्ते। मैं नारदवाणी हूँ। अपनी कुंडली के बारे में कुछ भी पूछिए।", voice_note: "आवाज़ आपके ब्राउज़र से आती है और होंठों की हरकत अंदाज़ी है।"
   });
 })();

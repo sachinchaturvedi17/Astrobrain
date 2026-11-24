@@ -464,3 +464,23 @@ def reference_answer(text: str, lang: str, ask_check: Optional[str] = None) -> D
         q, quick = ask_block("dosha_check", lang)
         return {"text": text, "expects": "dosha_check", "question": q, "quick_replies": quick}
     return {"text": text, "expects": None, "question": "", "quick_replies": TOPIC_CHIPS[lang][:4]}
+
+
+# ------------------------------------------------------------------------------------------ v1.1.3 additions
+EXPERT_LEAD = ("An experienced astrologer on our panel often advises:",
+               "Hamare panel ke ek anubhavi jyotishi aksar yeh salah dete hain:",
+               "हमारे पैनल के एक अनुभवी ज्योतिषी अक्सर यह सलाह देते हैं:")
+
+
+def expert_note(case, lang):
+    """Attribute a stored expert case to a practising astrologer. Cautions and simple practices are kept, nothing is added."""
+    li = {"en": 0, "hg": 1, "hi": 2}.get(lang, 0)
+    out = EXPERT_LEAD[li] + " " + str(case["advice"]).strip()
+    rem = case.get("remedies")
+    if isinstance(rem, str):
+        rem = [x.strip() for x in rem.split(";") if x.strip()]
+    if rem:
+        out += " " + ("Simple practices: ", "Saral upay: ", "सरल उपाय: ")[li] + "; ".join(rem) + "."
+    if case.get("cautions"):
+        out += " " + str(case["cautions"]).strip()
+    return out

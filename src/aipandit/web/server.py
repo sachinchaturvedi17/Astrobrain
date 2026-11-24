@@ -52,8 +52,8 @@ MAX_LOG_BYTES = 8 * 1024 * 1024
 P = "parashari"
 NUMS = ("mulank", "bhagyank", "name_number", "personal_year")
 STATIC_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8",
-                ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon"}
-CSP = ("default-src 'self'; style-src 'self'; script-src 'self'; font-src 'self'; img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self'; "
+                ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".ico": "image/x-icon", ".glb": "model/gltf-binary"}
+CSP = ("default-src 'self'; style-src 'self'; script-src 'self' 'wasm-unsafe-eval'; font-src 'self'; img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self' blob:; "
        "base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
 
 
@@ -382,8 +382,14 @@ def make_handler(app: App):
     return H
 
 
+class _Server(ThreadingHTTPServer):
+    """A browser opens ~10 connections at once on reload; the default backlog of 5 resets some of them."""
+    request_queue_size = 128
+    daemon_threads = True
+
+
 def make_server(pandit: Pandit, host="127.0.0.1", port=8000, log_dir: Optional[str] = None) -> ThreadingHTTPServer:
-    return ThreadingHTTPServer((host, port), make_handler(App(pandit, log_dir)))
+    return _Server((host, port), make_handler(App(pandit, log_dir)))
 
 
 def main(argv=None) -> int:
