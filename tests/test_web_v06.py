@@ -22,6 +22,7 @@ def srv(tmp_path):
     threading.Thread(target=s.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{s.server_address[1]}", tmp_path
     s.shutdown()
+    s.server_close()
 
 
 def post(url, path, body, raw=None):
@@ -31,7 +32,10 @@ def post(url, path, body, raw=None):
         with urllib.request.urlopen(req) as r:
             return r.status, json.loads(r.read())
     except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read())
+        try:
+            return e.code, json.loads(e.read())
+        finally:
+            e.close()
 
 
 def start(url, **kw):

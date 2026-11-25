@@ -18,12 +18,12 @@
   var ICON = {
     hub: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>', ask: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>',
     horoscope: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>', chart: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3v6.5M12 14.5V21M3 12h6.5M14.5 12H21M5.6 5.6l4.6 4.6M13.8 13.8l4.6 4.6M18.4 5.6l-4.6 4.6M10.2 13.8l-4.6 4.6"/>',
-    calculators: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M8 16h2M12 16h2"/>', reports: '<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/>', learn: '<path d="M4 5a2 2 0 012-2h5v17H6a2 2 0 00-2 2zM20 5a2 2 0 00-2-2h-5v17h5a2 2 0 012 2z"/>',
+    calculators: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M8 16h2M12 16h2"/>', reports: '<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/>', kundli: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 3l18 18M21 3L3 21M12 3l9 9-9 9-9-9z"/>', learn: '<path d="M4 5a2 2 0 012-2h5v17H6a2 2 0 00-2 2zM20 5a2 2 0 00-2-2h-5v17h5a2 2 0 012 2z"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>', search: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/>', send: '<path d="M4 12l16-8-6 16-3-7z"/>', heart: '<path d="M12 20s-7-4.6-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.4-7 10-7 10z"/>', cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>' };
   var AVATAR = '<img class="avatar" src="/static/naradvani-avatar.jpg" alt="NaradVani" width="44" height="44">';
-  var svg = function (k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[k] + '</svg>'; };
+  var svg = function (k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICON[k] || ICON.chart) + '</svg>'; };
 
-  var S = { route: "hub", profile: null, palms: {}, chart: null, pan: null, horo: null, sel: null, msgs: [], mode: "muni", busy: false, calc: null, calcType: "moon", rep: null, repTopic: "career", learn: null, learnQ: "", compat: null, where: null, drawer: false, loaded: {} };
+  var S = { route: "hub", profile: null, palms: {}, chart: null, pan: null, horo: null, sel: null, msgs: [], mode: "muni", busy: false, calc: null, calcType: "moon", rep: null, repTopic: "career", kundli: null, compat: null, where: null, drawer: false, loaded: {} };
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var lang = function () { return AM.lang(); };
   var first = function () { return ((S.profile && S.profile.name) || "").trim().split(/\s+/)[0] || ""; };
@@ -36,7 +36,7 @@
     var o = JSON.stringify({ profile: S.profile, lang: lang() });
     AM.store.set(KEY, o, remember !== false);
   }
-  function resetAll() { AM.store.del(KEY); AM.store.del("astromuni_lang"); S.profile = null; S.palms = {}; S.chart = null; S.msgs = []; S.loaded = {}; S.pan = S.horo = S.calc = S.rep = S.learn = S.compat = null; }
+  function resetAll() { AM.store.del(KEY); AM.store.del("astromuni_lang"); S.profile = null; S.palms = {}; S.chart = null; S.msgs = []; S.loaded = {}; S.pan = S.horo = S.calc = S.rep = S.kundli = S.compat = null; }
 
   /* ------------------------------------------------------------ data loading (cached per language) */
   function body(extra) { return Object.assign({ profile: S.profile, lang: lang() }, extra || {}); }
@@ -46,7 +46,7 @@
     try {
       if (name === "pan") S.pan = await api("/api/v10/panchang", body(S.where ? { where: S.where } : {}));
       if (name === "horo") { S.horo = await api("/api/v10/horoscope", body()); if (!S.sel) S.sel = (S.horo.mine && S.horo.mine.key) || "Simha"; }
-      if (name === "chart") S.chart = await api("/api/v10/chart", body());
+      if (name === "chart") { S.chart = await api("/api/v10/chart", body()); S.kundli = S.chart; }
       S.loaded[name] = key;
     } catch (e) { S.loaded[name] = null; S["err_" + name] = e.message; }
     renderView();
@@ -56,12 +56,17 @@
     if (route === "horoscope") load("horo");
     if (route === "panchang") load("pan");
     if (route === "chart") load("chart");
+    if (route === "kundli") {
+      if (S.chart && !S.kundli) S.kundli = S.chart;
+      if (!S.kundli) runKundli();
+      else renderView();
+    }
     if (route === "reports" && !S.rep) runReport(S.repTopic);
     if (route === "calculators" && !S.calc) runCalc(S.calcType);
   }
 
   /* ------------------------------------------------------------ shell */
-  var NAV = [["hub", "n_hub"], ["ask", "n_ask"], ["horoscope", "n_horo"], ["chart", "n_chart"], ["calculators", "n_calc"], ["reports", "n_reports"], ["learn", "n_learn"]];
+  var NAV = [["hub", "n_hub"], ["ask", "n_ask"], ["horoscope", "n_horo"], ["chart", "n_chart"], ["calculators", "n_calc"], ["reports", "n_reports"], ["kundli", "n_kundli"]];
   function navHtml() { return NAV.map(function (n) { return '<button type="button" data-go="' + n[0] + '" class="' + (S.route === n[0] ? "on" : "") + '" aria-label="' + esc(t(n[1])) + '">' + svg(n[0]) + '<span class="lbl">' + esc(t(n[1])) + '</span></button>'; }).join(""); }
   function moonCard() {
     var m = S.chart && S.chart.moon ? S.chart.moon : null, tz = (S.pan && S.pan.date_label) ? "" : "";
@@ -86,6 +91,7 @@
     S.route = route; S.drawer = false; closeDrawer();
     if (location.hash.slice(1) !== route) { if (replace) history.replaceState(null, "", "#" + route); else location.hash = route; }
     shell(); renderView(); loadFor(route); window.scrollTo(0, 0);
+    if (route === "kundli") { initKundliDownloads(); }
   }
   function openDrawer() {
     var el = document.createElement("div"); el.className = "drawer"; el.id = "drawer";
@@ -98,10 +104,10 @@
   /* ------------------------------------------------------------ views */
   function renderView() {
     var v = $("#view"); if (!v) return;
-    var views = { hub: viewHub, ask: viewAsk, horoscope: viewHoro, chart: viewChart, calculators: viewCalc, reports: viewReports, learn: viewLearn, compat: viewCompat, panchang: viewPanchang };
+    var views = { hub: viewHub, ask: viewAsk, horoscope: viewHoro, chart: viewChart, calculators: viewCalc, reports: viewReports, kundli: viewKundli, compat: viewCompat, panchang: viewPanchang };
     v.innerHTML = (views[S.route] || viewHub)();
     paintTop();
-    if (S.route === "ask") { var th = $("#thread"); if (th) th.scrollTop = S.msgs.length ? th.scrollHeight : 0; var cv = $("#nvCanvas"); if (cv && window.AMLive) { window.AMLive.mount(cv, { mode: S.talk ? "talk" : "chat" }); paintStage(); } }
+    if (S.route === "ask") { var th = $("#thread"); if (th) th.scrollTop = S.msgs.length ? th.scrollHeight : 0; var pt = $("#nvPortrait"); if (pt && window.AMLive) { window.AMLive.mount(pt, { mode: S.talk ? "talk" : "chat", still: true }); paintStage(); } }
     if (S.route === "compat") mountCompatPicker();
   }
   var skel = '<div class="card"><div class="skeleton"></div><p></p><div class="skeleton"></div></div>';
@@ -181,15 +187,16 @@
       item("Sunrise", p.sunrise) + item("Sunset", p.sunset) + item(t("abhijit"), p.abhijit) + item("Rahu Kaal", p.rahu_kaal) + '</div><p class="small muted">' + esc(p.method || "") + '</p>';
   }
 
+  function calcLabel() { return lang() === "en" ? "The calculation behind this answer" : "Is jawab ke peeche ka hisaab"; }
   function replyHtml(m) {
     var d = m.data; if (!d) return '<div class="msg">' + AVATAR + '<div class="reply"><span class="typing"><i></i><i></i><i></i></span> <span class="muted small">' + esc(t("typing_label")) + '</span></div></div>';
-    var more = (d.reasons && d.reasons.length) || (d.evidence && d.evidence.length) || (d.timing && d.timing.length);
+    var more = (d.calc && d.calc.length) || (d.reasons && d.reasons.length) || (d.evidence && d.evidence.length) || (d.timing && d.timing.length);
     var qr = m.last && d.quick_replies && d.quick_replies.length && !d.safety;
     var wrap = !m.flat;
     return (wrap ? '<div class="msg">' + AVATAR : "") + '<div class="reply">' + (d.showTitle && d.title ? '<h3>' + esc(d.title) + '</h3>' : "") + '<p class="ans">' + esc(d.answer) + '</p>' + (d.followup_question ? '<p class="fq">' + esc(d.followup_question) + '</p>' : "") +
       (d.action === "compat" ? '<button type="button" class="btn mt-s" data-go="compat">' + esc(t("n_compat")) + ' →</button>' : "") + (qr ? '<div class="chips qr">' + d.quick_replies.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div><p class="small muted">' + esc(t("reply_hint")) + '</p>' : "") +
-      (d.confidence && d.confidence.level === "low" && d.confidence.why ? '<p class="small note">' + esc(d.confidence.why) + '</p>' : "") +
-      (more && !d.safety ? '<details class="why"><summary>' + esc(t("why")) + '</summary>' + (d.reasons && d.reasons.length ? '<div class="eyebrow">' + esc(t("basis")) + '</div><ul>' + d.reasons.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") + (d.timing && d.timing.length ? '<div class="eyebrow">' + esc(t("timing")) + '</div><ul>' + d.timing.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") +
+      (d.confidence && d.confidence.level === "low" && d.confidence.why && m.noteOk !== false ? '<p class="small note">' + esc(d.confidence.why) + '</p>' : "") +
+      (more && !d.safety ? '<details class="why"><summary>' + esc(t("why")) + '</summary>' + (d.calc && d.calc.length ? '<div class="eyebrow">' + esc(calcLabel()) + '</div><ol class="calc-list">' + d.calc.map(function (r) { return '<li>' + esc(r.replace(/^\d+\.\s*/, "")) + '</li>'; }).join("") + '</ol>' : "") + (d.reasons && d.reasons.length ? '<div class="eyebrow">' + esc(t("basis")) + '</div><ul>' + d.reasons.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") + (d.timing && d.timing.length ? '<div class="eyebrow">' + esc(t("timing")) + '</div><ul>' + d.timing.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join("") + '</ul>' : "") +
         (d.confidence && d.confidence.level !== "n/a" && d.confidence.why && d.confidence.level !== "low" ? '<p class="small muted">' + esc(t("confidence")) + ': ' + esc(t(d.confidence.level)) + '. ' + esc(d.confidence.why) + '</p>' : "") + (d.evidence && d.evidence.length ? '<div class="eyebrow">' + esc(t("sources")) + '</div><ul>' + d.evidence.map(function (e) { return '<li><b>' + esc(e.title) + '</b> <span class="src">' + (/^https?:\/\//.test(e.url) ? '<a href="' + esc(e.url) + '" target="_blank" rel="noopener noreferrer">' + esc(e.source) + '</a>' : esc(e.source)) + ' · ' + esc(e.licence) + '</span></li>'; }).join("") + '</ul>' : "") +
         (d.caveats && d.caveats.length ? '<p class="small muted">' + esc(d.caveats.join(" ")) + '</p>' : "") + '</details>' : "") + '</div>' + (wrap ? '</div>' : "") + (m.last && wrap && !d.safety ? fbHtml(m) : "");
   }
@@ -202,8 +209,13 @@
       var chips = CHIPS[lang()] || CHIPS.en;
       return '<div class="welcome card tint"><div class="eyebrow">' + esc(t("about_nv")) + '</div><h3>' + esc(t("astro_hello", { n: first() })) + '</h3><p class="muted">' + esc(t("astro_hello_sub")) + '</p><div class="eyebrow mt-m">' + esc(t("try_tap")) + '</div><div class="chips">' + chips.map(function (c) { return '<button type="button" class="chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join("") + '</div></div>';
     }
-    var n = S.msgs.length;
-    return S.msgs.map(function (m, i) { if (m.role === "user") return '<div class="bubble">' + esc(m.text) + '</div>'; m.last = i === n - 1; return replyHtml(m); }).join("");
+    var n = S.msgs.length, noteShown = false;
+    return S.msgs.map(function (m, i) {
+      if (m.role === "user") return '<div class="bubble">' + esc(m.text) + '</div>';
+      m.last = i === n - 1;
+      if (m.data) { m.noteOk = !noteShown; if (m.data.confidence && m.data.confidence.level === "low" && m.data.confidence.why) noteShown = true; }
+      return replyHtml(m);
+    }).join("");
   }
   function ctxChips() {
     var c = S.chart, out = [];
@@ -231,7 +243,7 @@
   function stageHtml() {
     var talk = !!S.talk;
     return '<aside class="nv-stage' + (S.busy ? " busy" : "") + (talk ? " talk" : "") + '" aria-label="NaradVani"><div class="rings"><span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>' +
-      '<div class="portrait"><canvas id="nvCanvas" width="900" height="1199" role="img" aria-label="NaradVani, the AI guide"></canvas></div></div>' +
+      '<div class="portrait"><img id="nvPortrait" src="/static/naradvani.jpg" width="900" height="1199" alt="NaradVani, the guide"></div></div>' +
       '<div class="stage-info"><div class="stage-name"><h2>NaradVani</h2><span class="live" aria-hidden="true"></span><span class="chip ai">' + esc(t("ai_guide")) + '</span></div>' +
       '<p class="stage-status" id="nvStatus" role="status">' + esc(statusText()) + '</p><p class="stage-cap">' + esc(t("stage_cap")) + '</p>' +
       '<div class="modes" role="group" aria-label="' + esc(t("mode_aria")) + '"><button type="button" class="seg' + (talk ? "" : " on") + '" data-talk="chat" aria-pressed="' + (talk ? "false" : "true") + '">' + esc(t("mode_chat")) + '</button><button type="button" class="seg' + (talk ? " on" : "") + '" data-talk="talk" aria-pressed="' + (talk ? "true" : "false") + '">' + esc(t("mode_talk")) + '</button></div>' +
@@ -260,19 +272,27 @@
   }
   async function ask(q) {
     q = (q || "").trim(); if (!q || S.busy) return; if (window.AMLive) window.AMLive.stop();
-    var hist = S.msgs.filter(function (x) { return x.role === "user" || x.data; }).slice(-6).map(function (x) { return x.role === "user" ? { role: "user", text: x.text } : { role: "bot", text: x.data.answer || "", topic: x.data.topic || "", expects: x.data.expects || "" }; });
+    var hist = S.msgs.filter(function (x) { return x.role === "user" || x.data; }).slice(-14).map(function (x) { return x.role === "user" ? { role: "user", text: x.text } : { role: "bot", text: x.data.answer || "", topic: x.data.topic || "", expects: x.data.expects || "", intent: x.data.intent || "" }; });
+    var started = Date.now();
     S.busy = true; S.msgs.push({ role: "user", text: q }); var m = { role: "bot", data: null }; S.msgs.push(m);
     if (S.route !== "ask") go("ask"); else renderView();
     try { m.data = await api("/api/v10/ask", Object.assign(body({ question: q, mode: S.mode, history: hist }), S.mode === "astropedia" ? { profile: null } : {})); }
     catch (e) { m.data = { answer: e.message, title: "", reasons: [], evidence: [], caveats: [], safety: "error" }; }
+    // A 3–4 second thinking beat: the chart still computes at full speed, but the reply does not flash in before the person has read the question.
+    var think = 3000 + (q.length % 10) * 100;
+    var left = think - (Date.now() - started);
+    if (left > 0) await new Promise(function (r) { setTimeout(r, left); });
     S.busy = false; renderView(); var i = $("#askQ"); if (i) i.focus();
     if (m.data && !m.data.safety && m.data.answer) talkSay(m.data.answer);
   }
 
   async function runCalc(type) {
-    S.calcType = type; S.calc = { loading: true }; renderView();
+    S.busy = true; S.calcType = type; S.calc = { loading: true }; renderView();
+    var started = Date.now();
     try { S.calc = await api("/api/v10/calculator", body({ type: type })); } catch (e) { S.calc = { error: e.message }; }
-    renderView();
+    var think = 3000; var left = think - (Date.now() - started);
+    if (left > 0) await new Promise(function (r) { setTimeout(r, left); });
+    S.busy = false; renderView();
   }
   function viewCalc() {
     var items = [["moon", "c_moon", "☾"], ["ascendant", "c_asc", "☀︎"], ["nakshatra", "c_nak", "✦"], ["sade_sati", "c_sade", "♄"]], r = S.calc;
@@ -281,9 +301,12 @@
   }
 
   async function runReport(topic) {
-    S.repTopic = topic; S.rep = { loading: true }; renderView();
+    S.busy = true; S.repTopic = topic; S.rep = { loading: true }; renderView();
+    var started = Date.now();
     try { S.rep = await api("/api/v10/report", body({ topic: topic })); } catch (e) { S.rep = { error: e.message }; }
-    renderView();
+    var think = 3000; var left = think - (Date.now() - started);
+    if (left > 0) await new Promise(function (r) { setTimeout(r, left); });
+    S.busy = false; renderView();
   }
   function viewReports() {
     var r = S.rep;
@@ -291,16 +314,69 @@
       (!r || r.loading ? skel : r.error ? errBox(r.error) : '<div class="card tint">' + replyHtml({ data: Object.assign({}, r, { title: t("r_" + S.repTopic), showTitle: true, followup_question: "", quick_replies: [] }), flat: true }) + '</div>' + (r.houses && r.houses.length ? '<details class="card flat why"><summary>' + esc(t("why")) + '</summary><div class="scroll-x"><table class="t"><thead><tr><th>' + esc(t("house")) + '</th><th>' + esc(t("sign")) + '</th><th>Lord</th><th></th></tr></thead><tbody>' + r.houses.map(function (h) { return '<tr><td>' + h.house + '</td><td>' + esc(signName(h.sign)) + '</td><td>' + esc(plName(h.lord)) + '</td><td class="' + (h.points > 0 ? "yes" : h.points < 0 ? "no" : "") + '">' + (h.points > 0 ? esc(t("fav")) : h.points < 0 ? esc(t("chall")) : "") + '</td></tr>'; }).join("") + '</tbody></table></div></details>' : ""));
   }
 
-  async function runLearn(q) {
-    S.learnQ = q; S.learn = { loading: true }; if (S.route !== "learn") go("learn"); else renderView();
-    try { S.learn = await api("/api/v10/ask", { question: q, lang: lang(), mode: "astropedia" }); } catch (e) { S.learn = { error: e.message }; }
-    renderView();
+  async function runKundli() {
+    if (S.chart && !S.chart.error) {
+      S.kundli = S.chart;
+      renderView();
+      initKundliDownloads();
+      return;
+    }
+    S.busy = true; renderView();
+    try {
+      S.kundli = await api("/api/v10/chart", body({}));
+      S.chart = S.kundli;
+      S.loaded.chart = "chart:" + lang();
+    } catch (e) {
+      S.kundli = { error: e.message };
+    }
+    S.busy = false; renderView(); initKundliDownloads();
   }
-  function viewLearn() {
-    var r = S.learn;
-    return '<div><div class="eyebrow">' + esc(t("n_learn")) + '</div><h2>' + esc(t("learn_title")) + '</h2><p class="muted">' + esc(t("learn_sub")) + '</p></div><form class="askbox" id="learnForm"><input id="learnQ" type="text" maxlength="200" value="' + esc(S.learnQ) + '" placeholder="' + esc(t("learn_ph")) + '" aria-label="' + esc(t("learn_ph")) + '"><button class="btn" type="submit" aria-label="' + esc(t("search")) + '">' + svg("search").replace("<svg", '<svg width="20" height="20"') + '</button></form>' +
-      '<div class="chips">' + LEARN.map(function (x) { return '<button type="button" class="chip" data-learn="' + esc(x[1]) + '">' + esc(x[0]) + '</button>'; }).join("") + '</div>' +
-      (!r ? "" : r.loading ? skel : r.error ? errBox(r.error) : '<div class="card tint">' + replyHtml({ data: Object.assign({}, r, { confidence: null }), flat: true }) + '</div>');
+  function viewKundli() {
+    var c = S.kundli || S.chart;
+    if (!c) return S.err_chart ? errBox(S.err_chart) : skel;
+    if (c.error) return errBox(c.error);
+    var p = c.profile || S.profile || {};
+    var noHouse = !c.lagna;
+    var d = c.dasha;
+    var moon = c.moon || {};
+    return '<div class="sec-head"><div><div class="eyebrow">' + esc(t("n_kundli")) + '</div><h2>' + esc(t("kundli_title")) + '</h2><p class="muted">' + esc(t("kundli_sub")) + '</p></div><button type="button" class="btn ghost" data-act="edit">' + esc(t("edit")) + '</button></div>' +
+      (noHouse ? '<div class="notice">' + esc(t("needs_time")) + '</div>' : "") +
+      '<div class="grid2"><div class="card tint">' + (noHouse ? "" : kundliSvg(c)) + '<p class="small muted center">' + esc(t("chart_note")) + '</p></div><div class="card">' +
+      '<div class="kv">' +
+      '<div><span>' + esc(t("f_name")) + '</span><b>' + esc(p.name || c.name || "—") + '</b></div>' +
+      '<div><span>' + esc(t("f_dob")) + '</span><b>' + esc(p.dob || "—") + '</b></div>' +
+      '<div><span>' + esc(t("f_tob")) + '</span><b>' + esc(p.tob || "—") + '</b></div>' +
+      '<div><span>' + esc(t("f_place")) + '</span><b>' + esc(p.place || "—") + '</b></div>' +
+      '<div><span>' + esc(t("lagna")) + '</span><b>' + esc(c.lagna ? signName(c.lagna) : "—") + '</b></div>' +
+      '<div><span>' + esc(t("moon")) + '</span><b>' + esc(moon.sign ? signName(moon.sign) + (moon.nakshatra ? " · " + moon.nakshatra + (moon.pada ? " (" + moon.pada + ")" : "") : "") : "—") + '</b></div>' +
+      (d && d.maha ? '<div><span>' + esc(t("dasha_now")) + '</span><b>' + esc(plName(d.maha)) + ' – ' + esc(plName(d.antar)) + '</b></div><div><span>' + esc(t("until")) + '</span><b>' + esc(d.antar_end || d.maha_end || "—") + '</b></div>' : "") +
+      '</div>' +
+      '<div class="row mt-m"><button type="button" class="btn" data-download-kundli>⬇ ' + esc(t("download_pdf")) + '</button>' +
+      '<button type="button" class="btn ghost" data-go="ask">' + esc(t("cta_ask")) + '</button></div>' +
+      '</div></div>' +
+      '<div class="card"><div class="scroll-x"><table class="t"><thead><tr><th>' + esc(t("planet")) + '</th><th>' + esc(t("sign")) + '</th><th>' + esc(t("house")) + '</th><th>' + esc(t("nakshatra")) + '</th><th>' + esc(t("retro")) + '</th></tr></thead><tbody>' +
+      Object.keys(c.planets || {}).map(function (k) { var x = c.planets[k]; return '<tr><td><b>' + esc(plName(k)) + '</b></td><td>' + esc(signName(x.sign)) + '</td><td>' + (x.house || "—") + '</td><td>' + esc(x.nakshatra ? x.nakshatra + (x.pada ? " (" + x.pada + ")" : "") : "") + '</td><td>' + (x.retrograde ? esc(t("yes")) : "") + '</td></tr>'; }).join("") +
+      '</tbody></table></div></div>';
+  }
+  function initKundliDownloads() {
+    var btns = document.querySelectorAll('[data-download-kundli]');
+    btns.forEach(function (btn) {
+      btn.onclick = function (e) { if (e) e.preventDefault(); downloadKundliPdf(); };
+    });
+  }
+  function downloadKundliPdf() {
+    var c = S.kundli || S.chart;
+    var p = (c && c.profile) || S.profile;
+    if (!p) return;
+    var url = "/api/v10/kundli-pdf?name=" + encodeURIComponent(p.name || "") +
+      "&dob=" + encodeURIComponent(p.dob || "") +
+      "&tob=" + encodeURIComponent(p.tob || "") +
+      "&time_certainty=" + encodeURIComponent(p.time_certainty || "exact") +
+      "&place=" + encodeURIComponent(p.place || "") +
+      "&lat=" + encodeURIComponent(p.lat != null ? p.lat : "") +
+      "&lon=" + encodeURIComponent(p.lon != null ? p.lon : "") +
+      "&tz=" + encodeURIComponent(p.tz || "");
+    var a = document.createElement("a"); a.href = url; a.download = "kundli_" + (p.name || "chart").replace(/\s+/g, "_") + ".pdf"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }
 
   /* compatibility */
@@ -354,7 +430,7 @@
   function editDetails() {
     AM.closeModal(); AM.runOnboarding({ profile: S.profile, palms: S.palms, startAt: "details", onCancel: function () {}, onDone: function (r) { applyProfile(r); go(S.route, true); } });
   }
-  function applyProfile(r) { S.profile = r.profile; S.palms = r.palms || {}; S.chart = r.chart; S.loaded = {}; S.horo = S.pan = S.calc = S.rep = S.compat = null; S.sel = null; S.msgs = []; save(r.remember); }
+  function applyProfile(r) { S.profile = r.profile; S.palms = r.palms || {}; S.chart = r.chart; S.kundli = r.chart || null; S.loaded = {}; S.horo = S.pan = S.calc = S.rep = S.compat = null; S.sel = null; S.msgs = []; save(r.remember); }
 
   function act(a) {
     if (a === "settings") settingsModal();
@@ -370,6 +446,7 @@
   /* ------------------------------------------------------------ events */
   document.addEventListener("click", function (e) {
     var el;
+    if ((el = e.target.closest("[data-download-kundli]"))) { e.preventDefault(); return downloadKundliPdf(); }
     if ((el = e.target.closest("[data-go]"))) { e.preventDefault(); return go(el.dataset.go); }
     if ((el = e.target.closest("[data-act]")) && !e.target.closest("#amModal")) return act(el.dataset.act);
     if ((el = e.target.closest("[data-sign]"))) { S.sel = el.dataset.sign; return renderView(); }
@@ -416,7 +493,7 @@
     startApp();
   }
   function startApp() {
-    var r = location.hash.slice(1); S.route = /^(hub|ask|horoscope|chart|calculators|reports|learn|compat|panchang)$/.test(r) ? r : "hub";
+    var r = location.hash.slice(1); S.route = /^(hub|ask|horoscope|chart|calculators|reports|kundli|learn|compat|panchang)$/.test(r) ? r : "hub";
     shell(); renderView(); loadFor(S.route);
     if (!S.chart) load("chart").then(function () { shell(); renderView(); });
     else shell();

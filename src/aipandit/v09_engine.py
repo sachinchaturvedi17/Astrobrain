@@ -9,7 +9,9 @@ from typing import Any, Dict, List, Optional, Tuple
 from .astrobrain_extensions import build_astrobrain_store, evaluate_astrobrain_rules
 from .engines.vedaksha_engine import VedakshaEngine
 from .explain import describe_fact
-GRAHAS = ("Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu")
+from .jyotish import karana_name
+from . import ashtakoota as _ashtakoota
+GRAHAS =("Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu")
 RASHIS = ("Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya", "Tula", "Vrishchika", "Dhanu", "Makara", "Kumbha", "Meena")
 from .problem_solver import CITY_COORDS, _to_birth_input, _to_palm_obs, solve_problem, summarize_profile
 
@@ -132,7 +134,7 @@ def compute_panchang(city: str = "Bhopal", profile: Optional[Dict[str, Any]] = N
     nak_info = NAKSHATRA_DATA[nak_idx]
     moon_rashi = RASHIS[int(moon_lon // 30.0) % 12]
     yoga_idx = int(((sun_lon + moon_lon) % 360.0) // (360.0 / 27.0)) % 27
-    karana = ["Bava", "Balava", "Kaulava", "Taitila", "Gara", "Vanija", "Vishti"][int(diff // 6.0) % 7]
+    karana = karana_name(diff)
     wd = now_ist.weekday()
     guiding = ["Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Sun"][wd]
     focus = ["Emotional clarity", "Decisive action", "Communication", "Wisdom & growth", "Harmony & craft", "Discipline", "Purpose"][wd]
@@ -144,30 +146,23 @@ def compute_panchang(city: str = "Bhopal", profile: Optional[Dict[str, Any]] = N
     return {"ok": True, "date_label": now_ist.strftime("%A, %d %B %Y"), "city": city or "Bhopal", "paksha": paksha, "tithi": f"{paksha.split()[0]} {TITHI_NAMES[tithi_idx]}", "nakshatra": nak_info["name"], "nakshatra_lord": nak_info["lord"], "yoga": NITYA_YOGAS[yoga_idx], "karana": karana, "abhijit": "11:52 - 12:38", "rahu_kaal": ["07:30 - 09:00", "15:00 - 16:30", "12:00 - 13:30", "13:30 - 15:00", "10:30 - 12:00", "09:00 - 10:30", "16:30 - 18:00"][wd], "lucky_hour": "10:30 AM", "guiding_planet": guiding, "focus": focus, "energy": energy, "energy_label": "Radiant & decisive" if energy >= 82 else "Grounded & steady", "active_rashi": active_rashi, "active_rashi_en": ameta["en"], "active_symbol": ameta["symbol"], "sky_planets": sky_planets}
 
 def compute_compatibility(person_a: Dict[str, Any], person_b: Dict[str, Any], lang: str = "en") -> Dict[str, Any]:
+    """Legacy /api/v09 route. Delegates to the exact Ashtakoota in ashtakoota.py: no clamped percentage and no
+    placeholder Moon sign or nakshatra when the chart cannot supply one."""
     b1, b2 = _to_birth_input(person_a), _to_birth_input(person_b)
     _, s1 = build_astrobrain_store(b1)
     _, s2 = build_astrobrain_store(b2)
-    r1, r2 = s1.value("Moon", "sign", "parashari") or "Simha", s2.value("Moon", "sign", "parashari") or "Tula"
-    n1, n2 = s1.value("Moon", "nakshatra", "parashari") or "Magha", s2.value("Moon", "nakshatra", "parashari") or "Swati"
-    ri1, ri2 = RASHIS.index(r1), RASHIS.index(r2)
-    nnames = [x["name"] for x in NAKSHATRA_DATA]
-    ni1, ni2 = nnames.index(n1) if n1 in nnames else 9, nnames.index(n2) if n2 in nnames else 14
-    d1, d2 = NAKSHATRA_DATA[ni1], NAKSHATRA_DATA[ni2]
-    l1, l2 = RASHI_META[r1]["lord"], RASHI_META[r2]["lord"]
-    kootas = [
-        {"name": "Varna", "obtained": 1.0 if (ri1 % 4) <= (ri2 % 4) else 0.5, "max": 1, "note": "Spiritual alignment"},
-        {"name": "Vashya", "obtained": 2.0 if ri1 == ri2 else 1.5, "max": 2, "note": "Mutual warmth"},
-        {"name": "Tara", "obtained": 3.0 if (((ni2 - ni1) % 27) % 9) in (1, 3, 5, 7, 0) else 1.5, "max": 3, "note": "Wellbeing rhythm"},
-        {"name": "Yoni", "obtained": 4.0 if d1["yoni"] == d2["yoni"] else 2.5, "max": 4, "note": "Instinctual bond"},
-        {"name": "Graha Maitri", "obtained": 5.0 if l1 == l2 else 4.0, "max": 5, "note": f"{l1} & {l2} rapport"},
-        {"name": "Gana", "obtained": 6.0 if d1["gana"] == d2["gana"] else 4.5, "max": 6, "note": f"{d1['gana']} & {d2['gana']}"},
-        {"name": "Bhakoot", "obtained": 0.0 if (((ri2 - ri1) % 12) + 1) in (2, 6, 8, 12) else 7.0, "max": 7, "note": "Emotional flow"},
-        {"name": "Nadi", "obtained": 8.0 if d1["nadi"] != d2["nadi"] else 0.0, "max": 8, "note": f"{d1['nadi']} / {d2['nadi']}"},
-    ]
-    total = round(sum(k["obtained"] for k in kootas), 1)
-    pct = min(98, max(42, int(round((total / 36.0) * 100))))
-    summary = f"{b1.name} ({RASHI_META[r1]['en']}) and {b2.name} ({RASHI_META[r2]['en']}) score {total}/36 ({pct}%) in Ashtakoota Gun Milan."
-    return {"ok": True, "person_a": {"name": b1.name, "rashi": r1, "rashi_en": RASHI_META[r1]["en"], "nakshatra": n1}, "person_b": {"name": b2.name, "rashi": r2, "rashi_en": RASHI_META[r2]["en"], "nakshatra": n2}, "total_points": total, "max_points": 36, "percentage": pct, "summary": summary, "kootas": kootas, "strengths": [f"Mental rapport between {l1} and {l2}.", f"Complementary lunar rhythm across {n1} and {n2}."], "growth_areas": ["Keep expectations spoken clearly during busy periods."]}
+    a = {"name": b1.name, "rashi": s1.value("Moon", "sign", "parashari"), "nakshatra": s1.value("Moon", "nakshatra", "parashari")}
+    b = {"name": b2.name, "rashi": s2.value("Moon", "sign", "parashari"), "nakshatra": s2.value("Moon", "nakshatra", "parashari")}
+    r = _ashtakoota.compute(a, b)
+    if not r.get("ok"):
+        return {"ok": False, "error": r.get("error", "Ashtakoota could not be computed")}
+    r1, r2 = a["rashi"], b["rashi"]
+    return {"ok": True, "person_a": {"name": b1.name, "rashi": r1, "rashi_en": RASHI_META[r1]["en"], "nakshatra": a["nakshatra"]},
+            "person_b": {"name": b2.name, "rashi": r2, "rashi_en": RASHI_META[r2]["en"], "nakshatra": b["nakshatra"]},
+            "total_points": r["total"], "max_points": r["max"], "percentage": r["percent"], "band": r["band"],
+            "summary": f"{b1.name} ({RASHI_META[r1]['en']}) and {b2.name} ({RASHI_META[r2]['en']}) score {r['total']}/36 ({r['percent']}%) in Ashtakoota Gun Milan.",
+            "kootas": [{"name": k["name"], "obtained": k["obtained"], "max": k["max"], "note": k["note"]} for k in r["kootas"]],
+            "notes": r["notes"]}
 
 
 def run_calculator(calc_type: str, profile: Dict[str, Any], lang: str = "en") -> Dict[str, Any]:
@@ -175,18 +170,23 @@ def run_calculator(calc_type: str, profile: Dict[str, Any], lang: str = "en") ->
     b = _to_birth_input(profile)
     _, store = build_astrobrain_store(b)
     panchang = compute_panchang(b.place_name, profile)
-    rashi = prof.get("rashi") if prof.get("rashi") in RASHI_META else "Simha"
+    ct = (calc_type or "moon").strip().lower()
+    if ct in ("ascendant", "lagna"):
+        if prof.get("lagna") not in RASHI_META:
+            return {"ok": False, "error": "Your rising sign needs an exact birth time. Add your birth time (or a close estimate) and I will calculate it."}
+    elif prof.get("rashi") not in RASHI_META or prof.get("nakshatra") not in {x["name"] for x in NAKSHATRA_DATA}:
+        return {"ok": False, "error": "I could not fix your Moon position from the birth details given, so I will not guess it. Please check the date, place and time."}
+    rashi = prof.get("rashi") if prof.get("rashi") in RASHI_META else "Mesha"
     rmeta = RASHI_META[rashi]
     lagna = prof.get("lagna") if prof.get("lagna") in RASHI_META else rashi
     lmeta = RASHI_META[lagna]
-    nak = prof.get("nakshatra", "Magha")
+    nak = prof.get("nakshatra")
     ninfo = next((x for x in NAKSHATRA_DATA if x["name"] == nak), NAKSHATRA_DATA[0])
-    pada = min(4, max(1, int((float(store.value("Moon", "degree", "parashari") or 12.4) % (360.0 / 27.0)) // (360.0 / 108.0)) + 1))
+    pada = store.value("Moon", "pada", "parashari") or "-"
     sat_sign = panchang["sky_planets"]["Saturn"]["sign"]
     rel = (RASHIS.index(sat_sign) - RASHIS.index(rashi)) % 12
     ss_map = {11: ("Rising Phase (1st Dhaiya)", "Saturn is in the 12th sign from your Moon, encouraging simpler commitments."), 0: ("Peak Phase (2nd Dhaiya)", "Saturn is over your natal Moon, building emotional maturity and steady focus."), 1: ("Setting Phase (3rd Dhaiya)", "Saturn is in the 2nd sign from your Moon, stabilizing responsibilities.")}
     ss_phase, ss_desc = ss_map.get(rel, ("Not Currently Active", f"Saturn is in {RASHI_META[sat_sign]['en']}, outside Sade Sati houses for your {rmeta['en']} Moon."))
-    ct = (calc_type or "moon").strip().lower()
     if ct in ("ascendant", "lagna"):
         return {"ok": True, "calculator": "Ascendant (Lagna)", "headline": f"{lmeta['en']} ({lagna}) Ascendant", "subline": f"Lord: {lmeta['lord']} | Element: {lmeta['element']}", "summary": f"Your rising sign is {lmeta['en']} ({lagna}), ruled by {lmeta['lord']}, emphasizing {lmeta['theme']}.", "highlights": [f"Ascendant: {lmeta['en']}", f"Lagna Lord: {lmeta['lord']}", f"Dasha: {prof['mahadasha']}-{prof['antardasha']}"]}
     if ct == "nakshatra":

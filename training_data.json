@@ -1,0 +1,99 @@
+{
+  "career": {
+    "karakas": {
+      "Sun": "authority & leadership",
+      "Saturn": "discipline & hard work",
+      "Mercury": "skills & communication"
+    },
+    "houses": {
+      "10": "career & profession",
+      "6": "obstacles & service",
+      "2": "wealth & resources"
+    },
+    "questions": [
+      "What career suits my chart?",
+      "When will I get a job promotion?",
+      "Is business right for me?",
+      "What field should I study?",
+      "When will my career grow?",
+      "Which job will give me most satisfaction?",
+      "Government job or private sector?",
+      "Will I become wealthy through my career?",
+      "When will I change jobs?",
+      "Is my current job suitable for my skills?"
+    ],
+    "answer_principles": [
+      "Sun strong → leadership roles, administration, government",
+      "Mercury strong → writing, teaching, trading, communications",
+      "Saturn strong → engineering, administration, slow but steady growth",
+      "Jupiter strong → teaching, guidance, finance, expansion",
+      "10th house lord position determines actual career field",
+      "Dashas indicate timing of career changes"
+    ]
+  },
+  "marriage": {
+    "karakas": {
+      "Venus": "spouse & relationships",
+      "Jupiter": "husband for women, guru",
+      "7th house": "partnership"
+    },
+    "houses": {
+      "7": "marriage & partnerships",
+      "2": "family & values",
+      "11": "fulfillment of desires"
+    },
+    "questions": [
+      "When will I get married?",
+      "What kind of partner suits me?",
+      "Love marriage or arranged marriage?",
+      "Manglik dosha effects?",
+      "Second marriage possibilities?",
+      "Will my relationship lead to marriage?",
+      "Compatibility with partner name [name]?",
+      "When will I find my soulmate?",
+      "What are my relationship strengths?",
+      "Why do I have repeated relationship issues?"
+    ],
+    "answer_principles": [
+      "Venus strong → loving, harmonious marriage",
+      "7th house lord strength = relationship quality",
+      "Mars-Moon conjunction = emotional intensity in relationships",
+      "Jupiter-Venus aspect = favorable marriage timing",
+      "8th house afflictions = relationship transformations",
+      "Dasha of marriage karakas activates marriage timing"
+    ]
+  },
+  "love": {
+    "karakas": {
+      "Venus": "romantic love",
+      "Moon": "emotional connection",
+      "5th house": "romance & creativity"
+    },
+    "houses": {
+      "5": "romance & love affairs",
+      "7": "committed relationships",
+      "8": "deep transformations"
+    },
+    "questions": [
+      "Does he/she love me?",
+      "When will I meet my life partner?",
+      "Is this a true love or just attraction?",
+      "Will my love marriage happen?",
+      "Why am I getting repeated heartbreaks?",
+      "What kind of lover am I?",
+      "When will my romantic phase end?",
+      "Is he/she faithful?",
+      "What do I need to learn from this relationship?",
+      "Will I find love again after a breakup?"
+    ],
+    "answer_principles": [
+      "Venus position = love style and what attracts you",
+      "Moon position = emotional needs in relationships",
+      "5th house = romance, creativity, love affairs",
+      "7th house = committed partnerships, marriage",
+      "5th-7th connection = love marriage potential",
+      "Rahu in 5th/7th = unconventional love relationships",
+      "Venus afflictions = relationship challenges"
+    ]
+  }
+}

@@ -1,13 +1,37 @@
 {
   "wikipedia": {
-    "en": ["Jyotisha", "Nakshatra", "Navagraha", "Rashi (astrology)", "Dasha (astrology)", "Panchangam", "Tithi", "Yoga (astrology)",
-           "Muhurta", "Lagna", "Ayanamsa", "Hindu astrology", "Surya", "Chandra", "Shani", "Brihaspati", "Shukra", "Budha", "Mangala",
-           "Rahu", "Ketu (mythology)", "Karana (Hindu calendar)", "Hindu calendar", "Kundali", "Vimshottari dasha", "Sade sati"],
-    "hi": ["ज्योतिष", "नक्षत्र", "नवग्रह", "राशि", "पंचांग", "कुण्डली", "तिथि", "करण (ज्योतिष)", "मुहूर्त", "शनि (ग्रह)", "बृहस्पति (ग्रह)"]
+    "en": [
+      "Jyotisha", "Nakshatra", "Navagraha", "Rashi (astrology)", "Dasha (astrology)", "Panchangam", "Tithi", "Yoga (astrology)",
+      "Muhurta", "Lagna", "Ayanamsa", "Hindu astrology", "Surya", "Chandra", "Shani", "Brihaspati", "Shukra", "Budha", "Mangala",
+      "Rahu", "Ketu (mythology)", "Karana (Hindu calendar)", "Hindu calendar", "Kundali", "Vimshottari dasha", "Sade sati",
+      "Bhava", "Raja yoga (Hindu astrology)", "Dhana yoga", "Navamsa", "Ashtakoota", "Pancha Mahapurusha yoga", "Neecha Bhanga Raja yoga"
+    ],
+    "hi": [
+      "ज्योतिष", "नक्षत्र", "नवग्रह", "राशि", "पंचांग", "कुण्डली", "तिथि", "करण (ज्योतिष)", "मुहूर्त", "शनि (ग्रह)", "बृहस्पति (ग्रह)",
+      "लग्न", "विंशोत्तरी दशा", "साढ़ेसाती", "राजयोग", "नवांश"
+    ]
+  },
+  "domains": {
+    "career": ["10th house", "Karma bhava", "Dashamsa", "Sun", "Saturn", "Mercury", "Raja yoga", "Upachaya"],
+    "marriage": ["7th house", "Kalatra bhava", "Navamsa", "Venus", "Jupiter", "Ashtakoota", "Mangala dosha"],
+    "love": ["5th house", "Putra bhava", "Venus", "Moon", "Mars", "Rahu", "5th-7th lord connection"],
+    "health": ["1st house", "Tanu bhava", "6th house", "8th house", "Sun", "Moon", "vitality and routine"],
+    "education": ["5th house", "4th house", "9th house", "Vidya yoga", "Mercury", "Jupiter", "Budhaditya yoga"],
+    "wealth": ["2nd house", "11th house", "9th house", "12th house", "Dhana yoga", "Jupiter", "Venus"]
   },
   "public": [
-    {"_note": "Add public-domain or openly licensed full texts here. Example (remove _note, set a real URL you are allowed to use):",
-     "_example": {"url": "https://example.org/some-public-domain-text.txt", "title": "Name of the text", "licence": "public-domain (declared)", "max_passages": 300}}
+    {
+      "url": "https://archive.org/stream/BPHSEnglish/BPHS%20-%201%20RSanthanam_djvu.txt",
+      "title": "Brihat Parashara Hora Shastra (Vol. 1 - Houses, Planets, Yogas)",
+      "licence": "public-domain (classical translation archive)",
+      "max_passages": 400
+    },
+    {
+      "url": "https://archive.org/stream/BPHSEnglish/BPHS%20-%202%20RSanthanam_djvu.txt",
+      "title": "Brihat Parashara Hora Shastra (Vol. 2 - Dashas, Bhava Effects, Ashtakavarga)",
+      "licence": "public-domain (classical translation archive)",
+      "max_passages": 400
+    }
   ],
   "restricted": [
     {"_note": "Pages from sites you do NOT have a licence for. Only a <=35-word snippet and the link are kept, and robots.txt is obeyed. Example: {\"url\": \"https://example.com/page\", \"title\": \"Page name\"}"}

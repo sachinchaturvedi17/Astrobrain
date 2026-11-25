@@ -44,31 +44,41 @@ class VoiceTests(unittest.TestCase):
 
 
 class ConversationTests(unittest.TestCase):
-    def test_answer_is_plain_language_not_house_numbers(self):
+    def test_answer_shows_the_working_and_is_specific(self):
         for topic in ("education", "career", "love", "money"):
             o = ask(topic)
-            low = o["answer"].lower()
-            for bad in ("house", "lord", "bhava", "lagna"):
-                self.assertNotIn(bad, low, (topic, o["answer"]))
-            self.assertTrue(o["followup_question"] and o["quick_replies"])
-            self.assertTrue(o["reasons"], "technical reasons stay available behind 'Why this answer?'")
+            self.assertTrue(o["calc"], topic)                      # the calculation is shown with every chart answer
+            self.assertTrue(any("Tally" in line for line in o["calc"]), topic)
+            self.assertTrue(o["quick_replies"], topic)
+            self.assertRegex(o["answer"], r"supportive|mixed|patience", topic)
 
-    def test_follow_up_continues_the_conversation(self):
-        o = ask("education")
-        self.assertEqual(o["expects"], "field")
-        o2 = ask("marketing", hist(o))
-        self.assertEqual(o2["topic"], "education")
-        self.assertIn("Marketing", o2["answer"])
-        self.assertEqual(o2["expects"], "timing")
-        o3 = ask("yes", hist(o2))
-        self.assertIn("Jupiter", o3["answer"])
-        self.assertIn("Mar 2027", o3["answer"])
+    def test_follow_ups_are_specific_and_never_repeat(self):
+        h = []
+        seen = set()
+        for q in ("education", "Which field suits me, I like medical", "why can't I concentrate", "how will my exams go", "when will I succeed"):
+            o = ask(q, h)
+            self.assertEqual(o["topic"], "education", q)
+            self.assertNotIn(o["answer"], seen, q)                 # no canned paragraph twice
+            seen.add(o["answer"])
+            h += [{"role": "user", "text": q}, {"role": "bot", "text": o["answer"], "topic": o["topic"], "expects": o["expects"] or "", "intent": o.get("intent") or ""}]
+        self.assertIn("medic", "".join(seen).lower())
 
-    def test_career_asks_status_then_field(self):
-        o = ask("mera career kaisa rahega")
-        self.assertEqual((o["lang"], o["expects"]), ("hg", "career_status"))
-        o2 = ask("Job mein hoon", hist(o), lang="hg")
-        self.assertEqual(o2["expects"], "field")
+    def test_stated_facts_are_remembered_and_not_asked_again(self):
+        o = ask("tell me about love and marriage")
+        self.assertTrue(any("single" in c.lower() for c in o["quick_replies"]))          # asked once, as a tap, not a blocking question
+        h = [{"role": "user", "text": "tell me about love and marriage"}, {"role": "bot", "topic": o["topic"], "intent": o.get("intent") or "", "text": o["answer"]}]
+        o2 = ask("I am single", h)
+        self.assertEqual(o2["topic"], "marriage")
+        self.assertIn("single", o2["answer"].lower())
+        self.assertNotIn("single", " ".join(o2["quick_replies"]).lower())
+        self.assertFalse(o2["followup_question"])
+
+    def test_career_status_is_read_from_free_text(self):
+        o = ask("mera career kaisa rahega", lang="hg")
+        self.assertEqual(o["lang"], "hg")
+        o2 = ask("I have a job but want to switch, when", [{"role": "user", "text": "mera career kaisa rahega"}, {"role": "bot", "topic": "career", "text": o["answer"], "intent": o.get("intent") or ""}])
+        self.assertEqual((o2["topic"], o2["intent"]), ("career", "switch"))
+        self.assertIn("working", o2["answer"])
 
     def test_new_topic_beats_stale_follow_up(self):
         o = ask("education")
@@ -145,7 +155,9 @@ class V111Tests(unittest.TestCase):
                 self.assertNotIn(bad, a)
 
     def test_new_topics_foreign_property_and_faq(self):
-        self.assertEqual(ask("will I settle abroad")["expects"], "abroad_goal")
+        o = ask("will I settle abroad")
+        self.assertEqual(o["topic"], "foreign")
+        self.assertTrue(o["calc"])
         self.assertEqual(ask("when will I buy a house")["topic"], "property")
         o = ask("What is sade sati?", None, None)
         self.assertIn("seven and a half", o["answer"])

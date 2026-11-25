@@ -18,8 +18,8 @@
 (function (root) {
   "use strict";
   var VENDOR = "/static/vendor/";
-  var MODELS = { naradvani: VENDOR + "naradvani.glb", mp: VENDOR + "naradvani_mp.glb" };   // ?model=mp is for private local testing only
-  var CFG = { fov: 24, margin: 0.92, shiftY: 0.0, faceYaw: 0, exposure: 1.2, tone: "neutral", light: 1.8, cornea: 0.18, eyeTint: 0.8, pose: null, maxDpr: 2, slowMs: 42 };   // pose: {x,y,z,ex,ey} forces head/eye angles (verification only)   // tone: "aces" | "neutral" | "agx"
+  var MODELS = { naradvani: VENDOR + "naradvani.glb", mp: VENDOR + "naradvani_mp.glb", mh: VENDOR + "naradvani_mh.glb" };   // ?model=mp is for private local testing only
+  var CFG = { fov: 24, margin: 0.92, shiftY: 0.0, faceYaw: 0, exposure: 1.2, tone: "neutral", light: 1.8, cornea: 0.18, eyeTint: 0.8, pose: null, maxDpr: 2, slowMs: 42, frameSpan: 0, frameCenter: 0.3 };   // pose: {x,y,z,ex,ey} forces head/eye angles (verification only)   // tone: "aces" | "neutral" | "agx"
   var VIS = ["aa", "E", "I", "O", "U", "PP", "FF", "TH", "DD", "kk", "CH", "SS", "nn", "RR"];
   var REQUIRED = ["eyeBlinkLeft", "eyeBlinkRight", "browInnerUp", "jawOpen", "mouthSmileLeft", "mouthSmileRight"].concat(VIS.map(function (v) { return "viseme_" + v; }));
 
@@ -107,13 +107,15 @@
       var tZ = (Math.sin(t * 0.43) * 0.008 + (inp.listening ? 0.04 : 0)) * red, kh = 1 - Math.exp(-dt / 0.18);
       D.hx += (tX - D.hx) * kh; D.hy += (tY - D.hy) * kh; D.hz += (tZ - D.hz) * kh;
       // light resting smile, eased off while the mouth is shaping a sound
-      D.smile += ((inp.listening ? 0.22 : spk ? 0.14 : 0.16) - D.smile) * (1 - Math.exp(-dt / 0.4));
+      var W = CFG.warm || 1;
+      D.smile += ((inp.listening ? 0.22 : spk ? 0.14 : 0.16) * W - D.smile) * (1 - Math.exp(-dt / 0.4));
       var smile = D.smile * (1 - 0.6 * Math.min(1, mx)), m = {};
       VIS.forEach(function (n) { m["viseme_" + n] = D.vis[n] * sc; });
       m.viseme_sil = 0;
       m.eyeBlinkLeft = D.blink; m.eyeBlinkRight = D.blink;
       m.browInnerUp = brow * 0.9; m.browOuterUpLeft = brow * 0.5; m.browOuterUpRight = brow * 0.5;
-      m.mouthSmileLeft = smile; m.mouthSmileRight = smile; m.cheekSquintLeft = smile * 0.3; m.cheekSquintRight = smile * 0.3;
+      m.mouthSmileLeft = smile; m.mouthSmileRight = smile; m.cheekSquintLeft = smile * 0.3 * (W > 1 ? 1.8 : 1); m.cheekSquintRight = smile * 0.3 * (W > 1 ? 1.8 : 1);
+      if (W > 1) { m.viseme_aa = Math.min(1, m.viseme_aa + 0.11 * (1 - Math.min(1, mx * 2))); m.eyeSquintLeft = smile * 0.35; m.eyeSquintRight = smile * 0.35; m.mouthUpperUpLeft = smile * 0.16; m.mouthUpperUpRight = smile * 0.16; }
       return { morph: m, head: { x: D.hx, y: D.hy, z: D.hz }, eyes: { x: D.eyeX, y: D.eyeY }, breath: Math.sin(t * 1.3) * red };
     };
     return D;
@@ -145,6 +147,8 @@
   }
   function loadModel() {
     var key = modelKey();
+    if (key === "mp" || key === "mh") { CFG.frameSpan = 0.56; CFG.frameCenter = 0.275; CFG.exposure = 1.45; CFG.slowMs = 120; CFG.maxDpr = 3; }
+    CFG.warm = key === "mh" ? 4.4 : 1;   // warm, friendly resting smile (cheeks and eyes join in)   // private test avatar: head-to-chest close-up, brighter
     function get(k) { if (!CACHE[k]) CACHE[k] = loadFrom(MODELS[k]).catch(function (e) { delete CACHE[k]; throw e; }); return CACHE[k]; }
     return get(key).catch(function (e) { if (key === "naradvani") throw e; return get("naradvani"); });
   }
@@ -189,8 +193,9 @@
   /* ---------------- mounting ---------------- */
   var TOK = 0, A = null;
   function fitCamera(cam, rig, aspect) {
-    var hv = Math.tan(cam.fov * Math.PI / 360), half = 0.5 * CFG.margin * Math.max(rig.size.y, rig.size.x / aspect), d = half / hv + rig.size.z * 0.5;
-    var y = rig.center.y + CFG.shiftY * rig.size.y;
+    var fs = CFG.frameSpan, span = fs ? fs * rig.size.y : rig.size.y, wide = fs ? 0.5 * rig.size.x : rig.size.x;      // frameSpan: show only this fraction of the model height (close-up), frameCenter: where it sits, as a fraction down from the top
+    var hv = Math.tan(cam.fov * Math.PI / 360), half = 0.5 * CFG.margin * Math.max(span, wide / aspect), d = half / hv + rig.size.z * 0.5;
+    var y = fs ? rig.center.y + rig.size.y * (0.5 - CFG.frameCenter) + CFG.shiftY * rig.size.y : rig.center.y + CFG.shiftY * rig.size.y;
     cam.position.set(rig.center.x, y, rig.center.z + d); cam.lookAt(rig.center.x, y, rig.center.z);
     cam.aspect = aspect; cam.near = 0.05; cam.far = d + 5; cam.updateProjectionMatrix();
   }

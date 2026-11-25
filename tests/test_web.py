@@ -21,6 +21,7 @@ def url():
     t.start()
     yield f"http://127.0.0.1:{srv.server_address[1]}"
     srv.shutdown()
+    srv.server_close()
 
 
 def post(url, path, body, raw=None):
@@ -30,7 +31,10 @@ def post(url, path, body, raw=None):
         with urllib.request.urlopen(req) as r:
             return r.status, json.loads(r.read())
     except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read())
+        try:
+            return e.code, json.loads(e.read())
+        finally:
+            e.close()
 
 
 def test_page_and_security_headers(url):
@@ -109,6 +113,7 @@ def logged(tmp_path):
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{srv.server_address[1]}", tmp_path / "feedback.jsonl"
     srv.shutdown()
+    srv.server_close()
 
 
 def test_numbers_and_lenses_in_the_payload(logged):

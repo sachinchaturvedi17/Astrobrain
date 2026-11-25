@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 SIGNS = (
     "Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya",
-    "Tula", "Vrischika", "Dhanu", "Makara", "Kumbha", "Meena",
+    "Tula", "Vrishchika", "Dhanu", "Makara", "Kumbha", "Meena",
 )
 
 NAKSHATRAS = (
@@ -68,6 +68,23 @@ def nakshatra_of(longitude: float) -> NakshatraPosition:
         lord=VIMSHOTTARI_ORDER[idx % 9],
         fraction_elapsed=within / NAK_SPAN,
     )
+
+
+KARANA_MOVABLE = ("Bava", "Balava", "Kaulava", "Taitila", "Gara", "Vanija", "Vishti")
+KARANA_FIXED = ("Shakuni", "Chatushpada", "Naga")
+
+
+def karana_name(elongation: float) -> str:
+    """Karana for a Moon-minus-Sun elongation in degrees (each karana is half a tithi, 6 degrees).
+
+    A lunar month has 60 karanas: Kimstughna (fixed) first, then the 7 movable ones repeating 8 times
+    (karanas 1-56), then Shakuni, Chatushpada, Naga (57-59)."""
+    k = int((elongation % 360.0) // 6.0)
+    if k == 0:
+        return "Kimstughna"
+    if k <= 56:
+        return KARANA_MOVABLE[(k - 1) % 7]
+    return KARANA_FIXED[k - 57]
 
 
 def whole_sign_house(planet_longitude: float, lagna_longitude: float) -> int:

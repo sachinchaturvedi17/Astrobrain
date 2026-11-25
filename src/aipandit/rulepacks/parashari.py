@@ -346,4 +346,5 @@ R("parivartana.khala", _exchange([(3, x) for x in M_HOUSES]), ("general",),
 
 
 def parashari_rules() -> list[Rule]:
-    return list(RULES)
+    from .parashari_bhavas import RULES as _BHAVA_RULES      # lazy: that module imports helpers from here
+    return list(RULES) + list(_BHAVA_RULES)

@@ -15,7 +15,7 @@ from aipandit.jyotish import GRAHAS
 from aipandit.orchestrator import Pandit
 from aipandit.planner import classify
 from aipandit.reading import Reading, Statement
-from aipandit.rulepacks import parashari_rules
+from aipandit.rulepacks import all_rules, parashari_rules
 from aipandit.rules import Source
 from aipandit.salience import SelectionPolicy, select
 from chartkit import BIRTH, FixedEngine
@@ -221,9 +221,15 @@ def test_golden_bhopal_answers(pandit, bhopal):
     assert "main period is Rahu, until 2029-01" in d.text and "sub-period is Moon" in d.text
 
 
-def test_unsupported_topics_are_stated_not_invented(pandit, bhopal):
-    a = pandit.ask(bhopal, "tell me about my education")
+def test_unsupported_topics_are_stated_not_invented():
+    # education now has rules, so the mechanism is checked with a rule set that has none for it
+    bare = Pandit(now=lambda: NOW, rules=[r for r in all_rules() if "education" not in r.scope])
+    pandit = Pandit(now=lambda: NOW)
+    bhopal = bare.start(BIRTH)
+    a = bare.ask(bhopal, "tell me about my education")
     assert "I do not have any readings for education yet" in a.text and not a.reading.of_kind("reading")
+    full = pandit.ask(pandit.start(BIRTH), "tell me about my education")
+    assert any(i.startswith("parashari.edu.") for i in full.trace["selected"]) and full.reading.of_kind("reading")
     t = pandit.ask(bhopal, "meri shaadi kab hogi?")
     assert "tithiyan nahi" in t.text              # Hinglish question -> Hinglish caveat (v0.5)
     assert "cannot give dates" in pandit.ask(bhopal, "when will I get married?").text

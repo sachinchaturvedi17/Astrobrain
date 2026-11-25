@@ -68,7 +68,7 @@ def test_numerology_rules_are_separate_and_never_read_the_kundli():
         assert r.system == "numerology" and r.provenance == "later_tradition" and r.review_status == "draft"
         assert {a.system for a in r.condition.atoms()} == {"numerology"}
         assert not r.adverse
-    assert len({r.rule_id for r in all_rules()}) == len(all_rules()) == 110
+    assert len({r.rule_id for r in all_rules()}) == len(all_rules()) == 131
 
 
 def test_exactly_one_rule_per_family_fires_for_any_date():

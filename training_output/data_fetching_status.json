@@ -1,0 +1,45 @@
+{
+  "sources_fetched": 7,
+  "fields_covered": 6,
+  "keyword_sets": 28,
+  "structured_data": {
+    "career": {
+      "source": "corpus_and_keywords",
+      "topics": [],
+      "examples": 0,
+      "last_fetched": "2026-11-25T09:10:09.887941"
+    },
+    "marriage": {
+      "source": "corpus_and_keywords",
+      "topics": [],
+      "examples": 0,
+      "last_fetched": "2026-11-25T09:10:09.887947"
+    },
+    "love": {
+      "source": "corpus_and_keywords",
+      "topics": [],
+      "examples": 0,
+      "last_fetched": "2026-11-25T09:10:09.887948"
+    },
+    "health": {
+      "source": "corpus_and_keywords",
+      "topics": [],
+      "examples": 0,
+      "last_fetched": "2026-11-25T09:10:09.887949"
+    },
+    "education": {
+      "source": "corpus_and_keywords",
+      "topics": [],
+      "examples": 0,
+      "last_fetched": "2026-11-25T09:10:09.887949"
+    },
+    "wealth": {
+      "source": "corpus_and_keywords",
+      "topics": [],
+      "examples": 0,
+      "last_fetched": "2026-11-25T09:10:09.887950"
+    }
+  },
+  "timestamp": "2026-11-25T09:10:09.888092",
+  "status": "complete"
+}

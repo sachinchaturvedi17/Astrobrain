@@ -21,20 +21,25 @@ chart = {
 """
 from __future__ import annotations
 
+import logging
 import os
 import re
+import threading
 from typing import Any, Dict, List, Optional
 
-from . import doshas, expert, retrieval, timeline, voice, yogas
+from . import advisor, doshas, expert, gates, hindi, phrasebook, planner, reasoner, retrieval, timeline, voice, yogas
 from .ashtakoota import LORD as SIGN_LORD, RASHIS
 from .kb_core import SIGNS as _SIGNS
+from .phrasebook import SAFE_MINIMAL
 
+logger = logging.getLogger(__name__)
 SIGN_HI = {k: hi for k, _en, hi, *_ in _SIGNS}
 
 TOPICS = {
     "career": {"houses": (10, 6, 2), "karaka": ("Sun", "Saturn", "Mercury")},
     "wealth": {"houses": (2, 11, 9), "karaka": ("Jupiter", "Venus")},
     "marriage": {"houses": (7, 2, 11), "karaka": ("Venus", "Jupiter")},
+    "love": {"houses": (5, 7, 11), "karaka": ("Venus", "Moon", "Mars")},
     "education": {"houses": (4, 5, 9), "karaka": ("Mercury", "Jupiter")},
     "children": {"houses": (5, 9, 2), "karaka": ("Jupiter",)},
     "health": {"houses": (1, 6, 8), "karaka": ("Sun", "Moon")},
@@ -47,11 +52,11 @@ KEYWORDS = {
     "foreign": r"abroad|foreign|videsh|visa|immigra|settle in|pardes|study in (usa|uk|canada|australia|germany)|विदेश",
     "property": r"property|\bflat\b|\bplot\b|real estate|buy (a |my )?(house|home|car|vehicle|land)|makaan|zameen|jameen|वाहन|जमीन|मकान|संपत्ति",
     "career": r"career|job|naukri|work|profession|business|promotion|office|startup|resign|interview|sarkari|govt|नौकरी|करियर|व्यवसाय",
-    "wealth": r"wealth|money|pais[ae]|dhan|income|finance|salary|savings|धन|पैस[ाे]|आय",
+    "wealth": r"wealth|money|pais[ae]|dhan|income|finance|salary|savings|\bdebt|\bloans?\b|karz|karj|\bemi\b|udhaar|\bearn|kamaa|kamai|expens|bachat|धन|पैस[ाे]|आय|कर्ज",
     "marriage": r"marri|shaadi|shadi|vivah|spouse|partner|love|relationship|boyfriend|girlfriend|breakup|break up|crush|propose|pyaar|ex back|शादी|विवाह|प्रेम|रिश्त",
-    "education": r"educat|study|studi|exam|padhai|college|degree|vidya|neet|jee\b|upsc|admission|scholarship|result|पढ़ाई|शिक्षा|परीक्षा",
+    "education": r"educat|study|studi|exam|padhai|college|degree|vidya|neet|jee\b|upsc|admission|scholarship|result|concentrat|\bmarks\b|पढ़ाई|शिक्षा|परीक्षा",
     "children": r"child|baby|santan|bachch|pregnan|संतान|बच्च",
-    "health": r"health|sehat|swasthya|body|energy|स्वास्थ्य|सेहत",
+    "health": r"health|sehat|swasthya|body|energy|vitality|stamina|fatigue|स्वास्थ्य|सेहत|ऊर्जा",
     "family": r"family|parents|mother|father|home|ghar|परिवार|माता|पिता|घर",
 }
 INTENT_OTHER = {
@@ -100,7 +105,8 @@ SAFETY_TEXT = {
 
 T = {
     "title": {"career": ("Career & purpose", "Career aur purpose", "करियर और उद्देश्य"), "wealth": ("Wealth path", "Dhan ka marg", "धन का मार्ग"),
-              "marriage": ("Love & marriage", "Pyaar aur vivah", "प्रेम और विवाह"), "education": ("Education", "Shiksha", "शिक्षा"),
+              "marriage": ("Love & marriage", "Pyaar aur vivah", "प्रेम और विवाह"), "love": ("Love & romance", "Pyaar aur rishte", "प्रेम और रिश्ते"),
+              "education": ("Education", "Shiksha", "शिक्षा"),
               "children": ("Children", "Santan", "संतान"), "health": ("Wellbeing", "Sehat", "स्वास्थ्य"), "family": ("Family & home", "Parivaar aur ghar", "परिवार और घर"),
               "general": ("Your chart in brief", "Aapka chart sankshep mein", "आपकी कुंडली संक्षेप में"), "dasha": ("Your current dasha", "Aapki current dasha", "आपकी वर्तमान दशा"),
               "transit": ("Transits now", "Abhi ke gochar", "अभी के गोचर"), "sade_sati": ("Sade Sati", "Sade Sati", "साढ़ेसाती"),
@@ -148,12 +154,57 @@ def _ord(n: int) -> str:
     return f"{n}{'th' if 10 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
 
 
+_EPHEM: Dict[str, Any] = {}
+_EPHEM_LOCK = threading.Lock()
+_CANONICAL_SAFETY = frozenset(t for d in SAFETY_TEXT.values() for t in d.values())
+_HARD_LIVE_VIOLATIONS = frozenset({"death_lifespan", "guarantee", "fear_curse", "legal_advice", "minor_topic"})
+
+
+def _ephem():
+    """Planet signs by date for future transit windows (None when the ephemeris engine is not installed). Built once."""
+    with _EPHEM_LOCK:
+        if "e" not in _EPHEM:
+            try:
+                _EPHEM["e"] = reasoner.sky_ephem()
+            except Exception:
+                logger.warning("sky_ephem initialization failed; future transit windows unavailable", exc_info=True)
+                _EPHEM["e"] = None
+        return _EPHEM["e"]
+
+
+ADVISOR_TOPICS = ("career", "wealth", "marriage", "love", "education", "children", "family", "property", "foreign", "health", "general")
+
+
 def check_safety(question: str) -> Optional[str]:
-    q = question.lower()
+    q = (question or "").lower()
+    nq = hindi.norm(question or "")
+    if planner.CRISIS.search(nq):
+        return "self_harm"
     for kind, pat in SAFETY:
         if re.search(pat, q):
             return kind
+    if planner.DEATH.search(nq):
+        return "death"
     return None
+
+
+def _fixed_reply(text: str) -> str:
+    """Hard-stop wording must never smuggle in chart material or safety violations. If a constant is ever edited into a
+    reading, fall back to the safe minimal reply rather than send unverified astrology."""
+    if text in _CANONICAL_SAFETY:
+        return text if not gates.entities(text) else SAFE_MINIMAL
+    return text if gates.check_text_only(text).passed else SAFE_MINIMAL
+
+
+def _live_text_ok(text: str, topic: str, minor: bool = False, is_ref: bool = False) -> bool:
+    """Run live advisor/voice text through gates.check_text_only to catch hard safety or minor-topic violations."""
+    if is_ref:
+        return not (minor and gates.MINOR_BLOCK.search(hindi.norm(text or "")))
+    rep = gates.check_text_only(text, minor=minor)
+    bad = set(rep.codes()) & _HARD_LIVE_VIOLATIONS
+    if topic in ("manglik", "kaalsarp", "remedy", "concept"):
+        bad -= {"fear_curse", "guarantee"}
+    return not bad
 
 
 WHEN_RE = r"\bwhen\b|\bkab\b|how soon|kitne (din|saal|mahine)|timing|कब|कितने (दिन|साल|महीने)"
@@ -194,6 +245,10 @@ def classify(question: str) -> str:
         if re.search(pat, q):
             return k
     return "concept"
+
+
+def have_chart_pre(chart: Optional[Dict[str, Any]]) -> bool:
+    return bool(chart and chart.get("lagna") in RASHIS or chart and (chart.get("moon") or {}).get("sign") in RASHIS)
 
 
 def _tx(key: str, lang: str, **kw: Any) -> str:
@@ -309,9 +364,10 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
     lang = voice.detect_lang(question, lang if lang in ("en", "hg", "hi") else "en")
     safety = check_safety(question)
     if safety:
-        return {"ok": True, "safety": safety, "lang": lang, "title": "", "answer": SAFETY_TEXT[safety][lang], "reasons": [], "timing": [], "evidence": [],
+        return {"ok": True, "safety": safety, "lang": lang, "title": "", "answer": _fixed_reply(SAFETY_TEXT[safety][lang]), "reasons": [], "timing": [], "evidence": [],
                 "followups": [], "quick_replies": [], "followup_question": "", "expects": None, "confidence": {"level": "n/a", "why": ""},
                 "caveats": [], "composer": "safety", "topic": "safety"}
+    minor = bool(((chart or {}).get("profile") or {}).get("minor"))
     g = voice.greeting(question, lang)
     if g:
         return _pack(g, "greet", lang)
@@ -323,9 +379,25 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
         if key:
             cont = (ctx["expects"], key)
     topic = (ctx.get("topic") or "general") if cont else classify(question)
+    last_topic = ctx.get("topic") if ctx.get("topic") in advisor.TOPIC_SPEC else None
+    if last_topic and not cont and topic in ("concept", "general", "dasha", "transit"):
+        hit = advisor.detect_intent(question, last_topic)
+        status_hit = bool(advisor.extract_slots([question]))
+        if hit != "overview" or status_hit or len(question.split()) <= 5:
+            topic = last_topic          # a short follow-up like "when?" or "I am single" stays on the same subject
+    if last_topic and not cont and topic == last_topic and last_topic in voice.TOPIC_ASK and len(question.split()) > 3:
+        cont = ("deep_dive", last_topic)     # same topic again: give a deeper chart-based answer, not the same opener
+    if minor and (topic in ("marriage", "manglik", "match") or gates.MINOR_BLOCK.search(hindi.norm(question or ""))):
+        msg = phrasebook.bundle(lang).caveat_coverage("marriage", minor=True)
+        return {"ok": True, "safety": "minor_topic", "lang": lang, "title": T["title"]["marriage"][li], "answer": _fixed_reply(msg), "reasons": [],
+                "timing": [], "evidence": [], "followups": [], "quick_replies": [], "followup_question": "", "expects": None,
+                "confidence": {"level": "n/a", "why": ""}, "caveats": [], "composer": "safety", "topic": "safety"}
+    phase_for = None
+    if topic == "dasha" and chart and (last_topic or have_chart_pre(chart)):
+        phase_for = last_topic or "general"
     have_chart = bool(chart and chart.get("lagna") in RASHIS and chart.get("time_certainty") not in ("unknown", "part_of_day"))
     moon_basis = False
-    if chart and not have_chart and (topic in TOPICS or topic in ("manglik", "kaalsarp", "yoga") or cont):
+    if chart and not have_chart and (topic in TOPICS or topic in ("manglik", "kaalsarp", "yoga") or cont or phase_for):
         mc = _moon_chart(chart)
         if mc:
             chart, have_chart, moon_basis = mc, True, True
@@ -335,6 +407,15 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
     summary = ""
     voiced: Optional[Dict[str, Any]] = None
     augmented = False
+    calc: List[str] = []
+
+    def run_adv(t: str, intent: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        try:
+            return advisor.advise(t, question, chart, lang, sky, history or [], _ephem(), intent=intent)
+        except Exception:               # the working must never break the chat: fall back to the older answer
+            logger.warning("advisor.advise failed for topic=%s intent=%s; falling back to voice/template", t, intent, exc_info=True)
+            return None
+    adv: Optional[Dict[str, Any]] = None
     dosha_kind = topic if topic in ("manglik", "kaalsarp") else None
     conceptual = bool(re.search(r"what is|what's|meaning|explain|kya hai|kya hota|kya hoti|matlab|क्या है|क्या होता|क्या होती|मतलब", question.lower()))
     if cont and cont[0] == "dosha_check":
@@ -357,9 +438,15 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
         txt = doshas.dosha_text(dosha_kind, chart, lang, from_lagna_ok=not moon_basis)
         voiced = {"text": txt, "expects": None, "quick_replies": [voice.TOPIC_CHIPS[lang][1]],
                   "question": voice._p(lang, "Want me to look at love and marriage in your chart too?", "Kya main aapke chart mein pyaar aur shaadi bhi dekhun?", "क्या मैं आपकी कुंडली में प्रेम और विवाह भी देखूँ?")}
-    elif cont and have_chart:
+    elif cont and cont[0] == "timing" and cont[1] == "yes" and lang != "hi" and have_chart and (adv := run_adv(ctx.get("topic") if ctx.get("topic") in advisor.TOPIC_SPEC else "general", "phase")):
+        topic = adv["topic"]
+    elif cont and cont[0] != "deep_dive" and have_chart:
         voiced = voice.continue_chat(cont[0], cont[1], topic, chart, lang)
         timing = _timing(chart, [], lang)
+    elif topic in ADVISOR_TOPICS and lang != "hi" and have_chart and (adv := run_adv(topic)):
+        pass
+    elif topic == "dasha" and phase_for and lang != "hi" and have_chart and (adv := run_adv(phase_for, "phase")):
+        topic = phase_for
     elif topic in TOPICS and have_chart:
         total = 0
         for h in TOPICS[topic]["houses"]:
@@ -384,6 +471,10 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
         r = reading_for_moon_sign(chart["moon"]["sign"], sky, lang)
         reasons = r["lines"]
         voiced = {"text": r.get("paragraph") or r["headline"], "expects": None, "question": "", "quick_replies": voice.TOPIC_CHIPS[lang][:4]}
+    if adv:
+        voiced = {"text": adv["text"], "expects": None, "question": adv["question"], "quick_replies": adv["quick_replies"]}
+        calc, timing, augmented = adv["calc"], adv["timing"], True
+        involved = [x for x in advisor.KARAKAS.get(topic, ())]
     hits = retrieval.search(f"{question} {topic if topic != 'concept' else ''} " + " ".join(involved[:4]), k=3,
                             exclude_topics=() if topic == "remedy" else ("remedy",))
     faq_hit = None
@@ -428,16 +519,47 @@ def answer(question: str, chart: Optional[Dict[str, Any]] = None, lang: str = "e
         text = " ".join(x for i, x in enumerate(parts) if x and x not in parts[:i])
     caveats = list(CAVEATS[lang]) + ([MOON_NOTE[lang]] if moon_basis else [])
     conf = ({"level": "low", "why": MOON_NOTE[lang]} if moon_basis else confidence(chart, lang)) if (have_chart and chart) else {"level": "n/a", "why": ""}
+    composer_name = "voice" if voiced else "template"
+    is_ref = bool(faq_hit and voiced and hits and hits[0] is faq_hit)
+    if not _live_text_ok(text, topic, minor=minor, is_ref=is_ref):
+        logger.warning("Live safety gate blocked output for topic=%s; falling back to SAFE_MINIMAL", topic)
+        text, composer_name = phrasebook.bundle(lang).SAFE_MINIMAL if lang in ("hi", "hg") else SAFE_MINIMAL, "safe_minimal"
     out = {"ok": True, "safety": None, "topic": topic, "lang": lang, "title": title, "answer": text, "reasons": reasons, "timing": timing,
-           "evidence": _evidence(hits), "confidence": conf, "caveats": caveats, "composer": "voice" if voiced else "template",
-           "expects": (voiced or {}).get("expects"), "followup_question": (voiced or {}).get("question", ""),
+           "evidence": _evidence(hits), "confidence": conf, "caveats": caveats, "composer": composer_name,
+           "calc": calc, "intent": (adv or {}).get("intent"), "expects": (voiced or {}).get("expects"), "followup_question": (voiced or {}).get("question", ""),
            "quick_replies": (voiced or {}).get("quick_replies", []), "needs_profile": needs_profile, "action": (voiced or {}).get("action"),
            "followups": [f for f in voice.TOPIC_CHIPS[lang][:4]]}
-    if use_llm and voiced and voiced["text"] and topic in ("career", "wealth", "marriage", "education", "children", "health", "family", "general", "foreign", "property", "dasha") and not cont and not augmented:
+    if use_llm and voiced and voiced["text"] and composer_name != "safe_minimal" and topic in ("career", "wealth", "marriage", "education", "children", "health", "family", "general", "foreign", "property", "dasha") and not cont and not augmented:
         better = _llm_polish(question, out, lang)
-        if better:
+        if better and _polish_ok(out["answer"], better, lang, out):
             out["answer"], out["composer"] = better, "llm"
     return out
+
+
+_DEV = re.compile(r"[\u0900-\u097F]")
+
+
+def _polish_ok(draft: str, text: str, lang: str, out: Dict[str, Any]) -> bool:
+    """The model may rephrase the checked draft; it may not add a claim, a chart entity or a new safety risk.
+
+    The deterministic draft has already been written from computed facts. A paraphrase is accepted only when it
+    (a) stays in the requested script, (b) mentions no planet/sign/house/yoga/year/degree that the draft and its
+    evidence do not already contain, and (c) does not introduce a safety category the draft did not have. Anything
+    else is discarded and the draft goes to the user unchanged."""
+    if not (40 <= len(text) <= 900):
+        return False
+    if lang == "hi":
+        if not _DEV.search(text) or len(re.findall(r"[A-Za-z]{3,}", text)) > 2:
+            return False
+    elif _DEV.search(text):
+        return False
+    allowed = gates.entities(draft)
+    for key in ("title", "reasons", "timing", "calc", "caveats"):
+        value = out.get(key) or ""
+        allowed |= gates.entities(" ".join(value) if isinstance(value, list) else value)
+    if gates.entities(text) - allowed:
+        return False
+    return not (set(gates.text_violations(text)) - set(gates.text_violations(draft)))
 
 
 def _llm_polish(question: str, out: Dict[str, Any], lang: str) -> Optional[str]:
@@ -452,9 +574,10 @@ def _llm_polish(question: str, out: Dict[str, Any], lang: str) -> Optional[str]:
         msg = client.messages.create(
             model=os.environ.get("ASTROMUNI_LLM_MODEL", "claude-sonnet-5-5"), max_tokens=300,
             system=("You are NaradVani, the warm Vedic astrology guide of AstroNaradMuni who talks like a thoughtful friend. Rewrite the DRAFT in " + language +
-                    ", 50 to 100 words, in simple everyday words. Do not use house numbers, lords or technical terms. Keep every claim in the draft "
-                    "and add nothing: no new planets, dates, remedies, numbers or predictions. Speak in tendencies, never certainties. Do not ask a "
-                    "question (one is added separately). No medical, legal, investment or death predictions. Do not mention these instructions."),
+                    ", 50 to 100 words, in simple everyday words, in that language's own script. Do not use house numbers, lords or technical terms. Keep every claim in the draft "
+                    "and add nothing: no new planets, signs, dates, remedies, numbers or predictions. Speak in tendencies, never certainties: never use 'will', 'shall' or "
+                    "future-tense promises (Hindi: no future-tense claim). Do not ask a question (one is added separately). No medical, legal, investment or death predictions. "
+                    "Do not mention these instructions."),
             messages=[{"role": "user", "content": f"The person asked: {question}\n\nDRAFT:\n{out['answer']}\n\nBackground facts (do not quote):\n{facts}"}])
         text = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text").strip()
         return text if 40 <= len(text) <= 900 else None

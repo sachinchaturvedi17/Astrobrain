@@ -1,0 +1,62 @@
+{
+  "basic": [
+    {
+      "question": "What career suits my chart?",
+      "framework": "Check 10th house lord, Sun/Mercury/Saturn placement",
+      "answer_template": "Based on your chart, {planet} in {sign} indicates {career_type}. Your 10th house lord {lord} in {house} house suggests {career_detail}.",
+      "strength_check": "If Sun strong -> government/admin/leadership; Mercury strong -> writing/teaching/commerce; Saturn strong -> engineering/admin/slow steady growth"
+    },
+    {
+      "question": "When will I get a job promotion?",
+      "framework": "Check current dasha period and transit to 10th house",
+      "answer_template": "Your current {dasha} dasha activates {planet} matters. With transit of {transit_planet} to your 10th house, this is a favorable period for promotion. Exact timing: {timing}.",
+      "strength_check": "Check dasha lord strength and transit aspects to 10th house"
+    },
+    {
+      "question": "Is business right for me?",
+      "framework": "Check Mercury/Venus strength and 2nd/10th house connection",
+      "answer_template": "Your Mercury {status} indicates {business_type} aptitude. With Venus {status}, {creative_business}. The 2nd house {condition} suggests {financial_outlook}.",
+      "strength_check": "Mercury strong -> commerce/writing; Venus strong -> creative business; 2nd house lord strength"
+    },
+    {
+      "question": "What field should I study?",
+      "framework": "Check 5th house, Mercury/Jupiter placement",
+      "answer_template": "Your 5th house {condition} shows natural aptitude. Mercury {status} in {sign} suggests {study_field}. Jupiter {status} indicates {higher_learning}.",
+      "strength_check": "Mercury for skills, Jupiter for higher education, 5th house creativity"
+    }
+  ],
+  "intermediate": [
+    {
+      "question": "Will I become wealthy through my career?",
+      "framework": "Check 11th house, Jupiter/Venus strength, 10th house strength",
+      "answer_template": "Your 11th house {condition} shows income gains. Jupiter {status} indicates {wealth_type}. Venus {status} adds {financial_detail}. 10th house {condition} shows career-related wealth.",
+      "strength_check": "Jupiter strong -> prosperity through teaching/finance; Venus strong -> wealth through arts/business; 11th house strength"
+    },
+    {
+      "question": "Government job or private sector?",
+      "framework": "Check Sun strength, 10th house lord placement, Navamsa analysis",
+      "answer_template": "Sun {status} strongly favors government/service roles. 10th house lord {lord} in {navamsa} suggests {sector}. Navamsa analysis of 10th lord gives final indication.",
+      "strength_check": "Sun exalted -> government; Sun debilitated -> private sector; 10th house lord placement"
+    },
+    {
+      "question": "Which job will give me most satisfaction?",
+      "framework": "Check Moon placement, 5th house, and personal passion areas",
+      "answer_template": "Your Moon {status} in {sign} shows emotional job satisfaction needs. 5th house {condition} indicates creative fulfillment. Your passion areas: {passions}. Ideal work: {ideal_job}.",
+      "strength_check": "Moon for emotional satisfaction, 5th house for creativity, personal passion alignment"
+    }
+  ],
+  "advanced": [
+    {
+      "question": "Is my current job suitable for my skills?",
+      "framework": "Check 6th house (daily work), Mercury (skills), and 10th house (career)",
+      "answer_template": "Your 6th house {condition} shows daily work environment. Mercury {status} indicates your skill set. 10th house {condition} shows career fit. Combined: {suitability_assessment}.",
+      "strength_check": "6th house for daily work, Mercury for skills, 10th for career suitability"
+    },
+    {
+      "question": "What is my ideal work environment?",
+      "framework": "Check Moon sign (emotional needs), 7th house (partnerships at work), and Saturn (discipline style)",
+      "answer_template": "Your Moon {status} in {sign} shows needed work environment atmosphere. 7th house {condition} shows preferred workplace partnerships. Saturn {status} indicates discipline style: {discipline_style}. Ideal environment: {env_description}.",
+      "strength_check": "Moon for emotional satisfaction, 7th for workplace partnerships, Saturn for discipline style"
+    }
+  ]
+}

@@ -28,5 +28,7 @@ assets_src/review/
 assets_src/textures/
 assets_src/*_raw.glb
 
-# Private MetaPerson avatar copied in only for local ?model=mp testing (unresolved licence; also remove before building a wheel)
+# Private MetaPerson / MetaHuman test avatars and backups (never ship in wheels or commit)
 src/aipandit/web/static/vendor/naradvani_mp.glb
+src/aipandit/web/static/vendor/naradvani_mh.glb
+src/aipandit/web/static/vendor/*.bak

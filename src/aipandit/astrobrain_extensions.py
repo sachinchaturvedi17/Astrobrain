@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional
 
+from .derive import enrich as enrich_derive
 from .gochara_and_scopes import enrich_gochara, gochara_rules, life_area_rules
 from .inference import infer
 from .intake import BirthInput
@@ -21,10 +22,10 @@ def build_astrobrain_store(
     config: Optional[KundliConfig] = None,
     today: Optional[date] = None,
 ):
-    """Build a unified, frozen FactStore with Kundli, Numerology, Palm & Gochara facts."""
+    """Build a unified, frozen FactStore with Kundli, Derived, Numerology, Palm & Gochara facts."""
     ref_today = today or date.today()
     kundli = generate_kundli(birth, config=config, today=ref_today)
-    store = kundli.facts
+    store = enrich_derive(kundli)
     if birth.date:
         store = enrich_numerology(store, birth.date, birth.name or None)
     store = enrich_palm(store, palm_obs)

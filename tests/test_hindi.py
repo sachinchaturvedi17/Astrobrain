@@ -13,6 +13,7 @@ from aipandit.gates import (NOT_A_PREDICTION, TIME_CAVEAT_MARKERS, GateContext, 
 from aipandit.hindi import detect_language, dev_houses, norm
 from aipandit.orchestrator import Pandit
 from aipandit.planner import classify
+from aipandit.rulepacks import all_rules
 from aipandit.reading import Reading, Statement
 from chartkit import BIRTH, FixedEngine
 from test_phase3 import FakeLLM, NOW, QUESTIONS, llm_json, random_chart
@@ -199,7 +200,8 @@ def test_hindi_without_llm(pandit, bhopal):
     assert pandit.ask(bhopal, "मेरी आयु कितनी है").trace["composer"] == "death"
     f = pandit.ask(bhopal, "क्या मुझे क्रिप्टो में निवेश करना चाहिए")
     assert "निवेश सलाह यहाँ नहीं दी जाती" in f.text and not f.reading.of_kind("reading")
-    e = pandit.ask(bhopal, "मेरी शिक्षा के बारे में बताइए")
+    bare = Pandit(now=lambda: NOW, rules=[r for r in all_rules() if "education" not in r.scope])   # education now has rules
+    e = bare.ask(bare.start(BIRTH), "मेरी शिक्षा के बारे में बताइए")
     assert "शिक्षा के लिए अभी कोई पाठ उपलब्ध नहीं है" in e.text
     r = pandit.ask(bhopal, "मेरे करियर के बारे में बताइए")                  # readings exist, no Hindi writer available
     assert r.text.startswith(P.hi.NOTE_ENGLISH_ANSWER) and "Malavya yoga" in r.text and r.gate.passed

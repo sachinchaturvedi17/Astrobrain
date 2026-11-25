@@ -1,0 +1,50 @@
+{
+  "basic": [
+    {
+      "question": "When will I get married?",
+      "framework": "Check 7th house lord, Venus/Jupiter strength, dasha periods",
+      "answer_template": "Based on your chart, 7th house lord {lord} in {sign} with Venus {status} suggests {marriage_timing}. Current {dasha} dasha activates {activation}.",
+      "strength_check": "Venus strong -> early marriage; Jupiter aspect -> favorable timing; 7th house strength -> quick marriage"
+    },
+    {
+      "question": "What kind of partner suits me?",
+      "framework": "Check Venus placement, 7th house lord, and karaka strengths",
+      "answer_template": "Your Venus in {sign} shows partner {partner_type}. 7th house lord {lord} in {house} indicates {partner_qualities}. Mars {status} adds {mars_detail}.",
+      "strength_check": "Venus strong -> harmonious partner; 7th house strong -> supportive partner; Mars afflicted -> needs anger management"
+    },
+    {
+      "question": "Love marriage or arranged marriage?",
+      "framework": "Check 5th-7th house connection, Venus-Moon aspect",
+      "answer_template": "Your 5th-7th connection {connection_type} shows {marriage_type}. Venus-Moon {aspect} indicates {love_style}. Rahu/Ketu connections show {non_traditional}.",
+      "strength_check": "Strong 5th-7th -> love marriage; Strong Venus-Moon -> arranged marriage possible; Rahu connections -> non-traditional"
+    }
+  ],
+  "intermediate": [
+    {
+      "question": "Manglik dosha effects on marriage?",
+      "framework": "Check Mars placement in 1st/4th/7th/8th, Mangal dosha calculation",
+      "answer_template": "Mars in {position} {mangal_status}. Effects: {effects}. Remedies: {remedies}.",
+      "strength_check": "Mars in 1/4/7/8 -> Mangal dosha; Mars in own sign -> reduced effect; Aspects from Jupiter -> cancellation"
+    },
+    {
+      "question": "Second marriage possibilities?",
+      "framework": "Check 7th house lord strength, 8th house connections, dasha of 7th lord",
+      "answer_template": "7th house lord {status} shows {second_marriage_probability}. 8th house connections {8th_status}. Dasha of 7th lord {dasha_status}.",
+      "strength_check": "Strong 7th lord -> second marriage possible; Weak 7th lord -> delayed; 8th house connections -> transformative marriages"
+    }
+  ],
+  "advanced": [
+    {
+      "question": "Early marriage or late marriage?",
+      "framework": "Check 7th house strength, Venus dasha timing, Jupiter aspects",
+      "answer_template": "7th house {strength} shows {timing}. Venus dasha {venus_dasha} activates {activation}. Jupiter aspects {jupiter_aspect}.",
+      "strength_check": "Strong 7th -> early marriage; Debilitated 7th -> late marriage; Jupiter aspect -> marriage timing correction"
+    },
+    {
+      "question": "Inter-caste/religion marriage possibilities?",
+      "framework": "Check Rahu/Ketu connections, 7th house lord placement",
+      "answer_template": "Rahu in 7th {rahu_status} shows {inter_caste_status}. Ketu connections {ketu_status}. 7th lord {lord_status}.",
+      "strength_check": "Rahu in 7th -> inter-caste/marriage; Ketu aspects -> spiritual connection; 7th lord strength -> family acceptance"
+    }
+  ]
+}

@@ -114,14 +114,14 @@ def build_chart(profile: Dict[str, Any]) -> Dict[str, Any]:
         sign = f(g, "sign", P)
         if sign:
             planets[g] = {"sign": sign, "house": f(g, "house", P), "retrograde": bool(f(g, "retrograde", P)),
-                          "nakshatra": f(g, "nakshatra", P), "pada": f(g, "pada", P)}
+                          "nakshatra": f(g, "nakshatra", P), "pada": f(g, "pada", P), "dignity": f(g, "dignity", P)}
     lagna = f("lagna", "sign", P)
     d = {k: f("dasha", k, P) for k in ("maha_lord", "maha_end", "antar_lord", "antar_end")}
     running = None if d["maha_lord"] else _running_dasha(kundli)
     if running:
         d = {"maha_lord": running["maha"], "maha_end": running.get("maha_end"), "antar_lord": running.get("antar"), "antar_end": running.get("antar_end")}
     chart = {"lagna": lagna, "moon": {"sign": f("Moon", "sign", P), "nakshatra": f("Moon", "nakshatra", P), "pada": f("Moon", "pada", P)},
-             "planets": planets,
+             "planets": planets, "store": store,
              "dasha": {"maha": d["maha_lord"], "antar": d["antar_lord"], "maha_end": str(d["maha_end"] or "")[:10],
                        "antar_end": str(d["antar_end"] or "")[:10]} if d["maha_lord"] else None,
              "time_certainty": v["time_certainty"], "withheld": sorted({f"{w.subject} {w.predicate}" for w in kundli.withheld}),
@@ -215,16 +215,25 @@ def ask(payload: Dict[str, Any]) -> Dict[str, Any]:
     lang = payload.get("lang") if payload.get("lang") in ("en", "hg", "hi") else "en"
     chart = _chart_or_none(payload)
     sky = None
-    if brain.classify(q) in ("transit", "sade_sati"):
+    if chart is not None:                   # transits feed the working for every chart question, not only "transit" ones
         try:
             sky = _sky()[1]
         except Exception:
             sky = None
     hist = payload.get("history") if isinstance(payload.get("history"), list) else []
-    hist = [{k: (str(m.get(k))[:40] if k != "text" else str(m.get(k))[:600]) for k in ("role", "text", "topic", "expects") if m.get(k) is not None}
-            for m in hist[-6:] if isinstance(m, dict)]
+    hist = [{k: (str(m.get(k))[:40] if k != "text" else str(m.get(k))[:600]) for k in ("role", "text", "topic", "expects", "intent") if m.get(k) is not None}
+            for m in hist[-14:] if isinstance(m, dict)]
     out = brain.answer(q, chart, lang, sky, history=hist)
     out["mode"] = payload.get("mode", "muni")
+    try:
+        from . import db
+        mgr = db.get_db()
+        if mgr is not None:
+            if chart is not None:
+                mgr.record_user_chart(chart, lang)
+            mgr.record_chat(payload.get("profile") if isinstance(payload.get("profile"), dict) else None, q, out)
+    except Exception:
+        pass
     return out
 
 
@@ -314,8 +323,201 @@ def report(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 def chart_summary(payload: Dict[str, Any]) -> Dict[str, Any]:
     c = build_chart(_req(payload, "profile"))
+    try:
+        from . import db
+        mgr = db.get_db()
+        if mgr is not None:
+            mgr.record_user_chart(c, str(payload.get("lang") or "en"))
+    except Exception:
+        pass
     return {"ok": True, "lagna": c["lagna"], "moon": c["moon"], "dasha": c["dasha"], "withheld": c["withheld"], "warnings": c["warnings"],
-            "planets": c["planets"], "time_certainty": c["time_certainty"]}
+            "planets": c["planets"], "time_certainty": c["time_certainty"], "name": c["name"], "profile": c["profile"],
+            "sun_sign": (c["planets"].get("Sun") or {}).get("sign")}
+
+
+def _pdf_esc(text: Any) -> str:
+    s = str(text if text is not None else "")
+    s = s.encode("latin-1", "replace").decode("latin-1")
+    return s.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+
+def _build_kundli_pdf_bytes(c: Dict[str, Any]) -> bytes:
+    """Pure-stdlib PDF 1.4 generator for a Vedic Janam Kundli with North Indian diamond chart and planetary table."""
+    p = c.get("profile") or {}
+    signs_order = ["Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya",
+                   "Tula", "Vrishchika", "Dhanu", "Makara", "Kumbha", "Meena"]
+    abbr = {"Sun": "Su", "Moon": "Mo", "Mars": "Ma", "Mercury": "Me", "Jupiter": "Ju",
+            "Venus": "Ve", "Saturn": "Sa", "Rahu": "Ra", "Ketu": "Ke"}
+
+    ops = []
+    # Header banner
+    ops.append("0.98 0.94 0.82 rg 36 742 540 58 re f")
+    ops.append("0.54 0.35 0.22 RG 1 w 36 742 540 58 re S")
+    ops.append("0.24 0.15 0.08 rg")
+    ops.append("BT /F2 18 Tf 50 774 Td (AstroNaradMuni - Janam Kundli) Tj ET")
+    ops.append("BT /F1 10 Tf 50 756 Td (Vedic Birth Chart, Planetary Placements & Vimshottari Dasha) Tj ET")
+
+    # Left column: North Indian Diamond Kundli (x=44..244, y=515..715, size=200x200)
+    bx, by, bs = 44.0, 515.0, 200.0
+    mx, my = bx + bs / 2.0, by + bs / 2.0
+    ops.append("0.99 0.97 0.91 rg %.1f %.1f %.1f %.1f re f" % (bx, by, bs, bs))
+    ops.append("0.54 0.35 0.22 RG 1.2 w")
+    ops.append("%.1f %.1f %.1f %.1f re S" % (bx, by, bs, bs))
+    ops.append("%.1f %.1f m %.1f %.1f l S" % (bx, by, bx + bs, by + bs))
+    ops.append("%.1f %.1f m %.1f %.1f l S" % (bx + bs, by, bx, by + bs))
+    ops.append("%.1f %.1f m %.1f %.1f l %.1f %.1f l %.1f %.1f l h S" % (mx, by + bs, bx + bs, my, mx, by, bx, my))
+
+    # House centers in 300x300 SVG coordinates (top-down) mapped to PDF (bottom-up)
+    pos300 = {1: (150, 78), 2: (76, 30), 3: (30, 76), 4: (78, 150), 5: (30, 224), 6: (76, 270),
+              7: (150, 222), 8: (224, 270), 9: (270, 224), 10: (222, 150), 11: (270, 76), 12: (224, 30)}
+    lagna = c.get("lagna")
+    li = signs_order.index(lagna) if lagna in signs_order else 0
+    by_h: Dict[int, list] = {}
+    for g, info in (c.get("planets") or {}).items():
+        h = info.get("house")
+        if h:
+            by_h.setdefault(int(h), []).append(abbr.get(g, g[:2]) + ("*" if info.get("retrograde") else ""))
+
+    for h in range(1, 13):
+        sx, sy = pos300[h]
+        px = bx + (sx / 300.0) * bs
+        py = by + ((300.0 - sy) / 300.0) * bs
+        rashi_num = ((li + h - 1) % 12) + 1
+        pls = by_h.get(h, [])
+        ops.append("0.45 0.30 0.18 rg BT /F2 8 Tf %.1f %.1f Td (%d) Tj ET" % (px - 4, py + (6 if pls else -2), rashi_num))
+        if pls:
+            line1 = " ".join(pls[:3])
+            ops.append("0.18 0.11 0.05 rg BT /F2 8 Tf %.1f %.1f Td (%s) Tj ET" % (px - 14, py - 5, _pdf_esc(line1)))
+            if len(pls) > 3:
+                line2 = " ".join(pls[3:6])
+                ops.append("0.18 0.11 0.05 rg BT /F2 7 Tf %.1f %.1f Td (%s) Tj ET" % (px - 14, py - 14, _pdf_esc(line2)))
+
+    # Right column: Birth & Chart Summary Details (x=265..576, y=515..715)
+    moon = c.get("moon") or {}
+    dasha = c.get("dasha") or {}
+    dasha_str = f"{dasha.get('maha')} - {dasha.get('antar')} (until {dasha.get('antar_end') or dasha.get('maha_end') or ''})" if dasha.get("maha") else "Withheld (birth time uncertain)"
+    kv_rows = [
+        ("Name", p.get("name") or c.get("name") or "-"),
+        ("Date of Birth", p.get("dob") or "-"),
+        ("Time of Birth", f"{p.get('tob') or 'Unknown'} ({p.get('time_certainty') or c.get('time_certainty') or 'exact'})"),
+        ("Place of Birth", p.get("place") or "-"),
+        ("Coordinates / TZ", f"{p.get('lat', '')}, {p.get('lon', '')} ({p.get('tz', '')})"),
+        ("Lagna (Ascendant)", c.get("lagna") or "Withheld (time uncertain)"),
+        ("Moon Sign (Rashi)", moon.get("sign") or "-"),
+        ("Birth Nakshatra", f"{moon.get('nakshatra') or '-'}" + (f" (Pada {moon.get('pada')})" if moon.get("pada") else "")),
+        ("Running Dasha", dasha_str),
+    ]
+    ry = 702.0
+    for label, val in kv_rows:
+        ops.append("0.45 0.30 0.18 rg BT /F2 9 Tf 265 %.1f Td (%s:) Tj ET" % (ry, _pdf_esc(label)))
+        ops.append("0.15 0.10 0.05 rg BT /F1 9 Tf 370 %.1f Td (%s) Tj ET" % (ry, _pdf_esc(val)[:42]))
+        ry -= 21.0
+
+    # Planetary Positions Table Header
+    ty = 472.0
+    ops.append("0.24 0.15 0.08 rg BT /F2 12 Tf 36 %.1f Td (Planetary Positions \\(Navagraha\\)) Tj ET" % ty)
+    ty -= 18.0
+    ops.append("0.95 0.89 0.74 rg 36 %.1f 540 20 re f" % (ty - 5))
+    ops.append("0.24 0.15 0.08 rg")
+    cols = [(44, "Planet"), (125, "Sign (Rashi)"), (225, "House"), (285, "Nakshatra"), (405, "Pada"), (450, "Retrograde"), (510, "Dignity")]
+    for cx, cname in cols:
+        ops.append("BT /F2 9 Tf %d %.1f Td (%s) Tj ET" % (cx, ty, _pdf_esc(cname)))
+
+    ty -= 20.0
+    for idx, g in enumerate(GRAHAS):
+        info = (c.get("planets") or {}).get(g) or {}
+        if idx % 2 == 1:
+            ops.append("0.99 0.97 0.92 rg 36 %.1f 540 18 re f" % (ty - 4))
+        ops.append("0.15 0.10 0.05 rg")
+        row_vals = [
+            (44, g),
+            (125, info.get("sign") or "-"),
+            (225, str(info.get("house") or "-")),
+            (285, info.get("nakshatra") or "-"),
+            (405, str(info.get("pada") or "-")),
+            (450, "Yes (R)" if info.get("retrograde") else "No"),
+            (510, str(info.get("dignity") or "neutral")),
+        ]
+        for cx, rval in row_vals:
+            ops.append("BT /F1 9 Tf %d %.1f Td (%s) Tj ET" % (cx, ty, _pdf_esc(rval)))
+        ty -= 18.0
+
+    # Footer
+    ops.append("0.45 0.35 0.25 rg BT /F1 8 Tf 36 42 Td (Generated by AstroNaradMuni v%s - Traditional Parashari Jyotish Engine. Guidance, not certainty.) Tj ET" % _pdf_esc(__version__))
+
+    stream_bytes = "\n".join(ops).encode("latin-1")
+    objs = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+        b"<< /Length %d >>\nstream\n" % len(stream_bytes) + stream_bytes + b"\nendstream",
+    ]
+    out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets = [0]
+    for i, body in enumerate(objs, start=1):
+        offsets.append(len(out))
+        out.extend(b"%d 0 obj\n" % i)
+        out.extend(body)
+        out.extend(b"\nendobj\n")
+    xref_pos = len(out)
+    out.extend(b"xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1))
+    for off in offsets[1:]:
+        out.extend(b"%010d 00000 n \n" % off)
+    out.extend(b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objs) + 1, xref_pos))
+    return bytes(out)
+
+
+def kundli_pdf(payload: Dict[str, Any]) -> bytes:
+    """Build a downloadable PDF Janam Kundli from either {profile: {...}} or flat query parameters."""
+    prof = payload.get("profile") if isinstance(payload.get("profile"), dict) else dict(payload)
+    place = str(prof.get("place") or "Bhopal").strip()
+    cities = _known_cities()
+    default_lat, default_lon, default_tz = cities.get(place.lower(), (23.2599, 77.4126, "Asia/Kolkata"))
+    raw_lat, raw_lon, raw_tz = prof.get("lat"), prof.get("lon"), prof.get("tz")
+    try:
+        lat = float(raw_lat) if raw_lat not in (None, "", "undefined", "null") else float(default_lat)
+        lon = float(raw_lon) if raw_lon not in (None, "", "undefined", "null") else float(default_lon)
+    except (TypeError, ValueError):
+        lat, lon = float(default_lat), float(default_lon)
+    tz = str(raw_tz) if raw_tz not in (None, "", "undefined", "null") else str(default_tz)
+    tob = str(prof.get("tob") or "").strip() or None
+    cert = str(prof.get("time_certainty") or ("exact" if tob else "unknown"))
+    norm_prof = {
+        "name": str(prof.get("name") or "Native").strip(),
+        "dob": str(prof.get("dob") or "1995-05-15").strip(),
+        "tob": tob,
+        "time_certainty": cert,
+        "place": place,
+        "lat": lat,
+        "lon": lon,
+        "tz": tz,
+        "gender": prof.get("gender") or "prefer_not_to_say",
+    }
+    chart = build_chart(norm_prof)
+    try:
+        from . import db
+        mgr = db.get_db()
+        if mgr is not None:
+            mgr.record_user_chart(chart)
+            mgr.record_kundli_download(chart)
+    except Exception:
+        pass
+    return _build_kundli_pdf_bytes(chart)
+
+
+def admin_users(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Return DBMS summary and user records. Requires ASTROMUNI_ADMIN_KEY if configured in the environment."""
+    import os
+    expected_key = os.environ.get("ASTROMUNI_ADMIN_KEY", "").strip()
+    if expected_key and str(payload.get("key") or "").strip() != expected_key:
+        raise ValueError("invalid or missing admin key")
+    from . import db
+    mgr = db.get_db()
+    if mgr is None:
+        raise ValueError("database is disabled")
+    return mgr.get_summary(int(payload.get("limit") or 50))
 
 
 def journal(_: Dict[str, Any]) -> Dict[str, Any]:
@@ -326,6 +528,7 @@ def journal(_: Dict[str, Any]) -> Dict[str, Any]:
 ROUTES = {"/api/v10/geocode": geocode, "/api/v10/reverse": reverse, "/api/v10/chart": chart_summary, "/api/v10/ask": ask,
           "/api/v10/horoscope": horoscope, "/api/v10/panchang": panchang, "/api/v10/compat": compat,
           "/api/v10/calculator": calculator, "/api/v10/report": report, "/api/v10/journal": journal,
+          "/api/v10/admin/users": admin_users,
           "/api/v10/config": lambda _: {"ok": True, "version": __version__, "map": {"tiles": "osm", "geocoder": "nominatim"}}}
 
 

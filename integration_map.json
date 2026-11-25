@@ -1,0 +1,31 @@
+{
+  "career": {
+    "Sun_career": "Government job, administration, leadership roles, positions of authority",
+    "Mercury_career": "Writing, teaching, journalism, publishing, media, communications, trading",
+    "Saturn_career": "Engineering, administration, research, slow but steady career growth, social work",
+    "Jupiter_career": "Teaching, gurus, finance, banking, expansion fields, consulting",
+    "Venus_career": "Creative arts, design, fashion, hospitality, beauty industry, entertainment",
+    "10th_house_strong": "Career success, recognition, professional achievements",
+    "10th_house_weak": "Career challenges, frequent changes, need for extra effort",
+    "dasha_career": "Current dasha period indicates career theme and timing"
+  },
+  "marriage": {
+    "Venus_strong": "Loving harmonious marriage, good partner, compatibility",
+    "Venus_weak": "Relationship challenges, delays in marriage, need for patience",
+    "7th_house_strong": "Supportive partner, early marriage, stable relationship",
+    "7th_house_weak": "Delayed marriage, relationship difficulties, need for effort",
+    "Mars_afflict_7th": "Arguments, conflicts, need for anger management",
+    "Jupiter_aspect_7th": "Blessings, wisdom in relationships, favorable timing",
+    "Rahu_7th": "Unconventional partner, long-distance relationship, unusual circumstances",
+    "dasha_marriage": "Current dasha activates or delays marriage timing"
+  },
+  "love": {
+    "Venus_love": "Romantic style, what attracts you, love language",
+    "Moon_emotional": "Emotional needs, how you express feelings",
+    "5th_house_romance": "Romantic creativity, love affairs, dating style",
+    "5th_7th_connection": "Love marriage potential, transition from romance to commitment",
+    "Venus_afflict": "Relationship challenges, repeated heartbreaks, learning lessons",
+    "Rahu_in_5th": "Unconventional love, inter-caste/religion love, unexpected romance",
+    "Mars_in_5th": "Passionate love, sometimes aggressive pursuit, need for patience"
+  }
+}

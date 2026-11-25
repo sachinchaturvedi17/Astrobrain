@@ -1,0 +1,57 @@
+[
+  {
+    "source": "career.json",
+    "topic": "career.json",
+    "difficulty": "advanced",
+    "question": "Is my current job suitable for my skills?",
+    "framework": "Check 6th house (daily work), Mercury (skills), and 10th house (career)",
+    "answer_template": "Your 6th house {condition} shows daily work environment. Mercury {status} indicates your skill set. 10th house {condition} shows career fit. Combined: {suitability_assessment}.",
+    "strength_check": "6th house for daily work, Mercury for skills, 10th for career suitability",
+    "generated": "2026-11-25T08:58:39.235700",
+    "corpus_references": []
+  },
+  {
+    "source": "career.json",
+    "topic": "career.json",
+    "difficulty": "advanced",
+    "question": "What is my ideal work environment?",
+    "framework": "Check Moon sign (emotional needs), 7th house (partnerships at work), and Saturn (discipline style)",
+    "answer_template": "Your Moon {status} in {sign} shows needed work environment atmosphere. 7th house {condition} shows preferred workplace partnerships. Saturn {status} indicates discipline style: {discipline_style}. Ideal environment: {env_description}.",
+    "strength_check": "Moon for emotional satisfaction, 7th for workplace partnerships, Saturn for discipline style",
+    "generated": "2026-11-25T08:58:39.235701",
+    "corpus_references": []
+  },
+  {
+    "source": "career.json",
+    "topic": "career.json",
+    "difficulty": "basic",
+    "question": "What career suits my chart?",
+    "framework": "Check 10th house lord, Sun/Mercury/Saturn placement",
+    "answer_template": "Based on your chart, {planet} in {sign} indicates {career_type}. Your 10th house lord {lord} in {house} house suggests {career_detail}.",
+    "strength_check": "If Sun strong -> government/admin/leadership; Mercury strong -> writing/teaching/commerce; Saturn strong -> engineering/admin/slow steady growth",
+    "generated": "2026-11-25T08:58:39.235687",
+    "corpus_references": []
+  },
+  {
+    "source": "career.json",
+    "topic": "career.json",
+    "difficulty": "basic",
+    "question": "What field should I study?",
+    "framework": "Check 5th house, Mercury/Jupiter placement",
+    "answer_template": "Your 5th house {condition} shows natural aptitude. Mercury {status} in {sign} suggests {study_field}. Jupiter {status} indicates {higher_learning}.",
+    "strength_check": "Mercury for skills, Jupiter for higher education, 5th house creativity",
+    "generated": "2026-11-25T08:58:39.235697",
+    "corpus_references": []
+  },
+  {
+    "source": "love.json",
+    "topic": "love.json",
+    "difficulty": "intermediate",
+    "question": "Why am I getting repeated heartbreaks?",
+    "framework": "Check Rahu in 5th/7th, Venus afflictions, karmic patterns",
+    "answer_template": "Rahu in {position} {rahu_status}. Venus {venus_status} afflictions. Karmic pattern {karmic_detail}. Lessons: {lessons}.",
+    "strength_check": "Rahu in 5th/7th -> relationship patterns; Venus afflict -> heartbreak patterns; Karmic lessons to learn",
+    "generated": "2026-11-25T08:58:39.235794",
+    "corpus_references": []
+  }
+]

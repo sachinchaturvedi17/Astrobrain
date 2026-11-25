@@ -88,8 +88,8 @@ class TimelineTests(unittest.TestCase):
         c = with_dasha(CH)
         r = brain.answer("when will I get married?", c, "en", None, False, [])
         self.assertEqual(r["topic"], "marriage")
-        self.assertTrue(r["timing"])
-        self.assertTrue("stretches switch this area on" in r["answer"] or "special window" in r["answer"])
+        self.assertTrue(r["calc"])
+        self.assertTrue("Favourable stretches" in r["answer"] or "dated stretches" in r["answer"], r["answer"])
 
 
 class ExpertTests(unittest.TestCase):

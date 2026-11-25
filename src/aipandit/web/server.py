@@ -301,6 +301,13 @@ class App:
                 rec["palms"][side] = name
         if not self.reqlog.write(rec):
             raise ValueError("could not save the request on this server")
+        try:
+            from .. import db
+            mgr = db.get_db()
+            if mgr is not None:
+                mgr.record_pandit_booking(rec)
+        except Exception:
+            pass
         return {"ok": True, "ref": ref}
 
     def feedback(self, body: dict):
@@ -347,7 +354,42 @@ def make_handler(app: App):
             self.wfile.write(raw)
 
         def do_GET(self):
-            hit = app.static(self.path.split("?", 1)[0])
+            clean_path = self.path.split("?", 1)[0]
+            if clean_path == "/api/v10/kundli-pdf":
+                import urllib.parse
+                from ..v10_engine import kundli_pdf
+                try:
+                    qs = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query, keep_blank_values=True)
+                    params = {k: v[0] for k, v in qs.items() if v}
+                    pdf_bytes = kundli_pdf(params)
+                    fname = re.sub(r"[^A-Za-z0-9_-]+", "_", str(params.get("name") or "chart")).strip("_") or "chart"
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/pdf")
+                    self.send_header("Content-Disposition", f'attachment; filename="kundli_{fname}.pdf"')
+                    self.send_header("Content-Length", str(len(pdf_bytes)))
+                    self.send_header("Cache-Control", "no-store")
+                    self.send_header("X-Content-Type-Options", "nosniff")
+                    self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+                    self.send_header("Content-Security-Policy", CSP)
+                    self.end_headers()
+                    self.wfile.write(pdf_bytes)
+                    return
+                except (ValueError, KeyError) as e:
+                    return self._send(400, {"error": str(e)[:200]})
+                except Exception:
+                    return self._send(500, {"error": "internal error"})
+            if clean_path == "/api/v10/admin/users":
+                import urllib.parse
+                from ..v10_engine import admin_users
+                try:
+                    qs = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query, keep_blank_values=True)
+                    params = {k: v[0] for k, v in qs.items() if v}
+                    return self._send(200, admin_users(params))
+                except ValueError as e:
+                    return self._send(403, {"error": str(e)[:200]})
+                except Exception:
+                    return self._send(500, {"error": "internal error"})
+            hit = app.static(clean_path)
             if hit is None:
                 return self._send(404, {"error": "not found"})
             body, ctype = hit
@@ -393,10 +435,11 @@ def make_server(pandit: Pandit, host="127.0.0.1", port=8000, log_dir: Optional[s
 
 
 def main(argv=None) -> int:
+    import os
     ap = argparse.ArgumentParser(prog="astromuni-web")
-    ap.add_argument("--host", default="127.0.0.1", help="use 0.0.0.0 only on a network you trust (no auth, no TLS)")
-    ap.add_argument("--port", type=int, default=8000)
-    ap.add_argument("--log-dir", default="aipandit-feedback", help="where feedback.jsonl and pandit_requests.jsonl are written ('' to disable)")
+    ap.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"), help="use 0.0.0.0 only on a network you trust (no auth, no TLS)")
+    ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8000") or 8000))
+    ap.add_argument("--log-dir", default=os.environ.get("ASTROMUNI_LOG_DIR", "aipandit-feedback"), help="where feedback.jsonl and pandit_requests.jsonl are written ('' to disable)")
     ap.add_argument("--llm", action="store_true", help="use the LLM composer (needs `pip install .[llm]` + ANTHROPIC_API_KEY)")
     a = ap.parse_args(argv)
     llm = None
@@ -404,6 +447,9 @@ def main(argv=None) -> int:
         from ..chat import build_llm
         llm = build_llm()
         print("LLM composer:", "on" if llm else "unavailable, using template composer")
+    from threading import Thread
+    from .. import reasoner
+    Thread(target=reasoner.warm, daemon=True, name="astromuni-ephem-warm").start()
     srv = make_server(Pandit(llm=llm), a.host, a.port, a.log_dir or None)
     print(f"AstroMuni {__version__} on http://{a.host}:{a.port}   (Ctrl-C to stop)")
     print(f"Feedback and pandit requests are saved in {Path(a.log_dir)}/" if a.log_dir else "Saving of feedback and pandit requests is off")

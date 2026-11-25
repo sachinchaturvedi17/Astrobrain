@@ -1,0 +1,56 @@
+{
+  "basic": [
+    {
+      "question": "Does he/she love me?",
+      "framework": "Check Venus position, 5th house connections, Moon-Moon aspect",
+      "answer_template": "Venus {status} in {sign} shows {love_indicator}. 5th house {condition} indicates {love_quality}. Moon-Moon aspect {aspect_type}.",
+      "strength_check": "Venus strong -> love present; Venus afflicted -> uncertainty; 5th house strong -> deep connection"
+    },
+    {
+      "question": "When will I meet my life partner?",
+      "framework": "Check 7th house dasha, Venus transit, Jupiter aspects",
+      "answer_template": "Current {dasha} dasha activates {planet} matters. Venus transit to {house} house. Jupiter aspect to 7th house. Timing: {timing}.",
+      "strength_check": "Venus transit to 7th -> partner meeting; Jupiter aspect to 7th -> significant relationship; dasha lord strength"
+    },
+    {
+      "question": "Is this true love or just attraction?",
+      "framework": "Check 5th house quality, Venus sign, Moon emotional connection",
+      "answer_template": "5th house {quality} shows {love_type}. Venus {sign} shows {attraction_style}. Moon-Moon {aspect} shows {emotional_connection}. Rahu {rahu_status}.",
+      "strength_check": "5th house quality -> true love vs attraction; Venus sign -> love style; Moon connection -> emotional bond"
+    }
+  ],
+  "intermediate": [
+    {
+      "question": "Will my love marriage happen?",
+      "framework": "Check 5th-7th house connection, Venus strength, dasha timing",
+      "answer_template": "5th-7th connection {connection_type} shows {marriage_possibility}. Venus {status} dasha activates {activation}. Jupiter aspect {jupiter_aspect}.",
+      "strength_check": "Strong 5th-7th connection -> love marriage; Venus strong dasha -> marriage timing; Jupiter aspect -> relationship blessing"
+    },
+    {
+      "question": "Why am I getting repeated heartbreaks?",
+      "framework": "Check Rahu in 5th/7th, Venus afflictions, karmic patterns",
+      "answer_template": "Rahu in {position} {rahu_status}. Venus {venus_status} afflictions. Karmic pattern {karmic_detail}. Lessons: {lessons}.",
+      "strength_check": "Rahu in 5th/7th -> relationship patterns; Venus afflict -> heartbreak patterns; Karmic lessons to learn"
+    },
+    {
+      "question": "What is my love language?",
+      "framework": "Check Venus placement, Moon sign, 5th house creativity",
+      "answer_template": "Venus {sign} shows {love_language}. Moon {sign} shows {emotional_needs}. 5th house {condition} shows {creativity_style}. Acts of service: {acts_service}.",
+      "strength_check": "Venus for love language, Moon for emotional needs, 5th for creativity expression"
+    }
+  ],
+  "advanced": [
+    {
+      "question": "When will my romantic phase end?",
+      "framework": "Check current dasha, transit to 5th/7th house",
+      "answer_template": "Current {dasha} dasha activates {planet} matters. Transit of {transit_planet} to 5th/7th house. Phase ends when: {phase_end_condition}.",
+      "strength_check": "Current dasha lord strength; transit aspects to 5th/7th; phase duration based on dasha period"
+    },
+    {
+      "question": "Will I find love again after a breakup?",
+      "framework": "Check 5th house recovery, Venus retrograde, dasha timing",
+      "answer_template": "5th house {recovery_status} shows {recovery_possibility}. Venus retrograde {retrograde_status}. Current dasha {dasha_status}. New love potential: {new_love}.",
+      "strength_check": "5th house recovery; Venus retrograde effects; current dasha for new relationship timing"
+    }
+  ]
+}

@@ -40,7 +40,7 @@ SIGN_FORMS = {
     "Mesha": ["mesha", "mesh", "aries", "मेष"], "Vrishabha": ["vrishabha", "vrishabh", "taurus", "वृषभ"],
     "Mithuna": ["mithuna", "mithun", "gemini", "मिथुन"], "Karka": ["karka", "kark", "cancer", "कर्क"],
     "Simha": ["simha", "leo", "सिंह"], "Kanya": ["kanya", "virgo", "कन्या"],
-    "Tula": ["tula", "libra", "तुला"], "Vrischika": ["vrischika", "vrishchik", "vrischik", "scorpio", "वृश्चिक"],
+    "Tula": ["tula", "libra", "तुला"], "Vrishchika": ["vrischika", "vrishchika", "vrishchik", "vrischik", "scorpio", "वृश्चिक"],
     "Dhanu": ["dhanu", "sagittarius", "धनु"], "Makara": ["makara", "makar", "capricorn", "मकर"],
     "Kumbha": ["kumbha", "kumbh", "aquarius", "कुंभ", "कुम्भ"], "Meena": ["meena", "meen", "pisces", "मीन"],
 }

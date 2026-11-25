@@ -1,0 +1,24 @@
+{
+  "basic": [
+    {
+      "question": "What field of study suits me?",
+      "framework": "Check 5th house, Mercury/Jupiter placement",
+      "answer_template": "Your 5th house {condition} shows academic aptitude. Mercury {status} in {sign} indicates {study_field}. Jupiter {status} indicates {higher_learning}.",
+      "strength_check": "Mercury for skills, Jupiter for higher education, 5th house creativity"
+    },
+    {
+      "question": "When will I succeed in exams?",
+      "framework": "Check dasha of 5th lord, transit to 5th house",
+      "answer_template": "Current {dasha} dasha activates {planet} matters. Transit of {transit_planet} to 5th house. Favorable period: {timing}.",
+      "strength_check": "5th lord dasha strength and transit aspects"
+    }
+  ],
+  "intermediate": [
+    {
+      "question": "Higher education abroad?",
+      "framework": "Check 9th house, Rahu/Ketu, and 12th house",
+      "answer_template": "9th house {condition} shows foreign education. Rahu {rahu_status} indicates {abroad_probability}. 12th house {twelfth_status}. Jupiter aspect {jupiter_aspect}.",
+      "strength_check": "Rahu in 9/12 = foreign tendency; Jupiter aspect = blessing"
+    }
+  ]
+}

@@ -19,7 +19,14 @@ def test_golden_bhopal_firing_set():
     assert res.fired_ids() == {pid(x) for x in (
         "yoga.malavya", "yoga.sunapha", "yoga.vesi", "yoga.vosi", "yoga.ubhayachari",
         "dignity.venus_exalted", "dignity.saturn_own", "lagna_lord.dusthana", "yoga.vipareeta_sarala",
-        "yoga.shrapit", "yoga.vish", "dosha.manglik_from_venus")}
+        "yoga.shrapit", "yoga.vish", "dosha.manglik_from_venus",
+        # BPHS house-effect batch 1, checked by hand for this chart: lord of the 2nd (Venus) is in the 7th and exalted;
+        # lord of the 11th (Moon) is in the 5th; lord of the 5th (Saturn) is in the 5th
+        "bhava2.lord_supportive", "bhava2.lord_dignified", "bhava2.lord2_kendra_lord11_trikona",
+        "bhava5.lord_supportive",
+        # education batch: lord of the 11th (Moon) is in the 5th. The lord of the 12th (Sun, in Vrishabha) is in the
+        # 9th, so edu.lord12_in_1_5_7 correctly stays silent
+        "edu.lord11_in_1_5_11")}
     assert res.undetermined == []
     assert len(res.firings) + res.not_fired == len(RULES)
 

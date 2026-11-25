@@ -1,3 +1,17 @@
+# AstroNaradMuni 1.4.0
+
+Classical reasoning sheet, multi-turn astrologer advisor, live-path safety hardening, and still-portrait Ask UI.
+
+- **Astrologer procedure (`reasoner.py` + `advisor.py`):** every topic question works the chart step by step through `reasoner.Sheet` (primary and supporting houses, house lords and their placements, exaltation/own-sign/debilitation + Neecha Bhanga, co-occupants, graha drishti aspects, natural karakas, running Vimshottari dasha roles, and live Jupiter/Saturn transit windows). Every step is returned in `calc` with a transparent support/obstacle tally (`strong` / `good` / `mixed` / `demanding`), while the visible answer stays in plain everyday English or Hinglish with zero technical jargon.
+- **Single reasoning source of truth:** `reasoner.Sheet` derives its dignity, lordship, aspect, kendra, and dusthana primitives directly from `derive.py` and consumes attached `FactStore` derivations from `derive.enrich`, verified across a 24-chart corpus in `tests/test_reasoner_crosscheck.py`.
+- **Conversational memory & sub-question routing:** `advisor.extract_slots` remembers stated relationship (`single`, `relationship`, `married`, `trouble`) and work (`working`, `student`, `jobseeker`, `business`) facts across turns without re-asking, routes 20 sub-intents (`when`, `type`, `love_arr`, `caution`, `trouble`, `delay`, `switch`, `growth`, `business`, `govt`, `debt`, `savings`, `income`, `abroad`, `exam`, `focus`, `field`, `phase`, `explain`, `advice`), and avoids repeating canned answers on follow-up turns.
+- **Hindi (`lang="hi"`) script parity:** `lang="hi"` requests bypass the English/Hinglish advisor templates and route to the pure Devanagari `voice.py` path so Hindi answers never mix Latin and Devanagari scripts (`tests/test_advisor.py::HindiRoutingTests`).
+- **Live-path hardening & runtime robustness:**
+  - `/api/v10/ask` (`brain.answer`) shares `planner.CRISIS` and `planner.DEATH` hard-stops, enforces minor marriage/romance protections, runs hard-stop and live advisor/voice outputs through `gates.check_text_only`, gates optional `_llm_polish` paraphrases via `_polish_ok`, and logs advisor fallbacks.
+  - `VedakshaEngine` and `reasoner.sky_ephem` are protected by thread locks for concurrent requests, and `reasoner.warm()` warms the 9-year transit ephemeris cache in a background daemon thread at server startup.
+  - Engine accuracy fixes (`tests/test_engine_fixes.py`): 60-karana lunar cycle (`jyotish.karana_name`), canonical `"Vrishchika"` spelling across all modules, unclamped exact Ashtakoota on legacy `/api/v09/compatibility`, and real Moon `pada` / strict withholding when birth time is uncertain.
+- **Still portrait on Ask page:** `index.html` and `app.js` mount the static `naradvani.jpg` portrait (`AMLive.mount(..., {still: true})`) while preserving voice/mic (`speak`, `listen`) and keeping `avatar3d.js` tested offline (`tests/test_v130_pure.py`).
+
 # AstroNaradMuni 1.3.0
 
 NaradVani in 3D (page side). The Ask screen can now show a real-time 3D NaradVani instead of the 2D portrait, with the portrait as the automatic fallback.

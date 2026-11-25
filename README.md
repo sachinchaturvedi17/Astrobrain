@@ -1,9 +1,8 @@
-# AstroMuni (formerly AI Pandit) — kundli, horoscope and an AI guide in English, Hinglish and Hindi (v0.6)
+# AstroNaradMuni / AstroMuni (formerly AI Pandit) — kundli, horoscope and an AI guide in English, Hinglish and Hindi (v1.4.0)
 
-The deterministic core of AstroMuni: **birth input → validated chart → immutable facts**.
-No LLM is involved at this layer. The principle from the plan is *"the engine computes,
-the model interprets"* — every statement the chat agent later makes must trace back to a
-fact produced here and a rule that cites a source.
+The deterministic core of AstroNaradMuni (`aipandit` v1.4.0): **birth input → validated chart → immutable facts → classical working (`reasoner.Sheet` + 131-rule engine) → gated plain-language answer**.
+No LLM is ever allowed to calculate. Every statement traces back to a computed chart fact or classical rule, and nothing reaches the user without passing the deterministic grounding and safety gates (`gates.py`).
+See [`CHANGELOG_v1.md`](CHANGELOG_v1.md) for the v1.0.0 – v1.4.0 release history (`advisor.py`, `reasoner.py`, `v10_engine.py`, live-path safety gates, Hindi script parity, and NaradVani voice/portrait integration).
 
 ```
 BirthInput ──intake──▶ ResolvedBirth ──engine──▶ RawChart ──kundli──▶ FactStore (frozen)

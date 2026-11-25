@@ -3,7 +3,7 @@
   "use strict";
   var AM = window.AM;
   AM.extend("en", {
-    free_chat: "Free to chat. No timer, no wallet.", typing_label: "NaradVani is typing…", talk_to: "Talk to NaradVani", about_nv: "Your Vedic guide",
+    free_chat: "Free to chat. No timer, no wallet.", typing_label: "NaradVani is calculating…", talk_to: "Talk to NaradVani", about_nv: "Your Vedic guide",
     ob_step: "Step {n} of {m}", q_name: "What should we call you?", q_name_ph: "Your full name", name_why: "We use it to greet you. It stays on this device.",
     q_gender: "How do you identify?", q_dob: "When were you born?", q_tob: "What time were you born?",
     tob_why: "Birth time decides your rising sign (Lagna). If you don't know it, we can still read your Moon sign.",
@@ -15,7 +15,7 @@
     listening: "Listening to you", ai_guide: "AI guide", stage_cap: "Your kundli, dashas and current transits are present in this conversation.", ai_char: "NaradVani is an AI-generated character, not a real person.", voice_on: "Voice on", voice_off: "Read replies aloud", useful_q: "Did this feel useful?", not_quite: "Not quite", fb_yes: "Glad it helped. Ask me anything else.", fb_no: "Sorry about that. Tell me a bit more, or rephrase, and I will try again."
   });
   AM.extend("hg", {
-    free_chat: "Baat karna muft hai. Na timer, na wallet.", typing_label: "NaradVani likh raha hai…", talk_to: "NaradVani se baat karein", about_nv: "Aapka Vedic guide",
+    free_chat: "Baat karna muft hai. Na timer, na wallet.", typing_label: "NaradVani hisaab laga raha hai…", talk_to: "NaradVani se baat karein", about_nv: "Aapka Vedic guide",
     ob_step: "Step {n} / {m}", q_name: "Hum aapko kya kehkar bulayein?", q_name_ph: "Aapka poora naam", name_why: "Greet karne ke liye. Yeh sirf is device par rehta hai.",
     q_gender: "Aap kaun hain?", q_dob: "Aapka janm kab hua?", q_tob: "Janm kis samay hua?",
     tob_why: "Janm ka samay aapka Lagna (rising sign) tay karta hai. Pata nahi ho toh bhi hum aapki Chandra rashi padh sakte hain.",
@@ -27,7 +27,7 @@
     listening: "Aapki baat sun raha hoon", ai_guide: "AI guide", stage_cap: "Aapki kundli, dashas aur abhi ke gochar is baatcheet mein saath hain.", ai_char: "NaradVani ek AI-generated character hai, asli insaan nahi.", voice_on: "Awaaz on", voice_off: "Jawab bolkar sunao", useful_q: "Kya yeh kaam ka laga?", not_quite: "Poora nahi", fb_yes: "Accha laga ki kaam aaya. Aur kuch poochhna ho to poochhiye.", fb_no: "Maaf kijiye. Thoda aur bataiye ya dusre tareeke se poochhiye, main phir koshish karunga."
   });
   AM.extend("hi", {
-    free_chat: "बात करना मुफ़्त है। न टाइमर, न वॉलेट।", typing_label: "NaradVani लिख रहा है…", talk_to: "NaradVani से बात करें", about_nv: "आपका वैदिक मार्गदर्शक",
+    free_chat: "बात करना मुफ़्त है। न टाइमर, न वॉलेट।", typing_label: "NaradVani गणना कर रहा है…", talk_to: "NaradVani से बात करें", about_nv: "आपका वैदिक मार्गदर्शक",
     ob_step: "चरण {n} / {m}", q_name: "हम आपको क्या कहकर बुलाएँ?", q_name_ph: "आपका पूरा नाम", name_why: "आपका स्वागत करने के लिए। यह सिर्फ़ इस डिवाइस पर रहता है।",
     q_gender: "आप कौन हैं?", q_dob: "आपका जन्म कब हुआ?", q_tob: "जन्म किस समय हुआ?",
     tob_why: "जन्म का समय आपका लग्न तय करता है। पता न हो तब भी हम आपकी चंद्र राशि पढ़ सकते हैं।",
@@ -53,4 +53,7 @@
     mic_unsupported: "इस ब्राउज़र में आवाज़ से पूछना उपलब्ध नहीं है। आप टाइप कर सकते हैं।", mic_denied: "माइक्रोफ़ोन की अनुमति बंद है। बात करने के लिए ब्राउज़र में अनुमति दीजिए।", mic_btn: "नारदवाणी से बोलिए",
     talk_hello: "नमस्ते। मैं नारदवाणी हूँ। अपनी कुंडली के बारे में कुछ भी पूछिए।", voice_note: "आवाज़ आपके ब्राउज़र से आती है और होंठों की हरकत अंदाज़ी है।"
   });
+  AM.extend("en", { name: "Full name", dob: "Date of birth", tob: "Time of birth", place: "Place of birth" });
+  AM.extend("hg", { name: "Poora naam", dob: "Janm tithi", tob: "Janm ka samay", place: "Janm sthan" });
+  AM.extend("hi", { name: "पूरा नाम", dob: "जन्म तिथि", tob: "जन्म का समय", place: "जन्म स्थान" });
 })();

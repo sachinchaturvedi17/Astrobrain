@@ -48,6 +48,12 @@ TOPIC_WORDS = {
     "nakshatra": r"nakshatra|नक्षत्र", "graha": r"graha|planet|navagraha|ग्रह", "rashi": r"rashi|zodiac|राशि", "dasha": r"dasha|दशा",
     "yoga": r"yoga|योग", "panchang": r"panchang|tithi|karana|पंचांग|तिथि", "kundli": r"kundli|kundali|horoscope|birth chart|कुंडली|कुण्डली",
     "bhava": r"bhava|house|भाव", "muhurta": r"muhurta|मुहूर्त", "gochara": r"transit|gochar|गोचर", "remedy": r"remedy|upaya|उपाय",
+    "career": r"career|profession|10th house|tenth house|karma bhava|dashamsa|livelihood|occupation|नौकरी|करियर|दशम भाव",
+    "marriage": r"marriage|spouse|7th house|seventh house|kalatra|navamsa|vivaha|ashtakoota|विवाह|सप्तम भाव|जीवनसाथी",
+    "love": r"romance|affection|5th house|fifth house|venus|shukra|attraction|love|प्रेम|पंचम भाव",
+    "health": r"vitality|wellbeing|1st house|6th house|sixth house|constitution|tanu bhava|energy|स्वास्थ्य|लग्न भाव|षष्ठ भाव",
+    "education": r"education|learning|study|vidya|4th house|5th house|9th house|budha|mercury|शिक्षा|विद्या|पढ़ाई",
+    "wealth": r"wealth|prosperity|dhana|2nd house|11th house|second house|eleventh house|gains|income|धन|लाभ भाव|द्वितीय भाव",
 }
 _last = [0.0]
 

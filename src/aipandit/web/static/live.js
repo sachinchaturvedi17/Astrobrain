@@ -1,15 +1,8 @@
-/* AstroNaradMuni v1.3.0: NaradVani comes alive. No dependencies, no network, CSP-safe (no inline styles or handlers).
- * v1.3.0: when avatar3d.js can load the 3D model, mount() hands the stage to it and keeps this file as the speech brain (text position, word
- * boundary re-sync, mic). If 3D is unavailable or fails, everything below keeps drawing the 2D portrait exactly as in 1.2.0.
+/* AstroNaradMuni v1.4.0: NaradVani is a still portrait. This file now only drives voice and mic.
+ * The 3D/lip-sync page driver is not loaded; the page shows the static portrait image.
  *
- * What it does with the single portrait photo:
- *   - natural blinking (random gaps, occasional double blink) and a slow breathing sway. This is all that happens in Chat mode.
- *   - Talk mode: the mouth follows the words being spoken, eyebrows lift on questions and new sentences, the head nods
- *     slightly, and a different attentive pose is used while the person is speaking to him.
- * Eyelids are drawn from the skin just above each eye; the mouth is opened by stretching the dark inside of the mouth and
- * moving the lower lip and chin down, feathered into the photo. Landmarks live in CAL so a new portrait only needs new numbers.
- * Lip movement is driven by the TEXT (vowel openness per character, lips closed on m/b/p), re-synchronised on every word
- * boundary the browser reports. It is a believable approximation, not audio-exact phoneme tracking.
+ * Talk mode: the browser's own speech voice reads replies and the mic sends what the person says.
+ * There is no longer any canvas animation, blinking or lip movement.
  */
 (function () {
   "use strict";
@@ -196,23 +189,21 @@
   function stopListening() { try { if (REC) REC.stop(); } catch (e) { /* ignore */ } L.listening = false; }
 
   /* ---------------- mounting ---------------- */
-  function mount(canvas, opts) {
-    if (!canvas) return;
+  function mount(node, opts) {
+    if (!node) return;
     opts = opts || {}; L.mode = opts.mode === "talk" ? "talk" : "chat";
-    L.canvas = canvas; canvas.width = CAL.w; canvas.height = CAL.h; L.ctx = canvas.getContext("2d"); L.sig = "";
+    // Static portrait: the page renders a plain <img>. Keep the voice/mic API, do not start a draw loop.
+    if (opts.still || node.tagName === "IMG") {
+      L.still = true; L.canvas = null; L.ctx = null; L.three = false; L.ready = true;
+      return;
+    }
+    L.still = false;
+    L.canvas = node; node.width = CAL.w; node.height = CAL.h; L.ctx = node.getContext("2d"); L.sig = "";
     if (!L.img) {
       L.img = new Image(); L.img.onload = function () { L.ready = true; L.sig = ""; draw(); }; L.img.src = CAL.img;
     } else if (L.ready) { draw(); }
     if (!L.blinkAt) L.blinkAt = performance.now() / 1000 + rnd(1.2, 3);
     if (!L.rafOn) requestAnimationFrame(frame);
-    // 3D upgrade: keep the 2D portrait visible until the model is ready, then swap; any failure puts the portrait back
-    L.three = false; canvas.style.display = "";
-    var A3 = window.AM3D;
-    if (A3 && A3.enabled && A3.enabled() && canvas.parentNode) {
-      A3.mount(canvas.parentNode, { state: L, onFail: function () { if (L.canvas === canvas) { L.three = false; canvas.style.display = ""; L.sig = ""; } } }).then(function (ok) {
-        if (ok && L.canvas === canvas && canvas.isConnected) { L.three = true; canvas.style.display = "none"; }
-      });
-    }
   }
   function setMode(m) { L.mode = m === "talk" ? "talk" : "chat"; if (L.mode === "chat") { stop(); stopListening(); } }
   if (window.speechSynthesis) { loadVoices(); try { window.speechSynthesis.onvoiceschanged = loadVoices; } catch (e) { /* ignore */ } }
@@ -220,7 +211,6 @@
   function preview(blink, mouth, brow) { L.frozen = true; L.blink = blink; L.mouth = mouth; L.brow = brow; L.sig = ""; draw(); }   // for calibration and tests
   function unfreeze() { L.frozen = false; }
   window.AMLive = { preview: preview, unfreeze: unfreeze, mount: mount, setMode: setMode, speak: speak, stop: stop, listen: listen, stopListening: stopListening, micSupported: micSupported,
-    // is3d is false once the 3D view has unmounted (left Ask); isActive is optional so older AM3D builds still work
-    is3d: function () { var A3 = window.AM3D; return !!L.three && !(A3 && typeof A3.isActive === "function" && !A3.isActive()); },
+    is3d: function () { return false; },                      // the page no longer mounts a 3D avatar
     speaking: function () { return L.speaking; }, listening: function () { return L.listening; }, visemeTrack: visemeTrack, openness: openness, CAL: CAL, _state: L };
 })();

@@ -7,6 +7,7 @@ tests; others are exposed but flagged by kundli.generate_kundli.
 from __future__ import annotations
 
 import importlib.metadata
+import threading
 
 from .base import (DashaPeriod, DashaResult, EngineLimit, RawChart, RawPlanet)
 
@@ -40,6 +41,7 @@ class VedakshaEngine:
     def __init__(self) -> None:
         from vedaksha import Vedaksha
         self._vk = Vedaksha()
+        self._lock = threading.RLock()
         self.version = importlib.metadata.version("vedaksha")
         self.engine_id = f"vedaksha:{self.version}"
 
@@ -49,9 +51,10 @@ class VedakshaEngine:
             raise ValueError(f"unknown ayanamsa {ayanamsa!r}; choose from {sorted(AYANAMSA_MAP)}")
         if node_mode not in NODE_KEYS:
             raise ValueError("node_mode must be 'mean' or 'true'")
-        chart = self._vk.natal_chart(
-            jd_ut, lat, lon, house_system="whole_sign", ayanamsha=AYANAMSA_MAP[ayanamsa]
-        )
+        with self._lock:
+            chart = self._vk.natal_chart(
+                jd_ut, lat, lon, house_system="whole_sign", ayanamsha=AYANAMSA_MAP[ayanamsa]
+            )
         houses = chart["houses"]
         if houses.get("polar_fallback"):
             raise EngineLimit("ascendant undefined or unreliable at this latitude")
@@ -75,10 +78,11 @@ class VedakshaEngine:
         )
 
     def vimshottari(self, birth_jd: float, moon_longitude: float, depth: int = 2) -> DashaResult:
-        res = self._vk.call_tool(
-            "compute_dasha", system="Vimshottari",
-            birth_jd=birth_jd, moon_longitude=moon_longitude,
-        )
+        with self._lock:
+            res = self._vk.call_tool(
+                "compute_dasha", system="Vimshottari",
+                birth_jd=birth_jd, moon_longitude=moon_longitude,
+            )
 
         def parse(nodes, d):
             out = []

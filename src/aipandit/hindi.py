@@ -64,7 +64,7 @@ GRAHA_HI = {"Sun": "सूर्य", "Moon": "चंद्र", "Mars": "मं
 GRAHA_HG = {"Sun": "Surya", "Moon": "Chandra", "Mars": "Mangal", "Mercury": "Budh", "Jupiter": "Guru", "Venus": "Shukra",
             "Saturn": "Shani", "Rahu": "Rahu", "Ketu": "Ketu"}
 SIGN_HI = {"Mesha": "मेष", "Vrishabha": "वृषभ", "Mithuna": "मिथुन", "Karka": "कर्क", "Simha": "सिंह",
-           "Kanya": "कन्या", "Tula": "तुला", "Vrischika": "वृश्चिक", "Dhanu": "धनु", "Makara": "मकर",
+           "Kanya": "कन्या", "Tula": "तुला", "Vrishchika": "वृश्चिक", "Dhanu": "धनु", "Makara": "मकर",
            "Kumbha": "कुंभ", "Meena": "मीन"}
 ORD_HI = {1: "पहले", 2: "दूसरे", 3: "तीसरे", 4: "चौथे", 5: "पांचवें", 6: "छठे", 7: "सातवें", 8: "आठवें",
           9: "नौवें", 10: "दसवें", 11: "ग्यारहवें", 12: "बारहवें"}
@@ -82,7 +82,7 @@ GRAHA_DEV = {
 }
 SIGN_DEV = {
     "Mesha": ["मेष"], "Vrishabha": ["वृषभ"], "Mithuna": ["मिथुन"], "Karka": ["कर्क"], "Simha": ["सिंह"],
-    "Kanya": ["कन्या"], "Tula": ["तुला"], "Vrischika": ["वृश्चिक"], "Dhanu": ["धनु"], "Makara": ["मकर"],
+    "Kanya": ["कन्या"], "Tula": ["तुला"], "Vrishchika": ["वृश्चिक"], "Dhanu": ["धनु"], "Makara": ["मकर"],
     "Kumbha": ["कुंभ", "कुम्भ"], "Meena": ["मीन"],
 }
 YOGA_DEV = {

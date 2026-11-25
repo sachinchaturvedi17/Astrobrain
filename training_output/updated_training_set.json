@@ -1,0 +1,436 @@
+{
+  "training_examples": [
+    {
+      "source": "corpus_training",
+      "topic": "love",
+      "difficulty": "intermediate",
+      "question": "Based on your chart, what does the Sun placement indicate?",
+      "framework": "Check 5th house lord and planet strengths",
+      "answer_template": "Your Sun strong indicates mixed results.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.888969",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "marriage",
+      "difficulty": "intermediate",
+      "question": "Based on your chart, what does the Sun placement indicate?",
+      "framework": "Check 7th house lord and planet strengths",
+      "answer_template": "Your Moon strong indicates mixed results.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.888982",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "career",
+      "difficulty": "basic",
+      "question": "Based on your chart, what does the Moon placement indicate?",
+      "framework": "Check 10th house lord and planet strengths",
+      "answer_template": "Your Moon weak indicates favorable outcomes.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.888985",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "marriage",
+      "difficulty": "basic",
+      "question": "Based on your chart, what does the Sun placement indicate?",
+      "framework": "Check 7th house lord and planet strengths",
+      "answer_template": "Your Mars weak indicates mixed results.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.888987",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "love",
+      "difficulty": "advanced",
+      "question": "Based on your chart, what does the Mars placement indicate?",
+      "framework": "Check 7th house lord and planet strengths",
+      "answer_template": "Your Mars weak indicates needs patience.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.888989",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "love",
+      "difficulty": "basic",
+      "question": "Based on your chart, what does the Mars placement indicate?",
+      "framework": "Check 7th house lord and planet strengths",
+      "answer_template": "Your Mars weak indicates favorable outcomes.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.888991",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "marriage",
+      "difficulty": "basic",
+      "question": "Based on your chart, what does the Mars placement indicate?",
+      "framework": "Check 10th house lord and planet strengths",
+      "answer_template": "Your Moon weak indicates needs patience.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.888993",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "career",
+      "difficulty": "advanced",
+      "question": "Based on your chart, what does the Moon placement indicate?",
+      "framework": "Check 5th house lord and planet strengths",
+      "answer_template": "Your Mars moderate indicates needs patience.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.888995",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "marriage",
+      "difficulty": "basic",
+      "question": "Based on your chart, what does the Mars placement indicate?",
+      "framework": "Check 5th house lord and planet strengths",
+      "answer_template": "Your Moon weak indicates needs patience.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.888997",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "marriage",
+      "difficulty": "advanced",
+      "question": "Based on your chart, what does the Sun placement indicate?",
+      "framework": "Check 7th house lord and planet strengths",
+      "answer_template": "Your Sun moderate indicates favorable outcomes.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.888998",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "love",
+      "difficulty": "intermediate",
+      "question": "Based on your chart, what does the Sun placement indicate?",
+      "framework": "Check 10th house lord and planet strengths",
+      "answer_template": "Your Moon weak indicates mixed results.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.889002",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "career",
+      "difficulty": "advanced",
+      "question": "Based on your chart, what does the Moon placement indicate?",
+      "framework": "Check 5th house lord and planet strengths",
+      "answer_template": "Your Moon weak indicates favorable outcomes.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.889004",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "career",
+      "difficulty": "basic",
+      "question": "Based on your chart, what does the Mars placement indicate?",
+      "framework": "Check 5th house lord and planet strengths",
+      "answer_template": "Your Sun weak indicates needs patience.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.889006",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "career",
+      "difficulty": "intermediate",
+      "question": "Based on your chart, what does the Sun placement indicate?",
+      "framework": "Check 7th house lord and planet strengths",
+      "answer_template": "Your Mars weak indicates mixed results.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.889008",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "marriage",
+      "difficulty": "advanced",
+      "question": "Based on your chart, what does the Mars placement indicate?",
+      "framework": "Check 10th house lord and planet strengths",
+      "answer_template": "Your Mars strong indicates needs patience.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.889009",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "marriage",
+      "difficulty": "intermediate",
+      "question": "Based on your chart, what does the Moon placement indicate?",
+      "framework": "Check 10th house lord and planet strengths",
+      "answer_template": "Your Moon weak indicates favorable outcomes.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.889011",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "career",
+      "difficulty": "basic",
+      "question": "Based on your chart, what does the Mars placement indicate?",
+      "framework": "Check 5th house lord and planet strengths",
+      "answer_template": "Your Sun moderate indicates needs patience.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.889013",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "love",
+      "difficulty": "basic",
+      "question": "Based on your chart, what does the Moon placement indicate?",
+      "framework": "Check 10th house lord and planet strengths",
+      "answer_template": "Your Sun strong indicates needs patience.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.889015",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "love",
+      "difficulty": "basic",
+      "question": "Based on your chart, what does the Mars placement indicate?",
+      "framework": "Check 7th house lord and planet strengths",
+      "answer_template": "Your Moon moderate indicates favorable outcomes.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.889016",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    },
+    {
+      "source": "corpus_training",
+      "topic": "marriage",
+      "difficulty": "basic",
+      "question": "Based on your chart, what does the Moon placement indicate?",
+      "framework": "Check 7th house lord and planet strengths",
+      "answer_template": "Your Sun moderate indicates mixed results.",
+      "strength_check": "Check planet dignity and house placement",
+      "generated": "2026-11-25T09:01:46.889018",
+      "corpus_references": [
+        "BPhS relevant verses"
+      ]
+    }
+  ],
+  "existing_qa": {
+    "career.json": {
+      "basic": [
+        {
+          "question": "What career suits my chart?",
+          "framework": "Check 10th house lord, Sun/Mercury/Saturn placement",
+          "answer_template": "Based on your chart, {planet} in {sign} indicates {career_type}. Your 10th house lord {lord} in {house} house suggests {career_detail}.",
+          "strength_check": "If Sun strong -> government/admin/leadership; Mercury strong -> writing/teaching/commerce; Saturn strong -> engineering/admin/slow steady growth"
+        },
+        {
+          "question": "When will I get a job promotion?",
+          "framework": "Check current dasha period and transit to 10th house",
+          "answer_template": "Your current {dasha} dasha activates {planet} matters. With transit of {transit_planet} to your 10th house, this is a favorable period for promotion. Exact timing: {timing}.",
+          "strength_check": "Check dasha lord strength and transit aspects to 10th house"
+        },
+        {
+          "question": "Is business right for me?",
+          "framework": "Check Mercury/Venus strength and 2nd/10th house connection",
+          "answer_template": "Your Mercury {status} indicates {business_type} aptitude. With Venus {status}, {creative_business}. The 2nd house {condition} suggests {financial_outlook}.",
+          "strength_check": "Mercury strong -> commerce/writing; Venus strong -> creative business; 2nd house lord strength"
+        },
+        {
+          "question": "What field should I study?",
+          "framework": "Check 5th house, Mercury/Jupiter placement",
+          "answer_template": "Your 5th house {condition} shows natural aptitude. Mercury {status} in {sign} suggests {study_field}. Jupiter {status} indicates {higher_learning}.",
+          "strength_check": "Mercury for skills, Jupiter for higher education, 5th house creativity"
+        }
+      ],
+      "intermediate": [
+        {
+          "question": "Will I become wealthy through my career?",
+          "framework": "Check 11th house, Jupiter/Venus strength, 10th house strength",
+          "answer_template": "Your 11th house {condition} shows income gains. Jupiter {status} indicates {wealth_type}. Venus {status} adds {financial_detail}. 10th house {condition} shows career-related wealth.",
+          "strength_check": "Jupiter strong -> prosperity through teaching/finance; Venus strong -> wealth through arts/business; 11th house strength"
+        },
+        {
+          "question": "Government job or private sector?",
+          "framework": "Check Sun strength, 10th house lord placement, Navamsa analysis",
+          "answer_template": "Sun {status} strongly favors government/service roles. 10th house lord {lord} in {navamsa} suggests {sector}. Navamsa analysis of 10th lord gives final indication.",
+          "strength_check": "Sun exalted -> government; Sun debilitated -> private sector; 10th house lord placement"
+        },
+        {
+          "question": "Which job will give me most satisfaction?",
+          "framework": "Check Moon placement, 5th house, and personal passion areas",
+          "answer_template": "Your Moon {status} in {sign} shows emotional job satisfaction needs. 5th house {condition} indicates creative fulfillment. Your passion areas: {passions}. Ideal work: {ideal_job}.",
+          "strength_check": "Moon for emotional satisfaction, 5th house for creativity, personal passion alignment"
+        }
+      ],
+      "advanced": [
+        {
+          "question": "Is my current job suitable for my skills?",
+          "framework": "Check 6th house (daily work), Mercury (skills), and 10th house (career)",
+          "answer_template": "Your 6th house {condition} shows daily work environment. Mercury {status} indicates your skill set. 10th house {condition} shows career fit. Combined: {suitability_assessment}.",
+          "strength_check": "6th house for daily work, Mercury for skills, 10th for career suitability"
+        },
+        {
+          "question": "What is my ideal work environment?",
+          "framework": "Check Moon sign (emotional needs), 7th house (partnerships at work), and Saturn (discipline style)",
+          "answer_template": "Your Moon {status} in {sign} shows needed work environment atmosphere. 7th house {condition} shows preferred workplace partnerships. Saturn {status} indicates discipline style: {discipline_style}. Ideal environment: {env_description}.",
+          "strength_check": "Moon for emotional satisfaction, 7th for workplace partnerships, Saturn for discipline style"
+        }
+      ]
+    },
+    "marriage.json": {
+      "basic": [
+        {
+          "question": "When will I get married?",
+          "framework": "Check 7th house lord, Venus/Jupiter strength, dasha periods",
+          "answer_template": "Based on your chart, 7th house lord {lord} in {sign} with Venus {status} suggests {marriage_timing}. Current {dasha} dasha activates {activation}.",
+          "strength_check": "Venus strong -> early marriage; Jupiter aspect -> favorable timing; 7th house strength -> quick marriage"
+        },
+        {
+          "question": "What kind of partner suits me?",
+          "framework": "Check Venus placement, 7th house lord, and karaka strengths",
+          "answer_template": "Your Venus in {sign} shows partner {partner_type}. 7th house lord {lord} in {house} indicates {partner_qualities}. Mars {status} adds {mars_detail}.",
+          "strength_check": "Venus strong -> harmonious partner; 7th house strong -> supportive partner; Mars afflicted -> needs anger management"
+        },
+        {
+          "question": "Love marriage or arranged marriage?",
+          "framework": "Check 5th-7th house connection, Venus-Moon aspect",
+          "answer_template": "Your 5th-7th connection {connection_type} shows {marriage_type}. Venus-Moon {aspect} indicates {love_style}. Rahu/Ketu connections show {non_traditional}.",
+          "strength_check": "Strong 5th-7th -> love marriage; Strong Venus-Moon -> arranged marriage possible; Rahu connections -> non-traditional"
+        }
+      ],
+      "intermediate": [
+        {
+          "question": "Manglik dosha effects on marriage?",
+          "framework": "Check Mars placement in 1st/4th/7th/8th, Mangal dosha calculation",
+          "answer_template": "Mars in {position} {mangal_status}. Effects: {effects}. Remedies: {remedies}.",
+          "strength_check": "Mars in 1/4/7/8 -> Mangal dosha; Mars in own sign -> reduced effect; Aspects from Jupiter -> cancellation"
+        },
+        {
+          "question": "Second marriage possibilities?",
+          "framework": "Check 7th house lord strength, 8th house connections, dasha of 7th lord",
+          "answer_template": "7th house lord {status} shows {second_marriage_probability}. 8th house connections {8th_status}. Dasha of 7th lord {dasha_status}.",
+          "strength_check": "Strong 7th lord -> second marriage possible; Weak 7th lord -> delayed; 8th house connections -> transformative marriages"
+        }
+      ],
+      "advanced": [
+        {
+          "question": "Early marriage or late marriage?",
+          "framework": "Check 7th house strength, Venus dasha timing, Jupiter aspects",
+          "answer_template": "7th house {strength} shows {timing}. Venus dasha {venus_dasha} activates {activation}. Jupiter aspects {jupiter_aspect}.",
+          "strength_check": "Strong 7th -> early marriage; Debilitated 7th -> late marriage; Jupiter aspect -> marriage timing correction"
+        },
+        {
+          "question": "Inter-caste/religion marriage possibilities?",
+          "framework": "Check Rahu/Ketu connections, 7th house lord placement",
+          "answer_template": "Rahu in 7th {rahu_status} shows {inter_caste_status}. Ketu connections {ketu_status}. 7th lord {lord_status}.",
+          "strength_check": "Rahu in 7th -> inter-caste/marriage; Ketu aspects -> spiritual connection; 7th lord strength -> family acceptance"
+        }
+      ]
+    },
+    "love.json": {
+      "basic": [
+        {
+          "question": "Does he/she love me?",
+          "framework": "Check Venus position, 5th house connections, Moon-Moon aspect",
+          "answer_template": "Venus {status} in {sign} shows {love_indicator}. 5th house {condition} indicates {love_quality}. Moon-Moon aspect {aspect_type}.",
+          "strength_check": "Venus strong -> love present; Venus afflicted -> uncertainty; 5th house strong -> deep connection"
+        },
+        {
+          "question": "When will I meet my life partner?",
+          "framework": "Check 7th house dasha, Venus transit, Jupiter aspects",
+          "answer_template": "Current {dasha} dasha activates {planet} matters. Venus transit to {house} house. Jupiter aspect to 7th house. Timing: {timing}.",
+          "strength_check": "Venus transit to 7th -> partner meeting; Jupiter aspect to 7th -> significant relationship; dasha lord strength"
+        },
+        {
+          "question": "Is this true love or just attraction?",
+          "framework": "Check 5th house quality, Venus sign, Moon emotional connection",
+          "answer_template": "5th house {quality} shows {love_type}. Venus {sign} shows {attraction_style}. Moon-Moon {aspect} shows {emotional_connection}. Rahu {rahu_status}.",
+          "strength_check": "5th house quality -> true love vs attraction; Venus sign -> love style; Moon connection -> emotional bond"
+        }
+      ],
+      "intermediate": [
+        {
+          "question": "Will my love marriage happen?",
+          "framework": "Check 5th-7th house connection, Venus strength, dasha timing",
+          "answer_template": "5th-7th connection {connection_type} shows {marriage_possibility}. Venus {status} dasha activates {activation}. Jupiter aspect {jupiter_aspect}.",
+          "strength_check": "Strong 5th-7th connection -> love marriage; Venus strong dasha -> marriage timing; Jupiter aspect -> relationship blessing"
+        },
+        {
+          "question": "Why am I getting repeated heartbreaks?",
+          "framework": "Check Rahu in 5th/7th, Venus afflictions, karmic patterns",
+          "answer_template": "Rahu in {position} {rahu_status}. Venus {venus_status} afflictions. Karmic pattern {karmic_detail}. Lessons: {lessons}.",
+          "strength_check": "Rahu in 5th/7th -> relationship patterns; Venus afflict -> heartbreak patterns; Karmic lessons to learn"
+        },
+        {
+          "question": "What is my love language?",
+          "framework": "Check Venus placement, Moon sign, 5th house creativity",
+          "answer_template": "Venus {sign} shows {love_language}. Moon {sign} shows {emotional_needs}. 5th house {condition} shows {creativity_style}. Acts of service: {acts_service}.",
+          "strength_check": "Venus for love language, Moon for emotional needs, 5th for creativity expression"
+        }
+      ],
+      "advanced": [
+        {
+          "question": "When will my romantic phase end?",
+          "framework": "Check current dasha, transit to 5th/7th house",
+          "answer_template": "Current {dasha} dasha activates {planet} matters. Transit of {transit_planet} to 5th/7th house. Phase ends when: {phase_end_condition}.",
+          "strength_check": "Current dasha lord strength; transit aspects to 5th/7th; phase duration based on dasha period"
+        },
+        {
+          "question": "Will I find love again after a breakup?",
+          "framework": "Check 5th house recovery, Venus retrograde, dasha timing",
+          "answer_template": "5th house {recovery_status} shows {recovery_possibility}. Venus retrograde {retrograde_status}. Current dasha {dasha_status}. New love potential: {new_love}.",
+          "strength_check": "5th house recovery; Venus retrograde effects; current dasha for new relationship timing"
+        }
+      ]
+    }
+  },
+  "total_count": 38,
+  "generated": "2026-11-25T09:01:46.889786"
+}

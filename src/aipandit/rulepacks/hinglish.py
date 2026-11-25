@@ -89,7 +89,9 @@ for p, g in G.items():
     T[f"dignity.{p.lower()}_own"] = (f"{g} apni swarashi mein hai, jo parampara se aaram wali, sthir sthiti maani jaati hai. "
                                      f"Jin cheezon ka woh pratinidhitva karta hai ({q}), woh sthirta se vyakt hoti hain.")
 
-HINGLISH_PARASHARI = {f"parashari.{k}": v for k, v in T.items()}
+from .parashari_bhavas import HINGLISH as _BHAVA_HG
+
+HINGLISH_PARASHARI = {**{f"parashari.{k}": v for k, v in T.items()}, **_BHAVA_HG}
 HINGLISH_ALL = {**HINGLISH_PARASHARI, **_NUM_HG}
 
 

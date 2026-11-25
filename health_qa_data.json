@@ -1,0 +1,30 @@
+{
+  "basic": [
+    {
+      "question": "What does my chart say about my health?",
+      "framework": "Check 6th house, Sun/Moon placement, and dasha periods",
+      "answer_template": "Your 6th house {condition} indicates health tendencies. Sun {status} shows vitality, Moon {status} emotional health, Mars {status} physical energy.",
+      "strength_check": "6th house strength indicates resistance to illness; benefics in dusthan give cautionary indications"
+    },
+    {
+      "question": "When will I recover from illness?",
+      "framework": "Check dasha of lagna lord, aspect of Jupiter on 6th house",
+      "answer_template": "Current {dasha} dasha {recovery_status}. Jupiter aspect on 6th house {jupiter_status}. Favorable period: {timing}.",
+      "strength_check": "Jupiter strongest healer; lagna lord dasha indicates recovery period"
+    }
+  ],
+  "intermediate": [
+    {
+      "question": "Will I have chronic health issues?",
+      "framework": "Check 6th house strength, Saturn position, and dasha periods",
+      "answer_template": "6th house {strength} shows {chronic_probability}. Saturn {status} adds {karmic_detail}. Dasha {dasha_status}.",
+      "strength_check": "Strong 6th = minimal chronic issues; Weak 6th + Saturn = long-term concerns"
+    },
+    {
+      "question": "What remedies help my health?",
+      "framework": "Check Sun/Moon strength, lord of 6th house, and appropriate upays",
+      "answer_template": "Sun remedy: {sun_remedy}. Moon remedy: {moon_remedy}. 6th lord remedy: {sixth_remedy}. Direction: {direction}.",
+      "strength_check": "Benefic remedies for strong planets; malefic remedies for weak planets"
+    }
+  ]
+}

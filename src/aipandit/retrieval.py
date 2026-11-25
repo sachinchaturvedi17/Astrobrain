@@ -168,6 +168,7 @@ def load_index(kb_dir: Optional[Path] = None, force: bool = False) -> Index:
     base = Path(kb_dir) if kb_dir else KB_DIR
     docs: List[Dict[str, Any]] = list(core_passages())
     docs += list(_read_jsonl(base / "web_corpus.jsonl", "web"))
+    docs += list(_read_jsonl(base / "training_6fields.jsonl", "web"))
     docs += list(_read_jsonl(base / "shastra_corpus.jsonl", "shastra"))
     if kb_dir is None:
         from . import expert

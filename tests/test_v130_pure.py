@@ -1,5 +1,6 @@
-"""v1.3.0: real-time 3D NaradVani (avatar3d.js) with the 2D portrait as fallback. Static checks, a node harness for the pure driver
-logic and the live.js hand-over, and server checks for the GLB and CSP. stdlib only (node needed for the harness tests)."""
+"""v1.4.0: NaradVani is a still portrait on the page; the 3D page driver is no longer loaded.
+The 3D driver module and its pure logic tests stay for future work, but nothing on the page mounts it.
+Static checks for the wiring, voice/mic and server, plus the driver's own pure tests. stdlib only."""
 import json
 import re
 import shutil
@@ -34,11 +35,22 @@ RAND = "let s=12345;const rand=()=>{s=(s*1664525+1013904223)%4294967296;return s
 
 
 class WiringTests(unittest.TestCase):
-    def test_page_loads_avatar3d_before_live(self):
+    def test_page_shows_a_static_portrait_and_does_not_load_the_3d_driver(self):
         html = read("index.html")
-        self.assertLess(html.index("/static/avatar3d.js"), html.index("/static/live.js"))
+        self.assertNotIn("/static/avatar3d.js", html)
         self.assertEqual(set(re.findall(r"\?v=([0-9.]+)", html)), {aipandit.__version__})
-        self.assertEqual(aipandit.__version__, "1.3.0")
+        app = read("app.js")
+        self.assertIn('id="nvPortrait"', app)
+        self.assertIn('src="/static/naradvani.jpg"', app)
+        self.assertNotIn("nvCanvas", app)
+
+    def test_ask_waits_three_to_four_seconds_and_shows_a_calculating_state(self):
+        app = read("app.js")
+        self.assertRegex(app, r"3000 \+ \(q\.length % 10\) \* 100")       # 3.0–3.9 s visible thinking beat
+        self.assertRegex(app, r"setTimeout\(r, left\)")
+        self.assertIn("NaradVani is calculating", read("i18n11.js"))
+        self.assertIn('class="typing"', app)                               # the indicator is visible while the delay runs
+        self.assertIn("m.noteOk", app)                                     # the birth-time caveat is shown once, not after every turn
 
     def test_avatar3d_is_csp_safe(self):
         src = read("avatar3d.js")
@@ -50,15 +62,16 @@ class WiringTests(unittest.TestCase):
             self.assertTrue(spec.endswith(".js"), spec)
         self.assertIn('VENDOR = "/static/vendor/"', src)                         # absolute path, no bare specifiers
 
-    def test_live_keeps_2d_fallback(self):
+    def test_live_keeps_voice_and_still_portrait(self):
         live = read("live.js")
-        self.assertIn("L.three", live)
-        self.assertIn("onFail", live)
-        self.assertIn("canvas.style.display", live)
-        self.assertIn("is3d", live)
+        self.assertIn("opts.still", live)
+        self.assertIn('node.tagName === "IMG"', live)
+        self.assertNotIn("AM3D", live)
+        for fn in ("speak", "listen", "micSupported", "stopListening"):
+            self.assertIn(fn + ":", live)
 
     def test_css_and_gitignore(self):
-        self.assertIn(".portrait canvas.nv3d", read("v11.css"))
+        self.assertIn(".portrait img", read("v11.css"))
         self.assertIn("naradvani_mp.glb", (ROOT / ".gitignore").read_text())      # private test avatar never committed
         self.assertIn("assets_src/private/", (ROOT / ".gitignore").read_text())
 
@@ -172,40 +185,15 @@ class DriverTests(unittest.TestCase):
 
 
 @unittest.skipUnless(NODE, "node not installed")
-class HandOverTests(unittest.TestCase):
+class StillPortraitTests(unittest.TestCase):
     PRE = ("global.document={createElement:()=>({getContext:()=>({drawImage(){}}),style:{}})};global.performance={now:()=>0};global.requestAnimationFrame=()=>0;"
            "global.Image=function(){};")
 
-    def run_live(self, ams, check):
-        js = (self.PRE + "global.window={AM3D:%s};require(%s);const A=window.AMLive;" % (ams, json.dumps(str(ST / "live.js"))) +
-              "const cv={width:0,height:0,style:{display:''},isConnected:true,parentNode:{},getContext:()=>({drawImage(){}})};A.mount(cv,{mode:'chat'});" + check)
-        return node_json(js)
-
-    def test_stage_is_handed_to_3d_when_it_loads(self):
-        out = self.run_live("{enabled:()=>true,mount:()=>Promise.resolve(true)}",
-                            "setTimeout(()=>console.log(JSON.stringify({is3d:A.is3d(),display:cv.style.display})),10)")
-        self.assertEqual(out, {"is3d": True, "display": "none"})
-
-    def test_is3d_is_false_once_the_3d_view_has_unmounted(self):
-        out = self.run_live("{enabled:()=>true,isActive:()=>global.on,mount:()=>{global.on=true;return Promise.resolve(true)}}",
-                            "setTimeout(()=>{const a=A.is3d();global.on=false;console.log(JSON.stringify({mounted:a,afterUnmount:A.is3d()}))},10)")
-        self.assertEqual(out, {"mounted": True, "afterUnmount": False})
-
-    def test_portrait_stays_when_3d_cannot_load(self):
-        out = self.run_live("{enabled:()=>true,mount:()=>Promise.resolve(false)}",
-                            "setTimeout(()=>console.log(JSON.stringify({is3d:A.is3d(),display:cv.style.display})),10)")
-        self.assertEqual(out, {"is3d": False, "display": ""})
-
-    def test_portrait_comes_back_if_3d_fails_later(self):
-        out = self.run_live("{enabled:()=>true,mount:(h,o)=>{global.fail=o.onFail;return Promise.resolve(true)}}",
-                            "setTimeout(()=>{const before=cv.style.display;global.fail('too slow');console.log(JSON.stringify({before:before,is3d:A.is3d(),after:cv.style.display}))},10)")
-        self.assertEqual(out, {"before": "none", "is3d": False, "after": ""})
-
-    def test_works_with_no_3d_module_at_all(self):
+    def test_mounting_the_still_image_starts_no_animation_and_keeps_the_api(self):
         js = (self.PRE + "global.window={};require(%s);const A=window.AMLive;" % json.dumps(str(ST / "live.js")) +
-              "const cv={width:0,height:0,style:{display:''},isConnected:true,parentNode:{},getContext:()=>({drawImage(){}})};A.mount(cv,{mode:'talk'});"
-              "console.log(JSON.stringify({is3d:A.is3d(),api:['mount','setMode','speak','stop','listen','stopListening','micSupported'].every(k=>typeof A[k]==='function')}))")
-        self.assertEqual(node_json(js), {"is3d": False, "api": True})
+              "const img={tagName:'IMG',isConnected:true};A.mount(img,{mode:'talk',still:true});"
+              "console.log(JSON.stringify({is3d:A.is3d(),speaking:A.speaking(),api:['mount','setMode','speak','stop','listen','stopListening','micSupported'].every(k=>typeof A[k]==='function')}))")
+        self.assertEqual(node_json(js), {"is3d": False, "speaking": False, "api": True})
 
 
 class VendorToolTests(unittest.TestCase):

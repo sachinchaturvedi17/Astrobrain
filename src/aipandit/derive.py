@@ -30,7 +30,7 @@ SYS = "parashari"
 VERSION = "derive:v1"
 
 SEVEN = ("Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn")
-#                 Mesha    Vrishabha Mithuna   Karka   Simha  Kanya     Tula    Vrischika Dhanu     Makara   Kumbha   Meena
+#                 Mesha    Vrishabha Mithuna   Karka   Simha  Kanya     Tula    Vrishchika Dhanu     Makara   Kumbha   Meena
 SIGN_LORD = ("Mars", "Venus", "Mercury", "Moon", "Sun", "Mercury", "Venus", "Mars",
              "Jupiter", "Saturn", "Saturn", "Jupiter")
 EXALT_SIGN = {"Sun": 0, "Moon": 1, "Mars": 9, "Mercury": 5, "Jupiter": 3, "Venus": 11, "Saturn": 6}

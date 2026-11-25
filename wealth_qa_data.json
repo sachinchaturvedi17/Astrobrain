@@ -1,0 +1,16 @@
+{
+  "basic": [
+    {
+      "question": "Will I become wealthy?",
+      "framework": "Check 2nd house, 11th house, Jupiter/Venus strength",
+      "answer_template": "2nd house {condition} shows wealth potential. Jupiter {status} adds {jupiter_wealth}. Venus {status} adds {venus_wealth}. 11th house {eleventh_status} shows gains.",
+      "strength_check": "Jupiter strong = progressive wealth; Venus strong = comfort wealth; 11th house strength"
+    },
+    {
+      "question": "When will I acquire assets?",
+      "framework": "Check dasha of 2nd/11th lord, transit to 11th house",
+      "answer_template": "Current {dasha} dasha activates {planet} matters. Transit of {transit_planet} to 11th house. Favorable period: {timing}.",
+      "strength_check": "2nd/11th lord dasha strength and transit aspects"
+    }
+  ]
+}

@@ -392,9 +392,11 @@ def continue_chat(expects: str, key: str, topic: str, chart: Dict[str, Any], lan
             return {"text": NO_FOLLOW[li], "expects": None, "question": "", "quick_replies": TOPIC_CHIPS[lang]}
         text = (dasha_line(chart, lang) + " " + TIMING_TAIL[li]).strip()
         return {"text": text, "expects": None, "question": "", "quick_replies": TOPIC_CHIPS[lang]}
-    else:
+    elif expects in REPLY and key in REPLY[expects]:
         text = REPLY[expects][key][li]
         nxt = "field" if expects == "career_status" and key != "business" else "timing"
+    else:
+        return dasha_answer(chart, lang)
     q, quick = ask_block(nxt, lang)
     return {"text": text, "expects": nxt, "question": q, "quick_replies": quick}
 
